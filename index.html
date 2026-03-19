@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal Tropical Aquarium Screensaver</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#000; }
+    canvas { display:block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let time = 0;
+    let saverActive = false;
+    let timeout;
+    const IDLE_TIME = 120000; // 2 minutes
+
+    class Fish {
+      constructor(color, size, speed) {
+        this.color = color;
+        this.size = size;
+        this.speed = speed;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height * 0.8;
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed * 0.5;
+        this.angle = 0;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Occasional gentle direction change
+        if (Math.random() < 0.015) {
+          this.vx += (Math.random() - 0.5) * 2;
+          this.vy += (Math.random() - 0.5) * 1;
+        }
+
+        // Limit speed
+        const maxSpeed = this.speed;
+        const currentSpeed = Math.hypot(this.vx, this.vy);
+        if (currentSpeed > maxSpeed) {
+          const factor = maxSpeed / currentSpeed;
+          this.vx *= factor;
+          this.vy *= factor;
+        }
+
+        // Soft bounce off "tank" edges
+        const margin = 60;
+        if (this.x < margin || this.x > width - margin) this.vx *= -0.85;
+        if (this.y < margin || this.y > height * 0.9) this.vy *= -0.85;
+
+        this.angle = Math.atan2(this.vy, this.vx);
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        // Soft shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 30, 0.5)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 10;
+        ctx.shadowOffsetY = 8;
+
+        const flip = this.vx < 0 ? -1 : 1;
+        ctx.scale(flip, 1);
+
+        // Simple body (oval-ish rectangle)
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size / 2, this.size / 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye (small white + black dot)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(this.size / 3, -this.size / 8, this.size / 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(this.size / 3 + this.size / 20, -this.size / 8, this.size / 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    class Bubble {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = height + 30;
+        this.r = Math.random() * 8 + 4;
+        this.speed = Math.random() * 2 + 1;
+        this.wobble = Math.random() * Math.PI * 2;
+      }
+      update() {
+        this.y -= this.speed;
+        this.x += Math.sin(this.wobble + time * 0.05) * 1.5;
+        this.wobble += 0.08;
+        if (this.y < -this.r * 2) this.reset();
+      }
+      draw() {
+        ctx.save();
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(220, 240, 255, 0.8)';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    let fishes = [];
+    let bubbles = [];
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    function init() {
+      resize();
+      fishes = [];
+      bubbles = [];
+
+      // Different "species" with colors/sizes/speeds
+      const types = [
+        {color: '#FF4500', size: 80, speed: 1.4},    // Clownfish orange
+        {color: '#00BFFF', size: 90, speed: 1.2},    // Blue tang
+        {color: '#FFD700', size: 100, speed: 1.0},   // Angelfish yellow
+        {color: '#8A2BE2', size: 70, speed: 1.6},    // Royal gramma purple
+        {color: '#00FF7F', size: 45, speed: 2.2}     // Neon tetra green (smaller/faster)
+      ];
+
+      types.forEach((type, i) => {
+        const count = i === 4 ? 10 : 4; // more small tetras
+        for (let j = 0; j < count; j++) {
+          fishes.push(new Fish(type.color, type.size + Math.random() * 20 - 10, type.speed + Math.random() * 0.5));
+        }
+      });
+
+      for (let i = 0; i < 50; i++) {
+        bubbles.push(new Bubble());
+      }
+    }
+
+    function animate() {
+      time++;
+
+      // Always resize check
+      if (canvas.width !== width || canvas.height !== height) resize();
+
+      // Draw water gradient background
+      const grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0, '#001122');
+      grad.addColorStop(0.5, '#002244');
+      grad.addColorStop(1, '#001133');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      if (saverActive) {
+        // Caustics (rippling light)
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        for (let i = 0; i < 6; i++) {
+          const offset = (time * 0.7 + i * 40) % (height * 1.5);
+          ctx.fillStyle = `rgba(170, 255, 255, ${0.08 + Math.sin(time * 0.01 + i) * 0.04})`;
+          ctx.fillRect(0, offset - height, width, 100);
+        }
+        ctx.restore();
+
+        // Update & draw fish + bubbles
+        fishes.forEach(f => { f.update(); f.draw(); });
+        bubbles.forEach(b => { b.update(); b.draw(); });
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function resetTimer() {
+      clearTimeout(timeout);
+      saverActive = false;
+      timeout = setTimeout(() => {
+        saverActive = true;
+        if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      }, IDLE_TIME);
+    }
+
+    // Hotkey: S to toggle
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 's') {
+        saverActive = !saverActive;
+        if (saverActive && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else if (!saverActive && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        console.log('Screensaver toggled:', saverActive ? 'ON' : 'OFF');
+      }
+    });
+
+    window.addEventListener('load', () => {
+      init();
+      animate();
+      ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(e => 
+        window.addEventListener(e, resetTimer)
+      );
+      resetTimer();
+    });
+
+    window.addEventListener('resize', resize);
+  </script>
+</body>
+</html>
