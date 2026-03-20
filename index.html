@@ -205,45 +205,45 @@
   .beam.b2{ left:39%; transform:rotate(-3deg);  animation-duration:11s; opacity:.55;}
   .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48;}
 
-.light-shimmer{
-  z-index:4;
-  left:0;
-  top:0;
-  width:100%;
-  height:44%;
-  opacity:.34;
-  mix-blend-mode:screen;
-  overflow:hidden;
-  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.95) 38%, rgba(0,0,0,.45) 72%, rgba(0,0,0,0) 100%);
-  mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.95) 38%, rgba(0,0,0,.45) 72%, rgba(0,0,0,0) 100%);
-}
+  .light-shimmer{
+    z-index:4;
+    left:0;
+    top:0;
+    width:100%;
+    height:44%;
+    opacity:.34;
+    mix-blend-mode:screen;
+    overflow:hidden;
+    -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.95) 38%, rgba(0,0,0,.45) 72%, rgba(0,0,0,0) 100%);
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.95) 38%, rgba(0,0,0,.45) 72%, rgba(0,0,0,0) 100%);
+  }
 
-.light-shimmer::before{
-  content:"";
-  position:absolute;
-  inset:-8% -20%;
-  background:
-    repeating-linear-gradient(
-      103deg,
-      rgba(255,255,255,0.00) 0px,
-      rgba(255,255,255,0.00) 18px,
-      rgba(255,255,255,0.20) 28px,
-      rgba(255,255,255,0.08) 38px,
-      rgba(255,255,255,0.00) 54px,
-      rgba(255,255,255,0.00) 78px
-    ),
-    repeating-linear-gradient(
-      79deg,
-      rgba(180,220,255,0.00) 0px,
-      rgba(180,220,255,0.12) 16px,
-      rgba(180,220,255,0.00) 34px,
-      rgba(255,255,255,0.10) 48px,
-      rgba(255,255,255,0.00) 72px
-    );
-  filter:blur(1.5px);
-  transform:translateX(0) translateY(0) scale(1.04);
-  animation:topShimmerMove 4.8s linear infinite;
-}
+  .light-shimmer::before{
+    content:"";
+    position:absolute;
+    inset:-8% -20%;
+    background:
+      repeating-linear-gradient(
+        103deg,
+        rgba(255,255,255,0.00) 0px,
+        rgba(255,255,255,0.00) 18px,
+        rgba(255,255,255,0.20) 28px,
+        rgba(255,255,255,0.08) 38px,
+        rgba(255,255,255,0.00) 54px,
+        rgba(255,255,255,0.00) 78px
+      ),
+      repeating-linear-gradient(
+        79deg,
+        rgba(180,220,255,0.00) 0px,
+        rgba(180,220,255,0.12) 16px,
+        rgba(180,220,255,0.00) 34px,
+        rgba(255,255,255,0.10) 48px,
+        rgba(255,255,255,0.00) 72px
+      );
+    filter:blur(1.5px);
+    transform:translateX(0) translateY(0) scale(1.04);
+    animation:topShimmerMove 4.8s linear infinite;
+  }
 
   .scenery{
     z-index:5;
@@ -330,6 +330,25 @@
   .p4{ left:68%; height:24%; animation-duration:6.8s;}
   .p5{ left:79%; height:28%; animation-duration:8.4s;}
   .p6{ left:86%; height:20%; animation-duration:5.9s;}
+
+  .diver-layer{
+    z-index:6;
+    pointer-events:none;
+  }
+
+  .diver-ornament{
+    position:absolute;
+    left:10%;
+    bottom:9%;
+    width:20%;
+    max-width:120px;
+    opacity:.92;
+    filter:
+      drop-shadow(0 8px 14px rgba(0,0,0,0.28))
+      drop-shadow(0 0 8px rgba(255,210,120,0.08));
+    transform-origin:50% 85%;
+    animation:diverBob 4.8s ease-in-out infinite alternate;
+  }
 
   .particles, .bubbles, .fish-layer, .ripple, .glass-reflection{
     z-index:10;
@@ -615,6 +634,15 @@
     }
   }
 
+  @keyframes diverBob{
+    from{
+      transform:translateY(0px) rotate(-1deg);
+    }
+    to{
+      transform:translateY(-4px) rotate(1deg);
+    }
+  }
+
   @media (max-width: 800px){
     :root{
       --tank-w:min(92vw, 460px);
@@ -663,6 +691,10 @@
           <div class="gravel"></div>
         </div>
 
+        <div class="layer diver-layer">
+          <img src="./diver.png" alt="" class="diver-ornament" id="diverOrnament">
+        </div>
+
         <div class="layer particles" id="particles"></div>
         <div class="layer bubbles" id="bubbles"></div>
         <div class="layer fish-layer" id="fishLayer"></div>
@@ -692,6 +724,7 @@
   const fish = [];
   const particles = [];
   const bubbles = [];
+  const diverBubbles = [];
 
   const FISH_SPEED = 5.0;
 
@@ -893,6 +926,22 @@
     });
   }
 
+  function createDiverBubble() {
+    const el = document.createElement('div');
+    el.className = 'bubble';
+    bubblesEl.appendChild(el);
+
+    diverBubbles.push({
+      el,
+      x: 0.185,
+      y: 0.79,
+      vx: (Math.random() - 0.5) * 0.00005,
+      vy: 0.00052 + Math.random() * 0.00022,
+      size: 4 + Math.random() * 7,
+      wobble: Math.random() * 100
+    });
+  }
+
   function seedScene() {
     createAngel(0.53, 0.30, 1.00);
 
@@ -907,6 +956,7 @@
 
     for (let i = 0; i < 55; i++) createParticle();
     for (let i = 0; i < 18; i++) createBubble(0.29 + Math.random() * 0.08);
+    for (let i = 0; i < 10; i++) createDiverBubble();
   }
 
   function setMode(mode) {
@@ -996,6 +1046,23 @@
       b.el.style.height = `${s}px`;
       b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
       b.el.style.opacity = 0.35 + ((1 - b.y) * 0.22);
+    }
+
+    for (const b of diverBubbles) {
+      b.wobble += dt * 0.0018;
+      b.y -= b.vy * dt;
+      b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
+
+      if (b.y < 0.40) {
+        b.x = 0.185 + (Math.random() - 0.5) * 0.018;
+        b.y = 0.79 + Math.random() * 0.015;
+      }
+
+      const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
+      b.el.style.width = `${s}px`;
+      b.el.style.height = `${s}px`;
+      b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+      b.el.style.opacity = 0.42 + ((1 - b.y) * 0.26);
     }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
