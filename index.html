@@ -336,22 +336,22 @@
     pointer-events:none;
   }
 
- .diver-ornament{
-  position:absolute;
-  left:auto;
-  right:7.5%;
-  bottom:1.2%;
-  width:17%;
-  max-width:98px;
-  opacity:.72;
-  filter:
-    saturate(.78)
-    brightness(.78)
-    contrast(.92)
-    blur(.35px)
-    drop-shadow(0 3px 6px rgba(0,0,0,0.20));
-  transform-origin:50% 85%;
-}
+  .diver-ornament{
+    position:absolute;
+    left:auto;
+    right:7.5%;
+    bottom:1.2%;
+    width:17%;
+    max-width:98px;
+    opacity:.72;
+    filter:
+      saturate(.78)
+      brightness(.78)
+      contrast(.92)
+      blur(.35px)
+      drop-shadow(0 3px 6px rgba(0,0,0,0.20));
+    transform-origin:50% 85%;
+  }
 
   .particles, .bubbles, .fish-layer, .ripple, .glass-reflection{
     z-index:10;
@@ -381,6 +381,18 @@
     position:absolute;
     will-change:transform;
     filter:var(--fish-glow);
+  }
+
+  .fish-sprite{
+    position:absolute;
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    pointer-events:none;
+    user-select:none;
+    -webkit-user-drag:none;
+    filter:drop-shadow(0 0 8px rgba(120,220,255,0.10));
   }
 
   .tetra{
@@ -428,54 +440,8 @@
   }
 
   .angel{
-    width:86px;
-    height:110px;
-  }
-  .angel .body{
-    position:absolute;
-    left:24px; top:24px;
-    width:38px; height:44px;
-    background:linear-gradient(180deg, #f0fbff 0%, #cfe4ea 100%);
-    border-radius:52% 48% 48% 52% / 46% 46% 54% 54%;
-    box-shadow:inset -8px 0 10px rgba(0,0,0,0.08);
-  }
-  .angel .dorsal{
-    position:absolute;
-    left:30px; top:0;
-    width:18px; height:34px;
-    background:linear-gradient(180deg, rgba(210,245,255,0.9), rgba(130,210,235,0.25));
-    clip-path:polygon(50% 0, 100% 100%, 0 100%);
-  }
-  .angel .ventral{
-    position:absolute;
-    left:34px; top:62px;
-    width:16px; height:44px;
-    background:linear-gradient(180deg, rgba(170,230,245,0.9), rgba(130,210,235,0.05));
-    clip-path:polygon(50% 100%, 0 0, 100% 0);
-  }
-  .angel .tail{
-    position:absolute;
-    left:10px; top:34px;
-    width:22px; height:34px;
-    background:linear-gradient(90deg, rgba(170,230,245,0.95), rgba(170,230,245,0.18));
-    clip-path:polygon(100% 50%, 0 0, 0 100%);
-    transform-origin:right center;
-    animation:tailWag 1.4s ease-in-out infinite alternate;
-  }
-  .angel .fin1, .angel .fin2{
-    position:absolute;
-    width:2px; height:36px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.05));
-    border-radius:999px;
-  }
-  .angel .fin1{ left:38px; top:70px; transform:rotate(10deg);}
-  .angel .fin2{ left:46px; top:71px; transform:rotate(-5deg);}
-  .angel .eye{
-    position:absolute;
-    left:50px; top:38px;
-    width:4px; height:4px;
-    background:#081117;
-    border-radius:50%;
+    width:92px;
+    height:128px;
   }
 
   .bottomfish{
@@ -844,16 +810,10 @@
   function createAngel(x, y, scale = 1) {
     const el = makeEl(`
       <div class="fish angel">
-        <div class="tail"></div>
-        <div class="dorsal"></div>
-        <div class="body"></div>
-        <div class="ventral"></div>
-        <div class="fin1"></div>
-        <div class="fin2"></div>
-        <div class="eye"></div>
+        <img class="fish-sprite" src="./angel.png" alt="">
       </div>
     `);
-    el.style.scale = scale;
+
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
@@ -927,8 +887,8 @@
 
     diverBubbles.push({
       el,
-     x: 0.845,
-     y: 0.805,
+      x: 0.845,
+      y: 0.805,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00052 + Math.random() * 0.00022,
       size: 4 + Math.random() * 7,
@@ -937,7 +897,7 @@
   }
 
   function seedScene() {
-    createAngel(0.53, 0.30, 1.00);
+    createAngel(0.53, 0.32, 0.65);
 
     createTetra(0.41, 0.36, 0.95);
     createTetra(0.47, 0.40, 0.86);
@@ -1043,21 +1003,21 @@
     }
 
     for (const b of diverBubbles) {
-  b.wobble += dt * 0.0018;
-  b.y -= b.vy * dt;
-  b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
+      b.wobble += dt * 0.0018;
+      b.y -= b.vy * dt;
+      b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
 
-  if (b.y < 0.40) {
-    b.x = 0.845 + (Math.random() - 0.5) * 0.016;
-    b.y = 0.805 + Math.random() * 0.015;
-  }
+      if (b.y < 0.40) {
+        b.x = 0.845 + (Math.random() - 0.5) * 0.016;
+        b.y = 0.805 + Math.random() * 0.015;
+      }
 
-  const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
-  b.el.style.width = `${s}px`;
-  b.el.style.height = `${s}px`;
-  b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-  b.el.style.opacity = 0.42 + ((1 - b.y) * 0.26);
-}
+      const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
+      b.el.style.width = `${s}px`;
+      b.el.style.height = `${s}px`;
+      b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+      b.el.style.opacity = 0.42 + ((1 - b.y) * 0.26);
+    }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
     let tetraCenterX = 0.5;
