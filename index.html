@@ -582,33 +582,37 @@
     from{ transform:rotate(-8deg);}
     to{ transform:rotate(8deg);}
   }
+
   @keyframes plantSway{
     from{ transform:rotate(-2.5deg);}
     to{ transform:rotate(3.5deg);}
   }
+
   @keyframes beamSway{
     from{ transform:translateY(0) rotate(-8deg);}
     to{ transform:translateY(1.5%) rotate(-4deg);}
   }
+
   @keyframes hazeDrift{
     from{ transform:translateX(-1.2%) translateY(-0.5%);}
     to{ transform:translateX(1.2%) translateY(0.8%);}
   }
+
   @keyframes rippleShift{
     from{ transform:translateX(-4%) translateY(-1%) scale(1.02);}
     to{ transform:translateX(4%) translateY(1%) scale(1.04);}
-@keyframes topShimmerMove{
-  0%{
-    transform:translateX(-8%) translateY(0%) scale(1.04);
   }
-  50%{
-    transform:translateX(2%) translateY(1.2%) scale(1.07);
-  }
-  100%{
-    transform:translateX(10%) translateY(0%) scale(1.04);
-  }
-}
-}
+
+  @keyframes topShimmerMove{
+    0%{
+      transform:translateX(-8%) translateY(0%) scale(1.04);
+    }
+    50%{
+      transform:translateX(2%) translateY(1.2%) scale(1.07);
+    }
+    100%{
+      transform:translateX(10%) translateY(0%) scale(1.04);
+    }
   }
 
   @media (max-width: 800px){
