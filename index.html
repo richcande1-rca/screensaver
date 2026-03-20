@@ -256,10 +256,73 @@
 
   .particles,
   .bubbles,
-  .fish-layer,
-  .ripple,
-  .glass-reflection{
+  .fish-layer{
     z-index:10;
+  }
+
+  .foreground-plants{
+    z-index:14;
+    overflow:hidden;
+  }
+
+  .fg-plant{
+    position:absolute;
+    bottom:-1%;
+    width:12%;
+    transform-origin:50% 100%;
+    opacity:.48;
+    filter:
+      blur(.35px)
+      saturate(.90)
+      brightness(.82)
+      drop-shadow(0 2px 8px rgba(0,0,0,0.18));
+    animation:fgPlantSway 8s ease-in-out infinite alternate;
+  }
+
+  .fg-plant img{
+    display:block;
+    width:100%;
+    height:auto;
+    pointer-events:none;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+
+  .fg1{ left:-1%;  width:15%; animation-duration:8.6s; animation-delay:-1.4s; }
+  .fg2{ left:7%;   width:13%; animation-duration:9.8s; animation-delay:-3.2s; opacity:.42; }
+  .fg3{ left:16%;  width:10%; animation-duration:7.7s; animation-delay:-2.1s; opacity:.36; }
+
+  .fg4{ right:15%; width:10%; animation-duration:8.9s; animation-delay:-2.7s; opacity:.34; }
+  .fg5{ right:6%;  width:13%; animation-duration:10.3s; animation-delay:-4.1s; opacity:.44; }
+  .fg6{ right:-1%; width:16%; animation-duration:8.1s; animation-delay:-1.8s; }
+
+  .ripple{
+    z-index:20;
+    opacity:.14;
+    mix-blend-mode:screen;
+    background:
+      repeating-linear-gradient(
+        100deg,
+        rgba(255,255,255,0.18) 0px,
+        rgba(255,255,255,0.06) 6px,
+        rgba(255,255,255,0.00) 20px,
+        rgba(255,255,255,0.05) 34px,
+        rgba(255,255,255,0.00) 54px
+      );
+    filter:blur(8px);
+    animation:rippleShift 11s linear infinite;
+  }
+
+  .glass-reflection{
+    z-index:30;
+    background:
+      linear-gradient(112deg,
+        transparent 0%,
+        transparent 58%,
+        rgba(255,255,255,0.06) 66%,
+        rgba(255,255,255,0.00) 74%,
+        transparent 82%);
+    opacity:.75;
   }
 
   .particle{
@@ -310,35 +373,6 @@
   .angel{
     width:92px;
     height:128px;
-  }
-
-  .ripple{
-    z-index:20;
-    opacity:.14;
-    mix-blend-mode:screen;
-    background:
-      repeating-linear-gradient(
-        100deg,
-        rgba(255,255,255,0.18) 0px,
-        rgba(255,255,255,0.06) 6px,
-        rgba(255,255,255,0.00) 20px,
-        rgba(255,255,255,0.05) 34px,
-        rgba(255,255,255,0.00) 54px
-      );
-    filter:blur(8px);
-    animation:rippleShift 11s linear infinite;
-  }
-
-  .glass-reflection{
-    z-index:30;
-    background:
-      linear-gradient(112deg,
-        transparent 0%,
-        transparent 58%,
-        rgba(255,255,255,0.06) 66%,
-        rgba(255,255,255,0.00) 74%,
-        transparent 82%);
-    opacity:.75;
   }
 
   .controls{
@@ -425,6 +459,11 @@
     }
   }
 
+  @keyframes fgPlantSway{
+    from{ transform:rotate(-3.2deg) translateY(0); }
+    to{ transform:rotate(3.8deg) translateY(-0.4%); }
+  }
+
   @media (max-width: 800px){
     :root{
       --tank-w:min(92vw, 460px);
@@ -435,6 +474,10 @@
       flex-wrap:wrap;
       max-width:94vw;
       justify-content:center;
+    }
+
+    .fg-plant{
+      opacity:.40;
     }
   }
 </style>
@@ -463,6 +506,16 @@
         <div class="layer particles" id="particles"></div>
         <div class="layer bubbles" id="bubbles"></div>
         <div class="layer fish-layer" id="fishLayer"></div>
+
+        <div class="layer foreground-plants">
+          <div class="fg-plant fg1"><img src="./plant1.png" alt=""></div>
+          <div class="fg-plant fg2"><img src="./plant1.png" alt=""></div>
+          <div class="fg-plant fg3"><img src="./plant1.png" alt=""></div>
+          <div class="fg-plant fg4"><img src="./plant1.png" alt=""></div>
+          <div class="fg-plant fg5"><img src="./plant1.png" alt=""></div>
+          <div class="fg-plant fg6"><img src="./plant1.png" alt=""></div>
+        </div>
+
         <div class="layer ripple"></div>
         <div class="layer glass-reflection"></div>
       </div>
