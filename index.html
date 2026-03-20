@@ -205,15 +205,23 @@
   .beam.b2{ left:39%; transform:rotate(-3deg);  animation-duration:11s; opacity:.55;}
   .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48;}
 
-  .light-shimmer{
+ .light-shimmer{
   z-index:4;
   left:-8%;
   top:0;
   width:116%;
-  height:38%;
+  height:42%;
   opacity:.42;
   mix-blend-mode:screen;
   background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.22) 0%,
+      rgba(255,255,255,0.14) 18%,
+      rgba(255,255,255,0.07) 42%,
+      rgba(255,255,255,0.02) 68%,
+      rgba(255,255,255,0.00) 100%
+    ),
     repeating-linear-gradient(
       102deg,
       rgba(255,255,255,0.26) 0px,
@@ -231,6 +239,8 @@
       rgba(255,255,255,0.00) 54px
     );
   filter:blur(2px);
+  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 45%, rgba(0,0,0,0.45) 72%, rgba(0,0,0,0) 100%);
+  mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 45%, rgba(0,0,0,0.45) 72%, rgba(0,0,0,0) 100%);
   animation:topShimmer 5.8s ease-in-out infinite alternate;
 }
 
