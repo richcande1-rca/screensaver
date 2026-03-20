@@ -146,8 +146,22 @@
     pointer-events:none;
   }
 
-  .back-haze{
+  .photo-bg{
     z-index:1;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
+      url("./aquarium-bg.png") center center / cover no-repeat;
+    filter:
+      saturate(.92)
+      brightness(.78)
+      contrast(1.02)
+      blur(1px);
+    transform:scale(1.03);
+    opacity:.92;
+  }
+
+  .back-haze{
+    z-index:2;
     background:
       radial-gradient(circle at 50% 35%, rgba(160,220,255,0.09), transparent 26%),
       radial-gradient(circle at 26% 48%, rgba(120,220,180,0.05), transparent 22%),
@@ -431,6 +445,7 @@
 
     <div class="tank-wrap">
       <div class="tank" id="tank">
+        <div class="layer photo-bg"></div>
         <div class="layer back-haze"></div>
 
         <div class="layer light-beams">
