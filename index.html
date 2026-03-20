@@ -612,6 +612,7 @@
   const particlesEl = document.getElementById('particles');
   const bubblesEl = document.getElementById('bubbles');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
+
   const mouse = { x: 0.5, y: 0.5, inside: false };
   const fish = [];
   const particles = [];
@@ -619,10 +620,100 @@
 
   const FISH_SPEED = 5.0;
 
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
   function makeEl(html) {
     const wrap = document.createElement('div');
     wrap.innerHTML = html.trim();
     return wrap.firstChild;
+  }
+
+  function chooseTargetForFish(f) {
+    if (f.type === 'angel') {
+      f.targetX = rand(0.40, 0.66);
+      f.targetY = rand(0.24, 0.46);
+    } else if (f.type === 'tetra') {
+      const cx = 0.50;
+      const cy = 0.41;
+      f.targetX = clamp(cx + rand(-0.16, 0.16), 0.30, 0.70);
+      f.targetY = clamp(cy + rand(-0.10, 0.10), 0.29, 0.53);
+    } else {
+      f.targetX = rand(0.30, 0.67);
+      f.targetY = rand(0.73, 0.83);
+    }
+  }
+
+  function pickState(f, force) {
+    if (force) {
+      f.state = force;
+    } else {
+      const r = Math.random();
+      if (f.type === 'tetra') {
+        if (r < 0.12) f.state = 'idle';
+        else if (r < 0.86) f.state = 'cruise';
+        else if (r < 0.95) f.state = 'turn';
+        else f.state = 'dart';
+      } else if (f.type === 'angel') {
+        if (r < 0.24) f.state = 'idle';
+        else if (r < 0.88) f.state = 'cruise';
+        else if (r < 0.97) f.state = 'turn';
+        else f.state = 'dart';
+      } else {
+        if (r < 0.30) f.state = 'idle';
+        else if (r < 0.88) f.state = 'cruise';
+        else if (r < 0.98) f.state = 'turn';
+        else f.state = 'dart';
+      }
+    }
+
+    if (f.state === 'idle') {
+      f.stateTimer = rand(1.8, 4.8);
+    } else if (f.state === 'cruise') {
+      f.stateTimer = rand(2.5, 6.5);
+      chooseTargetForFish(f);
+    } else if (f.state === 'turn') {
+      f.stateTimer = rand(0.7, 1.8);
+      chooseTargetForFish(f);
+    } else if (f.state === 'dart') {
+      f.stateTimer = rand(0.35, 0.9);
+      chooseTargetForFish(f);
+      f.targetX += rand(-0.08, 0.08);
+      f.targetY += rand(-0.06, 0.06);
+    }
+  }
+
+  function makeFishBase(type, el, x, y, scale) {
+    const f = {
+      type,
+      el,
+      x, y,
+      vx: 0,
+      vy: 0,
+      dir: 1,
+      angle: 0,
+      displayAngle: 0,
+      bobT: Math.random() * 10,
+      schoolPhase: Math.random() * 6.28,
+      scale,
+      targetX: x,
+      targetY: y,
+      state: 'cruise',
+      stateTimer: rand(2, 5),
+      cruiseSpeed: 0.000010,
+      dartSpeed: 0.000024,
+      accel: 0.0018,
+      drag: 0.985,
+      turnEase: 0.045,
+      wander: rand(0.8, 1.2),
+      shyness: rand(0.8, 1.2),
+      idleBob: rand(0.8, 1.2),
+      depthOffset: rand(-0.006, 0.006)
+    };
+    chooseTargetForFish(f);
+    pickState(f, 'cruise');
+    return f;
   }
 
   function createTetra(x, y, scale = 1, hue = 0) {
@@ -638,19 +729,14 @@
     el.style.scale = scale;
     if (hue) el.style.filter = `hue-rotate(${hue}deg) var(--fish-glow)`;
     fishLayer.appendChild(el);
-    fish.push({
-      type: 'tetra',
-      el,
-      x, y,
-      homeX: x,
-      homeY: y,
-      vx: 0.00007 + Math.random() * 0.00005,
-      vy: (Math.random() - 0.5) * 0.00003,
-      dir: Math.random() > 0.5 ? 1 : -1,
-      bobT: Math.random() * 10,
-      schoolPhase: Math.random() * 6.28,
-      scale
-    });
+
+    const f = makeFishBase('tetra', el, x, y, scale);
+    f.cruiseSpeed = rand(0.000010, 0.000015);
+    f.dartSpeed = rand(0.000026, 0.000036);
+    f.accel = rand(0.0017, 0.0023);
+    f.drag = rand(0.982, 0.988);
+    f.turnEase = rand(0.05, 0.08);
+    fish.push(f);
   }
 
   function createAngel(x, y, scale = 1) {
@@ -667,19 +753,14 @@
     `);
     el.style.scale = scale;
     fishLayer.appendChild(el);
-    fish.push({
-      type: 'angel',
-      el,
-      x, y,
-      homeX: x,
-      homeY: y,
-      vx: 0.000045,
-      vy: 0.0,
-      dir: 1,
-      bobT: Math.random() * 10,
-      schoolPhase: Math.random() * 6.28,
-      scale
-    });
+
+    const f = makeFishBase('angel', el, x, y, scale);
+    f.cruiseSpeed = rand(0.000006, 0.000009);
+    f.dartSpeed = rand(0.000016, 0.000022);
+    f.accel = rand(0.0012, 0.0017);
+    f.drag = rand(0.986, 0.991);
+    f.turnEase = rand(0.035, 0.05);
+    fish.push(f);
   }
 
   function createBottomFish(x, y, scale = 1) {
@@ -694,25 +775,21 @@
     `);
     el.style.scale = scale;
     fishLayer.appendChild(el);
-    fish.push({
-      type: 'bottom',
-      el,
-      x, y,
-      homeX: x,
-      homeY: y,
-      vx: 0.00005 + Math.random() * 0.000035,
-      vy: 0,
-      dir: Math.random() > 0.5 ? 1 : -1,
-      bobT: Math.random() * 10,
-      schoolPhase: Math.random() * 6.28,
-      scale
-    });
+
+    const f = makeFishBase('bottom', el, x, y, scale);
+    f.cruiseSpeed = rand(0.000006, 0.000010);
+    f.dartSpeed = rand(0.000014, 0.000020);
+    f.accel = rand(0.0013, 0.0018);
+    f.drag = rand(0.984, 0.989);
+    f.turnEase = rand(0.04, 0.06);
+    fish.push(f);
   }
 
   function createParticle() {
     const el = document.createElement('div');
     el.className = 'particle';
     particlesEl.appendChild(el);
+
     particles.push({
       el,
       x: Math.random(),
@@ -729,6 +806,7 @@
     const el = document.createElement('div');
     el.className = 'bubble';
     bubblesEl.appendChild(el);
+
     bubbles.push({
       el,
       x: xNorm,
@@ -742,19 +820,23 @@
 
   function seedScene() {
     createAngel(0.53, 0.30, 1.00);
+
     createTetra(0.41, 0.36, 0.95);
     createTetra(0.47, 0.40, 0.86);
     createTetra(0.58, 0.43, 0.92);
     createTetra(0.64, 0.37, 0.88);
     createTetra(0.36, 0.46, 0.80);
+
     createBottomFish(0.35, 0.78, 0.95);
     createBottomFish(0.62, 0.80, 0.90);
+
     for (let i = 0; i < 55; i++) createParticle();
     for (let i = 0; i < 18; i++) createBubble(0.29 + Math.random() * 0.08);
   }
 
   function setMode(mode) {
     modeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+
     const r = document.documentElement.style;
     if (mode === 'day') {
       r.setProperty('--water-top', '#18485f');
@@ -796,8 +878,10 @@
   }
 
   let last = performance.now();
+
   function animate(now) {
     const dt = Math.min(33, now - last);
+    const dtSec = dt / 1000;
     last = now;
     const t = now * 0.001;
     const tankRect = tank.getBoundingClientRect();
@@ -808,12 +892,14 @@
       p.drift += dt * 0.0007;
       p.x += p.vx * dt + Math.sin(p.drift * 0.5) * 0.00002;
       p.y += p.vy * dt;
+
       if (p.y < -0.03) {
         p.y = 1.03;
         p.x = Math.random();
       }
       if (p.x < -0.03) p.x = 1.03;
       if (p.x > 1.03) p.x = -0.03;
+
       p.el.style.width = `${p.size}px`;
       p.el.style.height = `${p.size}px`;
       p.el.style.opacity = p.a + 0.03 * Math.sin(t + p.drift);
@@ -824,10 +910,12 @@
       b.wobble += dt * 0.0016;
       b.y -= b.vy * dt;
       b.x += b.vx * dt + Math.sin(b.wobble) * 0.00010;
+
       if (b.y < -0.06) {
         b.y = 1.05 + Math.random() * 0.15;
         b.x = 0.29 + Math.random() * 0.08;
       }
+
       const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
       b.el.style.width = `${s}px`;
       b.el.style.height = `${s}px`;
@@ -835,51 +923,116 @@
       b.el.style.opacity = 0.35 + ((1 - b.y) * 0.22);
     }
 
+    const tetraList = fish.filter(f => f.type === 'tetra');
+    let tetraCenterX = 0.5;
+    let tetraCenterY = 0.4;
+    if (tetraList.length) {
+      tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
+      tetraCenterY = tetraList.reduce((s, f) => s + f.y, 0) / tetraList.length;
+    }
+
     for (const f of fish) {
-      const avoidStrength = mouse.inside ? 0.000004 : 0;
+      f.stateTimer -= dtSec;
+      f.bobT += dtSec * 2.0;
+
+      if (f.stateTimer <= 0) pickState(f);
+
       const dxm = f.x - mx;
       const dym = f.y - my;
       const dist2 = dxm * dxm + dym * dym;
-      const repel = dist2 < 0.05 ? (0.05 - dist2) * avoidStrength : 0;
 
-      if (f.type === 'angel') {
-        f.bobT += dt * 0.00004;
-        f.x += (f.vx * f.dir * dt * FISH_SPEED) + Math.sin(f.bobT) * 0.0000015 + (dxm * repel * dt * 0.20);
-        f.y = f.homeY + Math.sin(f.bobT * 0.8) * 0.0010 + (dym * repel * dt * 0.20);
-        if (f.x > 0.67) f.dir = -1;
-        if (f.x < 0.39) f.dir = 1;
+      let repelX = 0;
+      let repelY = 0;
+      if (mouse.inside && dist2 < 0.05) {
+        const strength = (0.05 - dist2) * 0.015 * f.shyness;
+        repelX = dxm * strength;
+        repelY = dym * strength;
+        if (f.state !== 'dart' && dist2 < 0.012) {
+          pickState(f, 'dart');
+        }
       }
 
       if (f.type === 'tetra') {
-        f.bobT += dt * 0.00011;
-        const schoolX = Math.sin(t * 0.025 + f.schoolPhase) * 0.00012;
-        const schoolY = Math.cos(t * 0.035 + f.schoolPhase) * 0.00009;
-        f.x += (f.vx * f.dir * dt * FISH_SPEED) + schoolX * 0.0010 + (dxm * repel * dt * 0.25);
-        f.y += (Math.sin(f.bobT * 1.0) * 0.000005 * dt) + schoolY * 0.0006 + (dym * repel * dt * 0.25);
-        const cx = 0.50;
-        const cy = 0.40;
-        f.x += (cx - f.x) * 0.00003 * dt;
-        f.y += (cy - f.y) * 0.00003 * dt;
-        if (f.x > 0.69) f.dir = -1;
-        if (f.x < 0.31) f.dir = 1;
-        f.y = Math.max(0.30, Math.min(0.52, f.y));
+        f.targetX += (tetraCenterX - f.targetX) * 0.010 * f.wander;
+        f.targetY += (tetraCenterY - f.targetY) * 0.010 * f.wander;
       }
 
-      if (f.type === 'bottom') {
-        f.bobT += dt * 0.000045;
-        f.x += (f.vx * dt * f.dir * FISH_SPEED) + (dxm * repel * dt * 0.15);
-        f.y = f.homeY + Math.sin(f.bobT * 1.0) * 0.00045 + (dym * repel * dt * 0.10);
-        if (f.x > 0.66) f.dir = -1;
-        if (f.x < 0.30) f.dir = 1;
+      const tx = f.targetX - f.x;
+      const ty = f.targetY - f.y;
+      const dist = Math.hypot(tx, ty) || 0.00001;
+
+      if (dist < 0.02 && (f.state === 'cruise' || f.state === 'turn')) {
+        if (Math.random() < 0.02) {
+          pickState(f, 'idle');
+        } else {
+          chooseTargetForFish(f);
+        }
       }
 
-      const flip = f.dir < 0 ? -1 : 1;
-      const rot = f.type === 'angel'
-        ? Math.sin(f.bobT * 1.0) * 0.35
-        : Math.sin(f.bobT * 0.9) * 0.45;
+      let desiredSpeed = 0;
+      if (f.state === 'idle') desiredSpeed = f.cruiseSpeed * 0.10;
+      if (f.state === 'turn') desiredSpeed = f.cruiseSpeed * 0.55;
+      if (f.state === 'cruise') desiredSpeed = f.cruiseSpeed;
+      if (f.state === 'dart') desiredSpeed = f.dartSpeed;
 
+      const desiredVX = (tx / dist) * desiredSpeed * FISH_SPEED + repelX;
+      const desiredVY = (ty / dist) * desiredSpeed * FISH_SPEED + repelY;
+
+      f.vx = lerp(f.vx, desiredVX, f.accel);
+      f.vy = lerp(f.vy, desiredVY, f.accel);
+
+      if (f.state === 'idle') {
+        f.vx *= 0.992;
+        f.vy *= 0.992;
+      } else {
+        f.vx *= f.drag;
+        f.vy *= f.drag;
+      }
+
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+
+      if (f.type === 'angel') {
+        f.x = clamp(f.x, 0.38, 0.68);
+        f.y = clamp(f.y, 0.23, 0.48);
+      } else if (f.type === 'tetra') {
+        f.x = clamp(f.x, 0.28, 0.72);
+        f.y = clamp(f.y, 0.28, 0.54);
+      } else {
+        f.x = clamp(f.x, 0.28, 0.68);
+        f.y = clamp(f.y, 0.72, 0.84);
+      }
+
+      const moveAngle = Math.atan2(f.vy, f.vx || 0.00001);
+      f.angle = lerp(f.angle, moveAngle, f.turnEase);
+
+      const speedMag = Math.hypot(f.vx, f.vy);
+      if (Math.abs(f.vx) > 0.000001) {
+        f.dir = f.vx < 0 ? -1 : 1;
+      }
+
+      const tailBoost =
+        f.state === 'dart' ? 2.0 :
+        f.state === 'cruise' ? 1.0 :
+        f.state === 'turn' ? 0.7 : 0.35;
+
+      const bodyBob =
+        f.state === 'idle'
+          ? Math.sin(f.bobT * 1.5 + f.schoolPhase) * 0.0012 * f.idleBob
+          : Math.sin(f.bobT * 1.8 + f.schoolPhase) * 0.0008 * f.idleBob;
+
+      const extraSchoolY = f.type === 'tetra'
+        ? Math.sin(t * 0.7 + f.schoolPhase) * 0.0014
+        : 0;
+
+      const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
+      const rotDeg = (f.angle * 180 / Math.PI) * 0.33;
+      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * 9000);
+      const finalRot = rotDeg + clamp(tailDeg, -8, 8);
+
+      f.el.style.opacity = f.type === 'tetra' ? '0.96' : '1';
       f.el.style.transform =
-        `translate(${f.x * tankRect.width}px, ${f.y * tankRect.height}px) translate(-50%,-50%) scale(${flip * f.scale}, ${f.scale}) rotate(${rot}deg)`;
+        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
     }
 
     requestAnimationFrame(animate);
