@@ -183,6 +183,7 @@
   }
 
   .light-beams{
+    z-index:3;
     overflow:hidden;
     mix-blend-mode:screen;
     opacity:.95;
@@ -203,6 +204,25 @@
   .beam.b1{ left:20%; transform:rotate(-10deg); animation-duration:13s; }
   .beam.b2{ left:39%; transform:rotate(-3deg);  animation-duration:11s; opacity:.55;}
   .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48;}
+
+  .light-shimmer{
+    z-index:4;
+    top:0;
+    height:34%;
+    opacity:.20;
+    mix-blend-mode:screen;
+    background:
+      repeating-linear-gradient(
+        103deg,
+        rgba(255,255,255,0.18) 0px,
+        rgba(255,255,255,0.08) 10px,
+        rgba(255,255,255,0.00) 24px,
+        rgba(255,255,255,0.10) 38px,
+        rgba(255,255,255,0.00) 58px
+      );
+    filter:blur(6px);
+    animation:topShimmer 7.5s ease-in-out infinite alternate;
+  }
 
   .scenery{
     z-index:5;
@@ -557,6 +577,10 @@
     from{ transform:translateX(-4%) translateY(-1%) scale(1.02);}
     to{ transform:translateX(4%) translateY(1%) scale(1.04);}
   }
+  @keyframes topShimmer{
+    from{ transform:translateX(-2.5%) translateY(-1%) scale(1.02); }
+    to{ transform:translateX(2.5%) translateY(1%) scale(1.05); }
+  }
 
   @media (max-width: 800px){
     :root{
@@ -585,6 +609,8 @@
           <div class="beam b2"></div>
           <div class="beam b3"></div>
         </div>
+
+        <div class="layer light-shimmer"></div>
 
         <div class="layer scenery">
           <div class="wood left"></div>
