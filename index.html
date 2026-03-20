@@ -586,10 +586,16 @@
   @keyframes rippleShift{
     from{ transform:translateX(-4%) translateY(-1%) scale(1.02);}
     to{ transform:translateX(4%) translateY(1%) scale(1.04);}
+@keyframes topShimmer{
+  from{
+    transform:translateX(-3%) translateY(-1%) scale(1.02);
+    opacity:.28;
   }
-  @keyframes topShimmer{
-    from{ transform:translateX(-2.5%) translateY(-1%) scale(1.02); }
-    to{ transform:translateX(2.5%) translateY(1%) scale(1.05); }
+  to{
+    transform:translateX(3%) translateY(1%) scale(1.07);
+    opacity:.46;
+  }
+}
   }
 
   @media (max-width: 800px){
