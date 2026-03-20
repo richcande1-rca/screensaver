@@ -26,21 +26,8 @@
     --ui-border:rgba(255,255,255,0.10);
     --ui-text:#d8e7ef;
 
-    --plant:rgba(26,73,60,0.85);
-    --plant2:rgba(42,100,78,0.68);
-    --wood:#3c2c1f;
-    --gravel1:#3d4650;
-    --gravel2:#59646d;
-    --gravel3:#202830;
-
     --particle:rgba(230,245,255,0.18);
     --bubble:rgba(230,247,255,0.45);
-
-    --tetra-a:#53d7ff;
-    --tetra-b:#0c7fd3;
-    --tetra-red:#ff4d5e;
-
-    --bottom-fish:#b99c72;
 
     --fish-glow:drop-shadow(0 0 8px rgba(120,220,255,0.15));
 
@@ -52,6 +39,7 @@
   }
 
   *{box-sizing:border-box}
+
   html,body{
     margin:0;
     height:100%;
@@ -95,8 +83,9 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    filter:drop-shadow(0 18px 50px rgba(0,0,0,0.55))
-           drop-shadow(0 0 35px var(--tank-glow));
+    filter:
+      drop-shadow(0 18px 50px rgba(0,0,0,0.55))
+      drop-shadow(0 0 35px var(--tank-glow));
   }
 
   .tank{
@@ -157,21 +146,8 @@
     pointer-events:none;
   }
 
-  .photo-bg{
-    z-index:1;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
-      url("./aquarium-bg.png") center center / cover no-repeat;
-    filter:
-      saturate(.92)
-      brightness(.78)
-      contrast(1.02)
-      blur(1px);
-    transform:scale(1.03);
-    opacity:.92;
-  }
-
   .back-haze{
+    z-index:1;
     background:
       radial-gradient(circle at 50% 35%, rgba(160,220,255,0.09), transparent 26%),
       radial-gradient(circle at 26% 48%, rgba(120,220,180,0.05), transparent 22%),
@@ -200,8 +176,8 @@
   }
 
   .beam.b1{ left:20%; transform:rotate(-10deg); animation-duration:13s; }
-  .beam.b2{ left:39%; transform:rotate(-3deg);  animation-duration:11s; opacity:.55;}
-  .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48;}
+  .beam.b2{ left:39%; transform:rotate(-3deg);  animation-duration:11s; opacity:.55; }
+  .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48; }
 
   .light-shimmer{
     z-index:4;
@@ -243,92 +219,6 @@
     animation:topShimmerMove 4.8s linear infinite;
   }
 
-  .scenery{
-    z-index:5;
-    opacity:0;
-  }
-
-  .wood{
-    position:absolute;
-    background:linear-gradient(180deg, #4b3525 0%, #2e2118 100%);
-    box-shadow:inset 0 0 12px rgba(255,255,255,0.05), inset 0 -12px 20px rgba(0,0,0,0.2);
-    opacity:.95;
-  }
-
-  .wood.left{
-    left:6%;
-    bottom:11%;
-    width:22%;
-    height:42%;
-    border-radius:48% 46% 28% 30% / 18% 22% 58% 55%;
-    transform:rotate(-18deg);
-  }
-
-  .wood.right{
-    right:8%;
-    bottom:12%;
-    width:18%;
-    height:34%;
-    border-radius:34% 54% 22% 32% / 20% 22% 56% 50%;
-    transform:rotate(18deg);
-  }
-
-  .branch{
-    position:absolute;
-    background:linear-gradient(180deg, #5a3d2c, #2d2018);
-    border-radius:999px;
-    transform-origin:left center;
-    opacity:.92;
-  }
-
-  .branch.l1{ left:16%; bottom:42%; width:16%; height:2.2%; transform:rotate(-28deg);}
-  .branch.l2{ left:19%; bottom:30%; width:12%; height:1.8%; transform:rotate(14deg);}
-  .branch.r1{ right:16%; bottom:36%; width:12%; height:1.9%; transform:rotate(38deg);}
-  .branch.r2{ right:18%; bottom:24%; width:10%; height:1.5%; transform:rotate(-24deg);}
-
-  .gravel{
-    position:absolute;
-    left:0; right:0; bottom:0;
-    height:17%;
-    background:
-      radial-gradient(circle at 15% 40%, var(--gravel2) 0 2px, transparent 2.5px) 0 0/18px 14px,
-      radial-gradient(circle at 60% 60%, var(--gravel1) 0 2.2px, transparent 2.8px) 0 0/21px 16px,
-      radial-gradient(circle at 35% 40%, var(--gravel3) 0 1.8px, transparent 2.4px) 0 0/16px 13px,
-      linear-gradient(180deg, #56606b 0%, #343c45 40%, #262d35 100%);
-    box-shadow:inset 0 10px 20px rgba(255,255,255,0.05);
-  }
-
-  .plant{
-    position:absolute;
-    bottom:12%;
-    width:10%;
-    height:34%;
-    transform-origin:bottom center;
-    animation:plantSway 6s ease-in-out infinite alternate;
-    opacity:.9;
-  }
-
-  .plant::before,
-  .plant::after{
-    content:"";
-    position:absolute;
-    bottom:0;
-    width:34%;
-    height:100%;
-    border-radius:60% 40% 60% 40% / 90% 90% 10% 10%;
-    background:linear-gradient(180deg, var(--plant2) 0%, var(--plant) 60%, rgba(10,35,24,0.95) 100%);
-    filter:blur(.2px);
-  }
-
-  .plant::before{ left:22%; transform:rotate(-10deg);}
-  .plant::after{ left:48%; transform:rotate(12deg);}
-  .p1{ left:6%; height:26%; animation-duration:7.8s;}
-  .p2{ left:12%; height:31%; animation-duration:6.2s;}
-  .p3{ left:28%; height:21%; animation-duration:7.1s;}
-  .p4{ left:68%; height:24%; animation-duration:6.8s;}
-  .p5{ left:79%; height:28%; animation-duration:8.4s;}
-  .p6{ left:86%; height:20%; animation-duration:5.9s;}
-
   .diver-layer{
     z-index:6;
     pointer-events:none;
@@ -336,7 +226,6 @@
 
   .diver-ornament{
     position:absolute;
-    left:auto;
     right:7.5%;
     bottom:1.2%;
     width:17%;
@@ -351,7 +240,11 @@
     transform-origin:50% 85%;
   }
 
-  .particles, .bubbles, .fish-layer, .ripple, .glass-reflection{
+  .particles,
+  .bubbles,
+  .fish-layer,
+  .ripple,
+  .glass-reflection{
     z-index:10;
   }
 
@@ -404,44 +297,6 @@
     width:92px;
     height:128px;
   }
-
-  .bottomfish{
-    width:58px;
-    height:26px;
-  }
-  .bottomfish .body{
-    position:absolute;
-    left:8px; top:7px;
-    width:30px; height:12px;
-    background:linear-gradient(90deg, #8e7757, #d3bc95 55%, #8d7551);
-    clip-path:polygon(0 50%, 15% 15%, 78% 8%, 100% 50%, 78% 92%, 15% 85%);
-    border-radius:50%;
-  }
-  .bottomfish .tail{
-    position:absolute;
-    left:0; top:8px;
-    width:10px; height:10px;
-    background:linear-gradient(90deg, rgba(190,160,115,0.95), rgba(190,160,115,0.15));
-    clip-path:polygon(100% 50%, 0 0, 0 100%);
-    transform-origin:right center;
-    animation:tailWag 1s ease-in-out infinite alternate;
-  }
-  .bottomfish .eye{
-    position:absolute;
-    left:31px; top:10px;
-    width:2.5px; height:2.5px;
-    background:#111;
-    border-radius:50%;
-  }
-  .bottomfish .barb1, .bottomfish .barb2{
-    position:absolute;
-    width:10px; height:1px;
-    background:rgba(240,230,200,0.55);
-    left:35px; top:14px;
-    transform-origin:left center;
-  }
-  .bottomfish .barb1{ transform:rotate(12deg);}
-  .bottomfish .barb2{ transform:rotate(-10deg);}
 
   .ripple{
     z-index:20;
@@ -500,10 +355,12 @@
     cursor:pointer;
     transition:.18s ease;
   }
+
   .controls button:hover{
     background:rgba(255,255,255,0.11);
     transform:translateY(-1px);
   }
+
   .controls button.active{
     background:rgba(120,210,255,0.16);
     border-color:rgba(150,230,255,0.25);
@@ -527,29 +384,19 @@
     backdrop-filter:blur(6px);
   }
 
-  @keyframes tailWag{
-    from{ transform:rotate(-8deg);}
-    to{ transform:rotate(8deg);}
-  }
-
-  @keyframes plantSway{
-    from{ transform:rotate(-2.5deg);}
-    to{ transform:rotate(3.5deg);}
-  }
-
   @keyframes beamSway{
-    from{ transform:translateY(0) rotate(-8deg);}
-    to{ transform:translateY(1.5%) rotate(-4deg);}
+    from{ transform:translateY(0) rotate(-8deg); }
+    to{ transform:translateY(1.5%) rotate(-4deg); }
   }
 
   @keyframes hazeDrift{
-    from{ transform:translateX(-1.2%) translateY(-0.5%);}
-    to{ transform:translateX(1.2%) translateY(0.8%);}
+    from{ transform:translateX(-1.2%) translateY(-0.5%); }
+    to{ transform:translateX(1.2%) translateY(0.8%); }
   }
 
   @keyframes rippleShift{
-    from{ transform:translateX(-4%) translateY(-1%) scale(1.02);}
-    to{ transform:translateX(4%) translateY(1%) scale(1.04);}
+    from{ transform:translateX(-4%) translateY(-1%) scale(1.02); }
+    to{ transform:translateX(4%) translateY(1%) scale(1.04); }
   }
 
   @keyframes topShimmerMove{
@@ -569,6 +416,7 @@
       --tank-w:min(92vw, 460px);
       --tank-h:min(82vh, 760px);
     }
+
     .controls{
       flex-wrap:wrap;
       max-width:94vw;
@@ -583,7 +431,6 @@
 
     <div class="tank-wrap">
       <div class="tank" id="tank">
-        <div class="layer photo-bg"></div>
         <div class="layer back-haze"></div>
 
         <div class="layer light-beams">
@@ -593,24 +440,6 @@
         </div>
 
         <div class="layer light-shimmer"></div>
-
-        <div class="layer scenery">
-          <div class="wood left"></div>
-          <div class="wood right"></div>
-          <div class="branch l1"></div>
-          <div class="branch l2"></div>
-          <div class="branch r1"></div>
-          <div class="branch r2"></div>
-
-          <div class="plant p1"></div>
-          <div class="plant p2"></div>
-          <div class="plant p3"></div>
-          <div class="plant p4"></div>
-          <div class="plant p5"></div>
-          <div class="plant p6"></div>
-
-          <div class="gravel"></div>
-        </div>
 
         <div class="layer diver-layer">
           <img src="./diver.png" alt="" class="diver-ornament" id="diverOrnament">
@@ -668,9 +497,6 @@
       const cy = 0.41;
       f.targetX = clamp(cx + rand(-0.16, 0.16), 0.30, 0.70);
       f.targetY = clamp(cy + rand(-0.10, 0.10), 0.29, 0.53);
-    } else {
-      f.targetX = rand(0.30, 0.67);
-      f.targetY = rand(0.73, 0.83);
     }
   }
 
@@ -688,11 +514,6 @@
         if (r < 0.24) f.state = 'idle';
         else if (r < 0.88) f.state = 'cruise';
         else if (r < 0.97) f.state = 'turn';
-        else f.state = 'dart';
-      } else {
-        if (r < 0.30) f.state = 'idle';
-        else if (r < 0.88) f.state = 'cruise';
-        else if (r < 0.98) f.state = 'turn';
         else f.state = 'dart';
       }
     }
@@ -782,27 +603,6 @@
     fish.push(f);
   }
 
-  function createBottomFish(x, y, scale = 1) {
-    const el = makeEl(`
-      <div class="fish bottomfish">
-        <div class="tail"></div>
-        <div class="body"></div>
-        <div class="eye"></div>
-        <div class="barb1"></div>
-        <div class="barb2"></div>
-      </div>
-    `);
-    fishLayer.appendChild(el);
-
-    const f = makeFishBase('bottom', el, x, y, scale);
-    f.cruiseSpeed = rand(0.00005, 0.00009);
-    f.dartSpeed = rand(0.00012, 0.00018);
-    f.accel = rand(0.004, 0.007);
-    f.drag = rand(0.989, 0.994);
-    f.turnEase = rand(0.04, 0.06);
-    fish.push(f);
-  }
-
   function createParticle() {
     const el = document.createElement('div');
     el.className = 'particle';
@@ -860,9 +660,6 @@
     createTetra(0.58, 0.43, 0.92);
     createTetra(0.64, 0.37, 0.88);
     createTetra(0.36, 0.46, 0.80);
-
-    createBottomFish(0.35, 0.78, 0.95);
-    createBottomFish(0.62, 0.80, 0.90);
 
     for (let i = 0; i < 55; i++) createParticle();
     for (let i = 0; i < 18; i++) createBubble(0.29 + Math.random() * 0.08);
@@ -978,6 +775,7 @@
     const tetraList = fish.filter(f => f.type === 'tetra');
     let tetraCenterX = 0.5;
     let tetraCenterY = 0.4;
+
     if (tetraList.length) {
       tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
       tetraCenterY = tetraList.reduce((s, f) => s + f.y, 0) / tetraList.length;
@@ -995,6 +793,7 @@
 
       let repelX = 0;
       let repelY = 0;
+
       if (mouse.inside && dist2 < 0.05) {
         const strength = (0.05 - dist2) * 0.015 * f.shyness;
         repelX = dxm * strength;
@@ -1050,9 +849,6 @@
       } else if (f.type === 'tetra') {
         f.x = clamp(f.x, 0.28, 0.72);
         f.y = clamp(f.y, 0.28, 0.54);
-      } else {
-        f.x = clamp(f.x, 0.28, 0.68);
-        f.y = clamp(f.y, 0.72, 0.84);
       }
 
       const moveAngle = Math.atan2(f.vy, f.vx || 0.00001);
