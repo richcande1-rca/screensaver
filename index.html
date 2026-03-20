@@ -701,10 +701,10 @@
       targetY: y,
       state: 'cruise',
       stateTimer: rand(2, 5),
-      cruiseSpeed: 0.000010,
-      dartSpeed: 0.000024,
-      accel: 0.0018,
-      drag: 0.985,
+      cruiseSpeed: 0.00010,
+      dartSpeed: 0.00022,
+      accel: 0.006,
+      drag: 0.991,
       turnEase: 0.045,
       wander: rand(0.8, 1.2),
       shyness: rand(0.8, 1.2),
@@ -731,10 +731,10 @@
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
-    f.cruiseSpeed = rand(0.000010, 0.000015);
-    f.dartSpeed = rand(0.000026, 0.000036);
-    f.accel = rand(0.0017, 0.0023);
-    f.drag = rand(0.982, 0.988);
+    f.cruiseSpeed = rand(0.00010, 0.00016);
+    f.dartSpeed = rand(0.00024, 0.00034);
+    f.accel = rand(0.006, 0.010);
+    f.drag = rand(0.988, 0.993);
     f.turnEase = rand(0.05, 0.08);
     fish.push(f);
   }
@@ -755,10 +755,10 @@
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
-    f.cruiseSpeed = rand(0.000006, 0.000009);
-    f.dartSpeed = rand(0.000016, 0.000022);
-    f.accel = rand(0.0012, 0.0017);
-    f.drag = rand(0.986, 0.991);
+    f.cruiseSpeed = rand(0.00006, 0.00010);
+    f.dartSpeed = rand(0.00015, 0.00022);
+    f.accel = rand(0.004, 0.007);
+    f.drag = rand(0.990, 0.994);
     f.turnEase = rand(0.035, 0.05);
     fish.push(f);
   }
@@ -777,10 +777,10 @@
     fishLayer.appendChild(el);
 
     const f = makeFishBase('bottom', el, x, y, scale);
-    f.cruiseSpeed = rand(0.000006, 0.000010);
-    f.dartSpeed = rand(0.000014, 0.000020);
-    f.accel = rand(0.0013, 0.0018);
-    f.drag = rand(0.984, 0.989);
+    f.cruiseSpeed = rand(0.00005, 0.00009);
+    f.dartSpeed = rand(0.00012, 0.00018);
+    f.accel = rand(0.004, 0.007);
+    f.drag = rand(0.989, 0.994);
     f.turnEase = rand(0.04, 0.06);
     fish.push(f);
   }
