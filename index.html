@@ -206,23 +206,33 @@
   .beam.b3{ left:56%; transform:rotate(7deg);   animation-duration:15s; opacity:.48;}
 
   .light-shimmer{
-    z-index:4;
-    top:0;
-    height:34%;
-    opacity:.20;
-    mix-blend-mode:screen;
-    background:
-      repeating-linear-gradient(
-        103deg,
-        rgba(255,255,255,0.18) 0px,
-        rgba(255,255,255,0.08) 10px,
-        rgba(255,255,255,0.00) 24px,
-        rgba(255,255,255,0.10) 38px,
-        rgba(255,255,255,0.00) 58px
-      );
-    filter:blur(6px);
-    animation:topShimmer 7.5s ease-in-out infinite alternate;
-  }
+  z-index:4;
+  left:-8%;
+  top:0;
+  width:116%;
+  height:38%;
+  opacity:.42;
+  mix-blend-mode:screen;
+  background:
+    repeating-linear-gradient(
+      102deg,
+      rgba(255,255,255,0.26) 0px,
+      rgba(255,255,255,0.10) 8px,
+      rgba(255,255,255,0.00) 18px,
+      rgba(255,255,255,0.14) 30px,
+      rgba(255,255,255,0.00) 46px
+    ),
+    repeating-linear-gradient(
+      78deg,
+      rgba(180,220,255,0.12) 0px,
+      rgba(180,220,255,0.05) 10px,
+      rgba(180,220,255,0.00) 24px,
+      rgba(255,255,255,0.08) 34px,
+      rgba(255,255,255,0.00) 54px
+    );
+  filter:blur(2px);
+  animation:topShimmer 5.8s ease-in-out infinite alternate;
+}
 
   .scenery{
     z-index:5;
