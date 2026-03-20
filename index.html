@@ -390,51 +390,14 @@
     pointer-events:none;
     user-select:none;
     -webkit-user-drag:none;
+    image-rendering:auto;
+    background:transparent;
     filter:drop-shadow(0 0 8px rgba(120,220,255,0.10));
   }
 
   .tetra{
-    width:44px;
-    height:22px;
-  }
-  .tetra .body{
-    position:absolute;
-    left:8px; top:4px;
-    width:22px; height:14px;
-    background:linear-gradient(90deg, var(--tetra-a), #bff6ff 55%, var(--tetra-b));
-    clip-path:polygon(0% 50%, 22% 5%, 80% 8%, 100% 50%, 78% 92%, 20% 92%);
-    border-radius:40% 50% 50% 40%;
-  }
-  .tetra .tail{
-    position:absolute;
-    left:0; top:5px;
-    width:12px; height:12px;
-    background:linear-gradient(90deg, rgba(70,200,255,0.9), rgba(70,200,255,0.2));
-    clip-path:polygon(100% 50%, 0 0, 0 100%);
-    transform-origin:right center;
-    animation:tailWag .9s ease-in-out infinite alternate;
-  }
-  .tetra .stripe{
-    position:absolute;
-    left:14px; top:9px;
-    width:17px; height:4px;
-    background:linear-gradient(90deg, #0d0f15, #1c2432, #0f1118);
-    border-radius:999px;
-    opacity:.8;
-  }
-  .tetra .red{
-    position:absolute;
-    left:14px; top:13px;
-    width:13px; height:4px;
-    background:linear-gradient(90deg, #ff5b6b, #ff2a43);
-    border-radius:999px;
-  }
-  .tetra .eye{
-    position:absolute;
-    left:26px; top:7px;
-    width:2.8px; height:2.8px;
-    background:#091015;
-    border-radius:50%;
+    width:52px;
+    height:28px;
   }
 
   .angel{
@@ -783,18 +746,13 @@
     return f;
   }
 
-  function createTetra(x, y, scale = 1, hue = 0) {
+  function createTetra(x, y, scale = 1) {
     const el = makeEl(`
       <div class="fish tetra">
-        <div class="tail"></div>
-        <div class="body"></div>
-        <div class="stripe"></div>
-        <div class="red"></div>
-        <div class="eye"></div>
+        <img class="fish-sprite" src="./tetra1.png" alt="">
       </div>
     `);
-    el.style.scale = scale;
-    if (hue) el.style.filter = `hue-rotate(${hue}deg) var(--fish-glow)`;
+
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
@@ -834,7 +792,6 @@
         <div class="barb2"></div>
       </div>
     `);
-    el.style.scale = scale;
     fishLayer.appendChild(el);
 
     const f = makeFishBase('bottom', el, x, y, scale);
