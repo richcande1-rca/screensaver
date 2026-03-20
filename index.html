@@ -382,11 +382,11 @@ body{
 }
 
 .controls{
-  position:absolute;
+  position:fixed;
   left:50%;
-  bottom:18px;
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));
   transform:translateX(-50%);
-  z-index:100;
+  z-index:1000;
   display:flex;
   gap:8px;
   align-items:center;
@@ -424,11 +424,11 @@ body{
 }
 
 .title{
-  position:absolute;
-  top:18px;
+  position:fixed;
+  top:max(12px, env(safe-area-inset-top, 0px));
   left:50%;
   transform:translateX(-50%);
-  z-index:100;
+  z-index:1000;
   font-size:14px;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -511,13 +511,12 @@ body{
   }
 
   .title{
-    top:max(12px, env(safe-area-inset-top, 0px));
     font-size:12px;
     padding:6px 10px;
   }
 
   .controls{
-    bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+    bottom:calc(14px + env(safe-area-inset-bottom, 0px));
     padding:6px;
     gap:6px;
     max-width:94vw;
@@ -533,6 +532,11 @@ body{
   .tetra{
     width:46px;
     height:24px;
+  }
+
+  .angel{
+    width:84px;
+    height:118px;
   }
 
   .diver-ornament{
@@ -612,8 +616,8 @@ body{
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 10 : 18;
   const DIVER_BUBBLE_COUNT = isMobile ? 6 : 10;
-  const TETRA_COUNT = isMobile ? 4 : 5;
-  const INCLUDE_ANGEL = !isMobile;
+  const TETRA_COUNT = 5;
+  const INCLUDE_ANGEL = true;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -807,7 +811,8 @@ body{
       [0.42, 0.37, 0.92],
       [0.49, 0.40, 0.86],
       [0.58, 0.42, 0.90],
-      [0.37, 0.45, 0.80]
+      [0.37, 0.45, 0.80],
+      [0.64, 0.37, 0.88]
     ];
 
     const seeds = isMobile ? tetraSeedsMobile : tetraSeedsDesktop;
