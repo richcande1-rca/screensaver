@@ -291,7 +291,7 @@ body{
 
 .fg-plant{
   position:absolute;
-  bottom:-6%;
+  bottom:-6.5%;
   width:12%;
   transform-origin:50% 100%;
   opacity:.44;
@@ -316,8 +316,22 @@ body{
   opacity:.50;
 }
 
+.fg2{
+  left:50%;
+  bottom:-7.8%;
+  width:25%;
+  transform:translateX(-50%);
+  animation-duration:8.4s;
+  animation-delay:-2.6s;
+  opacity:.54;
+}
+
 .hero-plant{
   z-index:2;
+}
+
+.mid-plant{
+  z-index:3;
 }
 
 .ripple{
@@ -531,6 +545,13 @@ body{
     opacity:.44;
   }
 
+  .fg2{
+    left:50%;
+    bottom:-8.8%;
+    width:31%;
+    opacity:.50;
+  }
+
   .title{
     font-size:12px;
     padding:6px 10px;
@@ -598,6 +619,7 @@ body{
 
       <div class="layer foreground-plants">
         <div class="fg-plant fg1 hero-plant"><img src="./plant1.png" alt=""></div>
+        <div class="fg-plant fg2 mid-plant"><img src="./plant2.png" alt=""></div>
       </div>
 
       <div class="layer ripple"></div>
