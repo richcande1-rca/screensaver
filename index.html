@@ -250,13 +250,13 @@ body{
   bottom:11.5%;
   width:13.5%;
   max-width:78px;
-  opacity:.62;
+  opacity:.72;
   filter:
-    saturate(.68)
-    brightness(.72)
-    contrast(.88)
+    saturate(.76)
+    brightness(.82)
+    contrast(.96)
     blur(var(--diver-blur))
-    drop-shadow(0 3px 6px rgba(0,0,0,0.16));
+    drop-shadow(0 3px 6px rgba(0,0,0,0.14));
   transform-origin:50% 85%;
 }
 
@@ -265,16 +265,16 @@ body{
   pointer-events:none;
   background:
     radial-gradient(
-      circle at 86% 86%,
+      circle at 84% 73%,
       rgba(70,150,210,0.00) 0%,
       rgba(70,150,210,0.00) 7%,
-      rgba(70,150,210,0.10) 13%,
-      rgba(40,110,180,0.16) 20%,
-      rgba(20,60,120,0.12) 28%,
+      rgba(70,150,210,0.08) 13%,
+      rgba(40,110,180,0.13) 20%,
+      rgba(20,60,120,0.08) 28%,
       rgba(0,0,0,0.00) 38%
     );
   mix-blend-mode:screen;
-  opacity:.75;
+  opacity:.62;
   filter:blur(6px);
 }
 
@@ -490,7 +490,7 @@ body{
   :root{
     --tank-w:min(96vw, 460px);
     --tank-h:min(78vh, 760px);
-    --photo-blur:.2px;
+    --photo-blur:0px;
     --diver-blur:.2px;
     --shimmer-opacity:.24;
     --ripple-display:none;
@@ -553,12 +553,12 @@ body{
     height:118px;
   }
 
-.diver-ornament{
-  width:15%;
-  max-width:70px;
-  right:8%;
-  bottom:10%;
-}
+  .diver-ornament{
+    width:15%;
+    max-width:70px;
+    right:8%;
+    bottom:10%;
+  }
 }
 </style>
 </head>
@@ -812,8 +812,8 @@ body{
 
     diverBubbles.push({
       el,
-      x: 0.845,
-      y: 0.805,
+      x: 0.835,
+      y: 0.695,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00052 + Math.random() * 0.00022,
       size: isMobile ? 3.5 + Math.random() * 5 : 4 + Math.random() * 7,
@@ -952,9 +952,9 @@ body{
       b.y -= b.vy * dt;
       b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
 
-      if (b.y < 0.40) {
-        b.x = 0.845 + (Math.random() - 0.5) * 0.016;
-        b.y = 0.805 + Math.random() * 0.015;
+      if (b.y < 0.34) {
+        b.x = 0.835 + (Math.random() - 0.5) * 0.012;
+        b.y = 0.695 + Math.random() * 0.012;
       }
 
       const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
