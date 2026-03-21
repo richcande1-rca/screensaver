@@ -246,17 +246,18 @@ body{
 
 .diver-ornament{
   position:absolute;
-  right:9.5%;
-  bottom:11.5%;
-  width:13.5%;
-  max-width:78px;
-  opacity:.74;
+  left:74%;
+  bottom:5.2%;
+  width:11.2%;
+  max-width:64px;
+  opacity:.66;
   filter:
-    saturate(.80)
-    brightness(.86)
-    contrast(1.02)
+    saturate(.76)
+    brightness(.80)
+    contrast(1.00)
     blur(var(--diver-blur))
     drop-shadow(0 2px 4px rgba(0,0,0,0.10));
+  transform:translateX(-50%);
   transform-origin:50% 85%;
 }
 
@@ -265,16 +266,16 @@ body{
   pointer-events:none;
   background:
     radial-gradient(
-      circle at 84% 73%,
+      circle at 74% 84%,
       rgba(70,150,210,0.00) 0%,
-      rgba(70,150,210,0.00) 7%,
-      rgba(70,150,210,0.08) 13%,
-      rgba(40,110,180,0.13) 20%,
-      rgba(20,60,120,0.08) 28%,
+      rgba(70,150,210,0.00) 6%,
+      rgba(70,150,210,0.06) 12%,
+      rgba(40,110,180,0.10) 18%,
+      rgba(20,60,120,0.06) 26%,
       rgba(0,0,0,0.00) 38%
     );
   mix-blend-mode:screen;
-  opacity:.62;
+  opacity:.48;
   filter:blur(6px);
 }
 
@@ -573,6 +574,14 @@ body{
     opacity:.44;
   }
 
+  .diver-ornament{
+    left:74%;
+    bottom:5.2%;
+    width:12.6%;
+    max-width:62px;
+    opacity:.62;
+  }
+
   .title{
     font-size:12px;
     padding:6px 10px;
@@ -600,13 +609,6 @@ body{
   .angel{
     width:84px;
     height:118px;
-  }
-
-  .diver-ornament{
-    width:15%;
-    max-width:70px;
-    right:8%;
-    bottom:10%;
   }
 }
 </style>
@@ -858,8 +860,8 @@ body{
 
     diverBubbles.push({
       el,
-      x: 0.835,
-      y: 0.695,
+      x: 0.757,
+      y: 0.812,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00052 + Math.random() * 0.00022,
       size: isMobile ? 3.5 + Math.random() * 5 : 4 + Math.random() * 7,
@@ -998,9 +1000,9 @@ body{
       b.y -= b.vy * dt;
       b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
 
-      if (b.y < 0.34) {
-        b.x = 0.835 + (Math.random() - 0.5) * 0.012;
-        b.y = 0.695 + Math.random() * 0.012;
+      if (b.y < 0.43) {
+        b.x = 0.757 + (Math.random() - 0.5) * 0.010;
+        b.y = 0.812 + Math.random() * 0.010;
       }
 
       const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
