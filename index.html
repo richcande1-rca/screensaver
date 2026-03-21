@@ -311,19 +311,28 @@ body{
 .fg1{
   left:4%;
   width:22%;
+  bottom:-7.8%;
   animation-duration:9.2s;
   animation-delay:-1.8s;
   opacity:.50;
 }
 
 .fg2{
-  left:50%;
-  bottom:-7.8%;
+  left:38%;
   width:25%;
-  transform:translateX(-50%);
+  bottom:-8.4%;
   animation-duration:8.4s;
   animation-delay:-2.6s;
   opacity:.54;
+}
+
+.fg3{
+  right:-2%;
+  width:24%;
+  bottom:-9.2%;
+  animation-duration:10.1s;
+  animation-delay:-3.3s;
+  opacity:.48;
 }
 
 .hero-plant{
@@ -332,6 +341,10 @@ body{
 
 .mid-plant{
   z-index:3;
+}
+
+.right-plant{
+  z-index:2;
 }
 
 .ripple{
@@ -542,14 +555,22 @@ body{
   .fg1{
     left:2%;
     width:26%;
+    bottom:-9.2%;
     opacity:.44;
   }
 
   .fg2{
-    left:50%;
-    bottom:-8.8%;
+    left:35%;
     width:31%;
+    bottom:-10.0%;
     opacity:.50;
+  }
+
+  .fg3{
+    right:-4%;
+    width:28%;
+    bottom:-11.2%;
+    opacity:.44;
   }
 
   .title{
@@ -620,6 +641,7 @@ body{
       <div class="layer foreground-plants">
         <div class="fg-plant fg1 hero-plant"><img src="./plant1.png" alt=""></div>
         <div class="fg-plant fg2 mid-plant"><img src="./plant2.png" alt=""></div>
+        <div class="fg-plant fg3 right-plant"><img src="./plant3.png" alt=""></div>
       </div>
 
       <div class="layer ripple"></div>
