@@ -243,6 +243,7 @@ body{
   z-index:6;
   pointer-events:none;
 }
+
 .diver-ornament{
   position:absolute;
   right:9.5%;
@@ -254,7 +255,7 @@ body{
     saturate(.80)
     brightness(.86)
     contrast(1.02)
-    blur(.12px)
+    blur(var(--diver-blur))
     drop-shadow(0 2px 4px rgba(0,0,0,0.10));
   transform-origin:50% 85%;
 }
@@ -290,10 +291,10 @@ body{
 
 .fg-plant{
   position:absolute;
-  bottom:-1%;
+  bottom:-1.5%;
   width:12%;
   transform-origin:50% 100%;
-  opacity:.48;
+  opacity:.44;
   filter:none;
   animation:fgPlantSway 8s ease-in-out infinite alternate;
 }
@@ -307,12 +308,17 @@ body{
   -webkit-user-drag:none;
 }
 
-.fg1{ left:-1%;  width:15%; animation-duration:8.6s; animation-delay:-1.4s; }
-.fg2{ left:7%;   width:13%; animation-duration:9.8s; animation-delay:-3.2s; opacity:.42; }
-.fg3{ left:16%;  width:10%; animation-duration:7.7s; animation-delay:-2.1s; opacity:.36; }
-.fg4{ right:15%; width:10%; animation-duration:8.9s; animation-delay:-2.7s; opacity:.34; }
-.fg5{ right:6%;  width:13%; animation-duration:10.3s; animation-delay:-4.1s; opacity:.44; }
-.fg6{ right:-1%; width:16%; animation-duration:8.1s; animation-delay:-1.8s; }
+.fg1{
+  left:4%;
+  width:22%;
+  animation-duration:9.2s;
+  animation-delay:-1.8s;
+  opacity:.50;
+}
+
+.hero-plant{
+  z-index:2;
+}
 
 .ripple{
   z-index:20;
@@ -519,8 +525,10 @@ body{
     opacity:.52;
   }
 
-  .fg-plant{
-    opacity:.40;
+  .fg1{
+    left:2%;
+    width:26%;
+    opacity:.44;
   }
 
   .title{
@@ -553,11 +561,11 @@ body{
   }
 
   .diver-ornament{
-  width:15%;
-  max-width:70px;
-  right:8%;
-  bottom:10%;
-}
+    width:15%;
+    max-width:70px;
+    right:8%;
+    bottom:10%;
+  }
 }
 </style>
 </head>
@@ -589,12 +597,7 @@ body{
       <div class="layer fish-layer" id="fishLayer"></div>
 
       <div class="layer foreground-plants">
-        <div class="fg-plant fg1"><img src="./plant1.png" alt=""></div>
-        <div class="fg-plant fg2"><img src="./plant1.png" alt=""></div>
-        <div class="fg-plant fg3"><img src="./plant1.png" alt=""></div>
-        <div class="fg-plant fg4"><img src="./plant1.png" alt=""></div>
-        <div class="fg-plant fg5"><img src="./plant1.png" alt=""></div>
-        <div class="fg-plant fg6"><img src="./plant1.png" alt=""></div>
+        <div class="fg-plant fg1 hero-plant"><img src="./plant1.png" alt=""></div>
       </div>
 
       <div class="layer ripple"></div>
