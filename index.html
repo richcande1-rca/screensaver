@@ -37,7 +37,7 @@
   --mode-hue:0deg;
   --mode-overlay:rgba(0,0,0,0);
 
-  --photo-blur:.45px;
+  --photo-blur:0px;
   --diver-blur:.35px;
   --shimmer-opacity:.34;
   --ripple-display:block;
@@ -295,10 +295,7 @@ body{
   width:12%;
   transform-origin:50% 100%;
   opacity:.48;
-  filter:
-    saturate(.90)
-    brightness(.82)
-    drop-shadow(0 2px 8px rgba(0,0,0,0.18));
+  filter:none;
   animation:fgPlantSway 8s ease-in-out infinite alternate;
 }
 
