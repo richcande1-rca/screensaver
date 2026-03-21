@@ -38,7 +38,7 @@
   --mode-overlay:rgba(0,0,0,0);
 
   --photo-blur:.45px;
-  --diver-blur:1.2px;
+  --diver-blur:.35px;
   --shimmer-opacity:.34;
   --ripple-display:block;
   --ripple-opacity:.14;
@@ -296,7 +296,6 @@ body{
   transform-origin:50% 100%;
   opacity:.48;
   filter:
-    blur(.35px)
     saturate(.90)
     brightness(.82)
     drop-shadow(0 2px 8px rgba(0,0,0,0.18));
@@ -495,7 +494,7 @@ body{
     --tank-w:min(96vw, 460px);
     --tank-h:min(78vh, 760px);
     --photo-blur:.2px;
-    --diver-blur:.9px;
+    --diver-blur:.2px;
     --shimmer-opacity:.24;
     --ripple-display:none;
     --ripple-opacity:0;
@@ -556,21 +555,13 @@ body{
     width:84px;
     height:118px;
   }
- .diver-ornament{
-  position:absolute;
-  right:7.5%;
-  bottom:1.2%;
-  width:17%;
-  max-width:98px;
-  opacity:.58;
-  filter:
-    saturate(.64)
-    brightness(.70)
-    contrast(.84)
-    blur(var(--diver-blur))
-    drop-shadow(0 2px 5px rgba(0,0,0,0.12));
-  transform-origin:50% 85%;
-}
+
+  .diver-ornament{
+    width:19%;
+    max-width:84px;
+    right:6%;
+    bottom:1%;
+  }
 }
 </style>
 </head>
