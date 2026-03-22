@@ -38,7 +38,7 @@
   --mode-overlay:rgba(0,0,0,0);
 
   --photo-blur:0px;
-  --diver-blur:.35px;
+  --diver-blur:.12px;
   --shimmer-opacity:.34;
   --ripple-display:block;
   --ripple-opacity:.14;
@@ -250,13 +250,14 @@ body{
   bottom:4.6%;
   width:12.4%;
   max-width:70px;
-  opacity:.78;
+  opacity:.90;
   filter:
-    saturate(.76)
-    brightness(.80)
-    contrast(1.00)
+    saturate(.88)
+    brightness(.93)
+    contrast(1.12)
     blur(var(--diver-blur))
-    drop-shadow(0 2px 4px rgba(0,0,0,0.10));
+    drop-shadow(0 2px 6px rgba(0,0,0,0.24))
+    drop-shadow(0 0 4px rgba(190,220,235,0.10));
   transform:translateX(-50%);
   transform-origin:50% 85%;
 }
@@ -275,8 +276,8 @@ body{
       rgba(0,0,0,0.00) 38%
     );
   mix-blend-mode:screen;
-  opacity:.48;
-  filter:blur(6px);
+  opacity:.26;
+  filter:blur(4px);
 }
 
 .particles,
@@ -539,7 +540,7 @@ body{
     --tank-w:min(96vw, 460px);
     --tank-h:min(78vh, 760px);
     --photo-blur:0px;
-    --diver-blur:.2px;
+    --diver-blur:.08px;
     --shimmer-opacity:.24;
     --ripple-display:none;
     --ripple-opacity:0;
@@ -603,7 +604,7 @@ body{
     bottom:4.4%;
     width:14%;
     max-width:68px;
-    opacity:.74;
+    opacity:.88;
   }
 
   .title{
@@ -896,7 +897,7 @@ body{
       x: 0.535,
       y: 0.804,
       vx: (Math.random() - 0.5) * 0.00005,
-      vy: 0.00052 + Math.random() * 0.00022,
+      vy: 0.00028 + Math.random() * 0.00014,
       size: isMobile ? 3.5 + Math.random() * 5 : 4 + Math.random() * 7,
       wobble: Math.random() * 100
     });
@@ -1035,7 +1036,7 @@ body{
     }
 
     for (const b of diverBubbles) {
-      b.wobble += dt * 0.0018;
+      b.wobble += dt * 0.0011;
       b.y -= b.vy * dt;
       b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
 
