@@ -752,21 +752,51 @@ body{
       f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.10, 0.90);
       f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
     } else if (f.type === 'discus') {
-      const plantLanes = isMobile ? [0.42, 0.60, 0.72] : [0.45, 0.61, 0.73];
-      const lane = pick(plantLanes);
-      const riseChance = Math.random();
+      const plantLanes = isMobile ? [0.40, 0.66, 0.76] : [0.43, 0.68, 0.78];
+      const canRise = !f.riseCooldown || f.riseCooldown <= 0;
+      const doRise = canRise && Math.random() < 0.10;
 
-      if (riseChance < 0.06) {
-        f.targetX = clamp(lane + rand(-0.04, 0.04), 0.42, 0.78);
-        f.targetY = rand(0.66, 0.74);
+      if (doRise) {
+        f.targetX = clamp(f.x + rand(-0.05, 0.05), 0.38, 0.80);
+        f.targetY = rand(0.69, 0.75);
+        f.riseCooldown = rand(16, 24);
       } else {
-        f.targetX = clamp(lane + rand(-0.04, 0.04), 0.42, 0.80);
-        f.targetY = rand(0.80, 0.91);
+        let options = plantLanes.filter(lane => Math.abs(lane - f.x) > 0.06);
+        if (!options.length) options = plantLanes.slice();
+
+        let lane;
+        if (f.dir >= 0) {
+          lane = options.find(v => v > f.x + 0.02) ?? options[0];
+        } else {
+          lane = [...options].reverse().find(v => v < f.x - 0.02) ?? options[options.length - 1];
+        }
+
+        if (Math.random() < 0.28) lane = pick(options);
+
+        f.targetX = clamp(lane + rand(-0.022, 0.022), 0.38, 0.82);
+        f.targetY = rand(0.80, 0.86);
       }
     }
   }
 
   function pickState(f, force) {
+    if (f.type === 'discus') {
+      if (force === 'idle' || force === 'cruise') {
+        f.state = force;
+      } else {
+        f.state = Math.random() < 0.26 ? 'idle' : 'cruise';
+      }
+
+      if (f.state === 'idle') {
+        f.stateTimer = rand(2.8, 5.0);
+      } else {
+        f.state = 'cruise';
+        f.stateTimer = rand(7.0, 12.5);
+        chooseTargetForFish(f);
+      }
+      return;
+    }
+
     if (force) {
       f.state = force;
     } else {
@@ -781,24 +811,19 @@ body{
         else if (r < 0.93) f.state = 'cruise';
         else if (r < 0.99) f.state = 'turn';
         else f.state = 'dart';
-      } else if (f.type === 'discus') {
-        if (r < 0.40) f.state = 'idle';
-        else if (r < 0.95) f.state = 'cruise';
-        else if (r < 0.995) f.state = 'turn';
-        else f.state = 'dart';
       }
     }
 
     if (f.state === 'idle') {
-      f.stateTimer = f.type === 'discus' ? rand(3.8, 7.2) : rand(2.4, 5.8);
+      f.stateTimer = rand(2.4, 5.8);
     } else if (f.state === 'cruise') {
-      f.stateTimer = f.type === 'discus' ? rand(5.6, 10.8) : rand(3.8, 8.5);
+      f.stateTimer = rand(3.8, 8.5);
       chooseTargetForFish(f);
     } else if (f.state === 'turn') {
-      f.stateTimer = f.type === 'discus' ? rand(1.4, 2.8) : rand(0.9, 2.1);
+      f.stateTimer = rand(0.9, 2.1);
       chooseTargetForFish(f);
     } else if (f.state === 'dart') {
-      f.stateTimer = f.type === 'discus' ? rand(0.20, 0.40) : rand(0.28, 0.62);
+      f.stateTimer = rand(0.28, 0.62);
       chooseTargetForFish(f);
       f.targetX += rand(-0.08, 0.08);
       f.targetY += rand(-0.06, 0.06);
@@ -831,6 +856,7 @@ body{
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
       turnMomentum: 0,
+      riseCooldown: 0,
       zone: null,
       homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
       homeY: clamp(y + rand(-0.02, 0.02), 0.22, 0.72)
@@ -899,6 +925,7 @@ body{
     f.turnEase = rand(0.022, 0.034);
     f.shyness = rand(0.68, 0.92);
     f.idleBob = rand(0.55, 0.85);
+    f.riseCooldown = rand(8, 14);
     f.homeX = clamp(x + rand(-0.02, 0.02), 0.46, 0.74);
     f.homeY = clamp(y + rand(-0.015, 0.015), 0.80, 0.88);
     chooseTargetForFish(f);
@@ -1140,26 +1167,36 @@ body{
         const strength = (0.05 - dist2) * 0.015 * f.shyness;
         repelX = dxm * strength;
         repelY = dym * strength;
-        if (f.state !== 'dart' && dist2 < 0.012) {
+        if (f.type !== 'discus' && f.state !== 'dart' && dist2 < 0.012) {
           pickState(f, 'dart');
         }
       }
 
       if (f.type === 'discus') {
+        f.riseCooldown -= dtSec;
+
         const diverX = 0.535;
         const diverY = isMobile ? 0.842 : 0.838;
-        const avoidRX = isMobile ? 0.12 : 0.11;
-        const avoidRY = isMobile ? 0.10 : 0.09;
+        const avoidRX = isMobile ? 0.11 : 0.10;
+        const avoidRY = isMobile ? 0.09 : 0.085;
         const ddx = f.x - diverX;
         const ddy = f.y - diverY;
 
         if (Math.abs(ddx) < avoidRX && Math.abs(ddy) < avoidRY) {
           discusAvoidActive = true;
-          discusAvoidDirX = Math.abs(ddx) < 0.018 ? f.dir : Math.sign(ddx);
 
-          const closeness = 1 - Math.max(Math.abs(ddx) / avoidRX, Math.abs(ddy) / avoidRY);
-          repelX += discusAvoidDirX * (0.00012 + closeness * 0.00026);
-          repelY += (ddy >= 0 ? 1 : -1) * (0.00004 + closeness * 0.00009);
+          const safeLane = f.x < diverX
+            ? (isMobile ? 0.40 : 0.43)
+            : (isMobile ? 0.76 : 0.78);
+
+          discusAvoidDirX = safeLane >= f.x ? 1 : -1;
+          f.targetX = lerp(f.targetX, safeLane, 0.08);
+          f.targetY = lerp(f.targetY, 0.825, 0.10);
+          f.state = 'cruise';
+          f.stateTimer = Math.max(f.stateTimer, 4.8);
+
+          repelX += discusAvoidDirX * 0.00005;
+          repelY += (ddy > 0 ? 1 : -1) * 0.000015;
         }
       }
 
@@ -1207,7 +1244,7 @@ body{
         ? (discusAvoidDirX || f.dir || 1)
         : (Math.abs(tx) > 0.01 ? tx : desiredVX);
       const desiredDir = intentX >= 0 ? 1 : -1;
-      const dirResponse = f.type === 'angel' ? 0.10 : 0.16;
+      const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : 0.16);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponse);
 
       if (f.turnMomentum > 0.08) f.dir = 1;
@@ -1235,7 +1272,7 @@ body{
         f.y = clamp(f.y, 0.40, 0.72);
       } else if (f.type === 'discus') {
         f.x = clamp(f.x, 0.12, 0.90);
-        f.y = clamp(f.y, 0.60, 0.87);
+        f.y = clamp(f.y, 0.67, 0.87);
       }
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
