@@ -1133,6 +1133,8 @@ body{
 
       let repelX = 0;
       let repelY = 0;
+      let discusAvoidActive = false;
+      let discusAvoidDirX = 0;
 
       if (mouse.inside && dist2 < 0.05) {
         const strength = (0.05 - dist2) * 0.015 * f.shyness;
@@ -1140,6 +1142,24 @@ body{
         repelY = dym * strength;
         if (f.state !== 'dart' && dist2 < 0.012) {
           pickState(f, 'dart');
+        }
+      }
+
+      if (f.type === 'discus') {
+        const diverX = 0.535;
+        const diverY = isMobile ? 0.842 : 0.838;
+        const avoidRX = isMobile ? 0.12 : 0.11;
+        const avoidRY = isMobile ? 0.10 : 0.09;
+        const ddx = f.x - diverX;
+        const ddy = f.y - diverY;
+
+        if (Math.abs(ddx) < avoidRX && Math.abs(ddy) < avoidRY) {
+          discusAvoidActive = true;
+          discusAvoidDirX = Math.abs(ddx) < 0.018 ? f.dir : Math.sign(ddx);
+
+          const closeness = 1 - Math.max(Math.abs(ddx) / avoidRX, Math.abs(ddy) / avoidRY);
+          repelX += discusAvoidDirX * (0.00012 + closeness * 0.00026);
+          repelY += (ddy >= 0 ? 1 : -1) * (0.00004 + closeness * 0.00009);
         }
       }
 
@@ -1183,7 +1203,9 @@ body{
         f.vy *= f.drag;
       }
 
-      const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
+      const intentX = discusAvoidActive
+        ? (discusAvoidDirX || f.dir || 1)
+        : (Math.abs(tx) > 0.01 ? tx : desiredVX);
       const desiredDir = intentX >= 0 ? 1 : -1;
       const dirResponse = f.type === 'angel' ? 0.10 : 0.16;
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponse);
