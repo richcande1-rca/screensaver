@@ -701,7 +701,7 @@ body{
   const bubbles = [];
   const diverBubbles = [];
 
-  const FISH_SPEED = isMobile ? 3.7 : 4.1;
+  const FISH_SPEED = isMobile ? 3.6 : 3.95;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 10 : 18;
   const DIVER_BUBBLE_COUNT = isMobile ? 6 : 10;
@@ -723,22 +723,22 @@ body{
   function chooseTargetForFish(f) {
     if (f.type === 'angel') {
       if (f.zone === 'left') {
-        f.targetX = rand(0.34, 0.56);
-        f.targetY = rand(0.20, 0.46);
+        f.targetX = rand(0.22, 0.58);
+        f.targetY = rand(0.20, 0.47);
       } else if (f.zone === 'right') {
-        f.targetX = rand(0.50, 0.74);
-        f.targetY = rand(0.24, 0.52);
+        f.targetX = rand(0.44, 0.84);
+        f.targetY = rand(0.24, 0.53);
       } else {
-        f.targetX = rand(0.36, 0.72);
-        f.targetY = rand(0.22, 0.50);
+        f.targetX = rand(0.24, 0.84);
+        f.targetY = rand(0.22, 0.51);
       }
     } else if (f.type === 'tetra') {
       const cx = f.homeX ?? 0.50;
-      const cy = f.homeY ?? 0.41;
-      const spreadX = isMobile ? 0.16 : 0.21;
-      const spreadY = isMobile ? 0.10 : 0.13;
-      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.20, 0.80);
-      f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.24, 0.60);
+      const cy = f.homeY ?? 0.56;
+      const spreadX = isMobile ? 0.20 : 0.26;
+      const spreadY = isMobile ? 0.08 : 0.10;
+      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.10, 0.90);
+      f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
     }
   }
 
@@ -803,8 +803,8 @@ body{
       depthOffset: rand(-0.006, 0.006),
       turnMomentum: 0,
       zone: null,
-      homeX: clamp(x + rand(-0.03, 0.03), 0.22, 0.78),
-      homeY: clamp(y + rand(-0.02, 0.02), 0.25, 0.58)
+      homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
+      homeY: clamp(y + rand(-0.02, 0.02), 0.22, 0.72)
     };
     chooseTargetForFish(f);
     pickState(f, 'cruise');
@@ -821,13 +821,13 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
-    f.cruiseSpeed = rand(0.00008, 0.00012);
-    f.dartSpeed = rand(0.00018, 0.00027);
-    f.accel = rand(0.0045, 0.0075);
-    f.drag = rand(0.991, 0.995);
-    f.turnEase = rand(0.045, 0.07);
-    f.homeX = clamp(x + rand(-0.08, 0.08), 0.22, 0.78);
-    f.homeY = clamp(y + rand(-0.05, 0.05), 0.26, 0.58);
+    f.cruiseSpeed = rand(0.000075, 0.00011);
+    f.dartSpeed = rand(0.00016, 0.00024);
+    f.accel = rand(0.0042, 0.0068);
+    f.drag = rand(0.992, 0.9955);
+    f.turnEase = rand(0.042, 0.065);
+    f.homeX = clamp(x + rand(-0.14, 0.14), 0.12, 0.88);
+    f.homeY = clamp(y + rand(-0.04, 0.04), 0.43, 0.70);
     fish.push(f);
   }
 
@@ -842,13 +842,13 @@ body{
 
     const f = makeFishBase('angel', el, x, y, scale);
     f.zone = zone;
-    f.cruiseSpeed = rand(0.00005, 0.00008);
-    f.dartSpeed = rand(0.00011, 0.00016);
-    f.accel = rand(0.0035, 0.0055);
-    f.drag = rand(0.992, 0.995);
-    f.turnEase = rand(0.032, 0.046);
-    f.homeX = clamp(x + rand(-0.03, 0.03), 0.34, 0.72);
-    f.homeY = clamp(y + rand(-0.03, 0.03), 0.20, 0.50);
+    f.cruiseSpeed = rand(0.00005, 0.000078);
+    f.dartSpeed = rand(0.000105, 0.000155);
+    f.accel = rand(0.0033, 0.0052);
+    f.drag = rand(0.9925, 0.9955);
+    f.turnEase = rand(0.031, 0.045);
+    f.homeX = clamp(x + rand(-0.05, 0.05), 0.22, 0.82);
+    f.homeY = clamp(y + rand(-0.03, 0.03), 0.20, 0.51);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -912,25 +912,25 @@ body{
     }
 
     const tetraSeedsDesktop = [
-      [0.28, 0.34, 0.88],
-      [0.35, 0.42, 0.84],
-      [0.43, 0.48, 0.90],
-      [0.52, 0.37, 0.86],
-      [0.61, 0.45, 0.84],
-      [0.69, 0.38, 0.82],
-      [0.75, 0.44, 0.88],
-      [0.24, 0.50, 0.78]
+      [0.14, 0.55, 0.86],
+      [0.24, 0.61, 0.82],
+      [0.36, 0.57, 0.88],
+      [0.50, 0.64, 0.84],
+      [0.64, 0.58, 0.82],
+      [0.76, 0.62, 0.86],
+      [0.87, 0.56, 0.84],
+      [0.43, 0.69, 0.78]
     ];
 
     const tetraSeedsMobile = [
-      [0.30, 0.35, 0.88],
-      [0.38, 0.42, 0.84],
-      [0.47, 0.47, 0.90],
-      [0.56, 0.39, 0.86],
-      [0.64, 0.45, 0.84],
-      [0.72, 0.39, 0.82],
-      [0.27, 0.50, 0.78],
-      [0.58, 0.50, 0.80]
+      [0.16, 0.57, 0.86],
+      [0.28, 0.63, 0.82],
+      [0.40, 0.59, 0.88],
+      [0.52, 0.65, 0.84],
+      [0.64, 0.60, 0.82],
+      [0.76, 0.64, 0.84],
+      [0.24, 0.69, 0.78],
+      [0.80, 0.70, 0.80]
     ];
 
     const seeds = isMobile ? tetraSeedsMobile : tetraSeedsDesktop;
@@ -1053,7 +1053,7 @@ body{
 
     const tetraList = fish.filter(f => f.type === 'tetra');
     let tetraCenterX = 0.5;
-    let tetraCenterY = 0.4;
+    let tetraCenterY = 0.58;
 
     if (tetraList.length) {
       tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
@@ -1083,7 +1083,7 @@ body{
       }
 
       if (f.type === 'tetra') {
-        const schoolMix = 0.26;
+        const schoolMix = 0.12;
         const schoolTargetX = lerp(f.homeX, tetraCenterX, schoolMix);
         const schoolTargetY = lerp(f.homeY, tetraCenterY, schoolMix);
         f.targetX += (schoolTargetX - f.targetX) * 0.0030 * f.wander;
@@ -1127,18 +1127,18 @@ body{
 
       if (f.type === 'angel') {
         if (f.zone === 'left') {
-          f.x = clamp(f.x, 0.32, 0.58);
+          f.x = clamp(f.x, 0.18, 0.62);
           f.y = clamp(f.y, 0.18, 0.47);
         } else if (f.zone === 'right') {
-          f.x = clamp(f.x, 0.48, 0.76);
+          f.x = clamp(f.x, 0.40, 0.88);
           f.y = clamp(f.y, 0.22, 0.53);
         } else {
-          f.x = clamp(f.x, 0.34, 0.74);
+          f.x = clamp(f.x, 0.20, 0.86);
           f.y = clamp(f.y, 0.21, 0.51);
         }
       } else if (f.type === 'tetra') {
-        f.x = clamp(f.x, 0.20, 0.80);
-        f.y = clamp(f.y, 0.24, 0.60);
+        f.x = clamp(f.x, 0.10, 0.90);
+        f.y = clamp(f.y, 0.40, 0.72);
       }
 
       const moveAngle = Math.atan2(f.vy, f.vx || 0.00001);
