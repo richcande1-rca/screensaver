@@ -246,11 +246,11 @@ body{
 
 .diver-ornament{
   position:absolute;
-  left:74%;
-  bottom:5.2%;
-  width:11.2%;
-  max-width:64px;
-  opacity:.66;
+  left:53%;
+  bottom:4.6%;
+  width:12.4%;
+  max-width:70px;
+  opacity:.78;
   filter:
     saturate(.76)
     brightness(.80)
@@ -266,7 +266,7 @@ body{
   pointer-events:none;
   background:
     radial-gradient(
-      circle at 74% 84%,
+      circle at 53% 84%,
       rgba(70,150,210,0.00) 0%,
       rgba(70,150,210,0.00) 6%,
       rgba(70,150,210,0.06) 12%,
@@ -599,11 +599,11 @@ body{
   }
 
   .diver-ornament{
-    left:74%;
-    bottom:5.2%;
-    width:12.6%;
-    max-width:62px;
-    opacity:.62;
+    left:53%;
+    bottom:4.4%;
+    width:14%;
+    max-width:68px;
+    opacity:.74;
   }
 
   .title{
@@ -893,8 +893,8 @@ body{
 
     diverBubbles.push({
       el,
-      x: 0.757,
-      y: 0.812,
+      x: 0.535,
+      y: 0.804,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00052 + Math.random() * 0.00022,
       size: isMobile ? 3.5 + Math.random() * 5 : 4 + Math.random() * 7,
@@ -941,7 +941,7 @@ body{
     }
 
     for (let i = 0; i < PARTICLE_COUNT; i++) createParticle();
-    for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.29 + Math.random() * 0.08);
+    for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.06 + Math.random() * 0.08);
     for (let i = 0; i < DIVER_BUBBLE_COUNT; i++) createDiverBubble();
   }
 
