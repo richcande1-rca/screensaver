@@ -283,11 +283,11 @@ body{
 .particles,
 .bubbles,
 .fish-layer{
-  z-index:10;
+  z-index:9;
 }
 
 .foreground-plants{
-  z-index:14;
+  z-index:16;
   overflow:hidden;
 }
 
@@ -325,7 +325,7 @@ body{
   bottom:-10.2%;
   animation-duration:8.4s;
   animation-delay:-2.6s;
-  opacity:.54;
+  opacity:.60;
 }
 
 .fg4{
@@ -334,7 +334,7 @@ body{
   bottom:1.2%;
   animation-duration:7.9s;
   animation-delay:-1.1s;
-  opacity:.98;
+  opacity:1;
   z-index:8;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,0.22));
 }
@@ -752,16 +752,16 @@ body{
       f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.10, 0.90);
       f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
     } else if (f.type === 'discus') {
-      const bottomLanes = isMobile ? [0.16, 0.42, 0.66, 0.84] : [0.14, 0.43, 0.67, 0.86];
-      const lane = pick(bottomLanes);
+      const plantLanes = isMobile ? [0.42, 0.60, 0.72] : [0.45, 0.61, 0.73];
+      const lane = pick(plantLanes);
       const riseChance = Math.random();
 
-      if (riseChance < 0.22) {
-        f.targetX = clamp(rand(0.28, 0.78), 0.14, 0.88);
-        f.targetY = rand(0.50, 0.63);
+      if (riseChance < 0.16) {
+        f.targetX = clamp(lane + rand(-0.05, 0.05), 0.40, 0.78);
+        f.targetY = rand(0.54, 0.64);
       } else {
-        f.targetX = clamp(lane + rand(-0.08, 0.08), 0.12, 0.90);
-        f.targetY = rand(0.72, 0.86);
+        f.targetX = clamp(lane + rand(-0.05, 0.05), 0.40, 0.80);
+        f.targetY = rand(0.78, 0.90);
       }
     }
   }
@@ -899,8 +899,8 @@ body{
     f.turnEase = rand(0.022, 0.034);
     f.shyness = rand(0.68, 0.92);
     f.idleBob = rand(0.55, 0.85);
-    f.homeX = clamp(x + rand(-0.03, 0.03), 0.14, 0.88);
-    f.homeY = clamp(y + rand(-0.02, 0.02), 0.74, 0.84);
+    f.homeX = clamp(x + rand(-0.02, 0.02), 0.46, 0.74);
+    f.homeY = clamp(y + rand(-0.015, 0.015), 0.80, 0.88);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -994,8 +994,8 @@ body{
 
     if (DISCUS_COUNT >= 1) {
       createDiscus(
-        isMobile ? 0.64 : 0.66,
-        isMobile ? 0.82 : 0.80,
+        isMobile ? 0.61 : 0.63,
+        isMobile ? 0.86 : 0.85,
         isMobile ? 0.82 : 0.88,
         './fish5.png'
       );
@@ -1241,7 +1241,7 @@ body{
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : 9000));
       const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : -8, f.type === 'discus' ? 5 : 8);
 
-      const spriteFacing = f.type === 'angel' ? -1 : 1;
+      const spriteFacing = (f.type === 'angel' || f.type === 'discus') ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : '1');
       f.el.style.transform =
         `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
