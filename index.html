@@ -941,7 +941,7 @@ body{
     }
 
     for (let i = 0; i < PARTICLE_COUNT; i++) createParticle();
-    for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.06 + Math.random() * 0.08);
+    for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.015 + Math.random() * 0.03);
     for (let i = 0; i < DIVER_BUBBLE_COUNT; i++) createDiverBubble();
   }
 
@@ -1024,7 +1024,7 @@ body{
 
       if (b.y < -0.06) {
         b.y = 1.05 + Math.random() * 0.15;
-        b.x = 0.29 + Math.random() * 0.08;
+        b.x = 0.015 + Math.random() * 0.03;
       }
 
       const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
@@ -1040,7 +1040,7 @@ body{
       b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
 
       if (b.y < 0.43) {
-        b.x = 0.757 + (Math.random() - 0.5) * 0.010;
+        b.x = 0.535 + (Math.random() - 0.5) * 0.010;
         b.y = 0.812 + Math.random() * 0.010;
       }
 
@@ -1177,9 +1177,10 @@ body{
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * 9000);
       const finalRot = rotDeg + clamp(tailDeg, -8, 8);
 
+      const spriteFacing = f.type === 'angel' ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : '1';
       f.el.style.transform =
-        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
+        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
     }
 
     requestAnimationFrame(animate);
