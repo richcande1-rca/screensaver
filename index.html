@@ -679,26 +679,30 @@ body{
   font-weight:700;
   letter-spacing:.14em;
   text-transform:uppercase;
-  color:rgb(var(--beam-rgb) / 0.98);
-  background:linear-gradient(180deg, rgba(8,12,18,0.52), rgba(8,12,18,0.34));
+  color:#dff6ff;
+  background:linear-gradient(180deg, rgba(170,235,255,0.16), rgba(8,12,18,0.46));
   padding:8px 12px;
   border-radius:999px;
-  border:1px solid rgb(var(--beam-rgb) / 0.34);
+  border:1px solid rgba(191,230,255,0.50);
   backdrop-filter:blur(6px);
+  -webkit-text-stroke:.85px rgba(191,230,255,0.78);
+  paint-order:stroke fill;
   text-shadow:
-    0 0 7px rgb(var(--beam-rgb) / 0.88),
-    0 0 16px rgb(var(--beam-rgb) / 0.62),
-    0 0 32px rgb(var(--beam-rgb) / 0.34);
+    0 0 2px rgba(255,255,255,0.92),
+    0 0 8px rgba(191,230,255,0.96),
+    0 0 18px rgba(191,230,255,0.68),
+    0 0 34px rgba(191,230,255,0.32);
   box-shadow:
-    0 0 14px rgb(var(--beam-rgb) / 0.22),
-    0 0 34px rgb(var(--beam-rgb) / 0.12),
-    inset 0 0 12px rgb(var(--beam-rgb) / 0.10);
+    0 0 14px rgba(191,230,255,0.24),
+    0 0 34px rgba(191,230,255,0.14),
+    inset 0 0 12px rgba(191,230,255,0.12);
   transition:
     color 220ms linear,
     border-color 220ms linear,
     text-shadow 220ms linear,
     box-shadow 220ms linear,
-    background 220ms linear;
+    background 220ms linear,
+    -webkit-text-stroke-color 220ms linear;
 }
 
 @keyframes beamSway{
@@ -749,8 +753,8 @@ body{
 
 @media (max-width: 800px){
   :root{
-    --tank-w:min(96vw, 460px);
-    --tank-h:min(78vh, 760px);
+    --tank-w:min(98vw, 620px);
+    --tank-h:min(62vh, 560px);
     --photo-blur:0px;
     --diver-blur:.08px;
     --shimmer-opacity:.24;
@@ -759,7 +763,7 @@ body{
   }
 
   .tank-wrap{
-    top:47%;
+    top:41.5%;
     filter:
       drop-shadow(0 12px 28px rgba(0,0,0,0.45))
       drop-shadow(0 0 20px var(--tank-glow));
@@ -825,10 +829,11 @@ body{
   }
 
   .controls{
-    bottom:calc(14px + env(safe-area-inset-bottom, 0px));
-    padding:8px;
+    bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+    padding:7px;
     gap:6px;
-    min-width:min(95vw, 520px);
+    min-width:min(96vw, 620px);
+    max-width:96vw;
   }
 
   .control-row{
@@ -836,19 +841,23 @@ body{
   }
 
   .controls button{
-    padding:7px 10px;
-    font-size:12px;
+    padding:6px 9px;
+    font-size:11px;
     border-radius:10px;
   }
 
   .sliderWrap,
   .wheelWrap{
-    min-height:34px;
+    min-height:32px;
     padding:5px 8px;
   }
 
   #lightIntensity{
-    width:min(170px, 42vw);
+    width:min(150px, 36vw);
+  }
+
+  #cycleSpeed{
+    width:min(132px, 30vw);
   }
 
   .tetra{
@@ -869,6 +878,17 @@ body{
   .barb{
     width:52px;
     height:30px;
+  }
+}
+
+@media (max-width: 800px) and (max-height: 760px){
+  :root{
+    --tank-w:min(98vw, 660px);
+    --tank-h:min(58vh, 470px);
+  }
+
+  .tank-wrap{
+    top:39.5%;
   }
 }
 </style>
@@ -915,7 +935,7 @@ body{
     </div>
   </div>
 
-  <div class="title">Ambient Aquarium</div>
+  <div class="title" id="appTitle">Ambient Aquarium</div>
 
   <div class="controls">
     <div class="control-row">
@@ -949,6 +969,7 @@ body{
   const backFishLayer = document.getElementById('backFishLayer');
   const particlesEl = document.getElementById('particles');
   const bubblesEl = document.getElementById('bubbles');
+  const titleEl = document.getElementById('appTitle');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
   const lightIntensity = document.getElementById('lightIntensity');
   const lightIntensityValue = document.getElementById('lightIntensityValue');
@@ -982,6 +1003,24 @@ body{
     const root = document.documentElement.style;
     root.setProperty('--beam-rgb', `${r},${g},${b}`);
     root.setProperty('--tank-glow', `rgba(${r},${g},${b},0.20)`);
+
+    if (titleEl) {
+      titleEl.style.color = `rgb(${r}, ${g}, ${b})`;
+      titleEl.style.borderColor = `rgba(${r}, ${g}, ${b}, 0.52)`;
+      titleEl.style.webkitTextStrokeColor = `rgba(${r}, ${g}, ${b}, 0.82)`;
+      titleEl.style.background = `linear-gradient(180deg, rgba(${r}, ${g}, ${b}, 0.18), rgba(8,12,18,0.46))`;
+      titleEl.style.textShadow = [
+        '0 0 2px rgba(255,255,255,0.92)',
+        `0 0 8px rgba(${r}, ${g}, ${b}, 0.98)`,
+        `0 0 18px rgba(${r}, ${g}, ${b}, 0.68)`,
+        `0 0 34px rgba(${r}, ${g}, ${b}, 0.32)`
+      ].join(', ');
+      titleEl.style.boxShadow = [
+        `0 0 14px rgba(${r}, ${g}, ${b}, 0.24)`,
+        `0 0 34px rgba(${r}, ${g}, ${b}, 0.14)`,
+        `inset 0 0 12px rgba(${r}, ${g}, ${b}, 0.12)`
+      ].join(', ');
+    }
   }
 
   function applyCycleSpeed(value) {
