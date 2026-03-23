@@ -736,7 +736,7 @@ body{
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
-  const BARB_COUNT = 2;
+  const BARB_COUNT = 3;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -868,6 +868,7 @@ body{
       bobT: Math.random() * 10,
       schoolPhase: Math.random() * 6.28,
       scale,
+      spriteFacing: 1,
       targetX: x,
       targetY: y,
       state: 'cruise',
@@ -902,6 +903,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
+    f.spriteFacing = 1;
     f.cruiseSpeed = rand(0.000075, 0.00011);
     f.dartSpeed = rand(0.00016, 0.00024);
     f.accel = rand(0.0042, 0.0068);
@@ -922,6 +924,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('barb', el, x, y, scale);
+    f.spriteFacing = (spriteSrc.includes('barb2') || spriteSrc.includes('barb3')) ? 1 : -1;
     f.cruiseSpeed = rand(0.000055, 0.000082);
     f.dartSpeed = rand(0.00012, 0.00018);
     f.accel = rand(0.0038, 0.0059);
@@ -931,6 +934,7 @@ body{
     f.homeY = clamp(y + rand(-0.08, 0.08), 0.54, 0.82);
     chooseTargetForFish(f);
     fish.push(f);
+    return f;
   }
 
   function createAngel(x, y, scale = 1, spriteSrc = './angel.png', zone = null) {
@@ -943,6 +947,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
+    f.spriteFacing = -1;
     f.zone = zone;
     f.cruiseSpeed = rand(0.00005, 0.000078);
     f.dartSpeed = rand(0.000105, 0.000155);
@@ -965,6 +970,7 @@ body{
     backFishLayer.appendChild(el);
 
     const f = makeFishBase('discus', el, x, y, scale);
+    f.spriteFacing = -1;
     f.cruiseSpeed = rand(0.000032, 0.000046);
     f.dartSpeed = rand(0.000072, 0.000098);
     f.accel = rand(0.0026, 0.0038);
@@ -1094,6 +1100,15 @@ body{
         isMobile ? 0.66 : 0.64,
         isMobile ? 0.84 : 0.90,
         './barb2.png'
+      );
+    }
+
+    if (BARB_COUNT >= 3) {
+      createBarb(
+        isMobile ? 0.46 : 0.48,
+        isMobile ? 0.76 : 0.74,
+        isMobile ? 0.88 : 0.94,
+        './barb3.png'
       );
     }
 
@@ -1332,7 +1347,7 @@ body{
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
       const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
 
-      const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
+      const spriteFacing = f.spriteFacing ?? ((f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1);
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       f.el.style.transform =
         `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
