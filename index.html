@@ -736,7 +736,7 @@ body{
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
-  const BARB_COUNT = 1;
+  const BARB_COUNT = 2;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -784,18 +784,18 @@ body{
         f.targetY = rand(0.68, 0.86);
       }
     } else if (f.type === 'barb') {
-      const cx = f.homeX ?? 0.42;
-      const cy = f.homeY ?? 0.54;
-      const spreadX = isMobile ? 0.34 : 0.42;
-      const spreadY = isMobile ? 0.11 : 0.14;
-      const lowerDrift = Math.random() < 0.18;
+      const cx = f.homeX ?? 0.50;
+      const cy = f.homeY ?? 0.66;
+      const spreadX = isMobile ? 0.38 : 0.46;
+      const spreadY = isMobile ? 0.14 : 0.18;
+      const bottomRun = Math.random() < 0.28;
 
-      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.06, 0.94);
+      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.05, 0.95);
 
-      if (lowerDrift) {
-        f.targetY = rand(0.62, 0.76);
+      if (bottomRun) {
+        f.targetY = rand(0.74, 0.89);
       } else {
-        f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
+        f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.50, 0.86);
       }
     }
   }
@@ -927,8 +927,8 @@ body{
     f.accel = rand(0.0038, 0.0059);
     f.drag = rand(0.9924, 0.9953);
     f.turnEase = rand(0.040, 0.056);
-    f.homeX = clamp(x + rand(-0.18, 0.18), 0.10, 0.90);
-    f.homeY = clamp(y + rand(-0.07, 0.07), 0.44, 0.68);
+    f.homeX = clamp(x + rand(-0.20, 0.20), 0.08, 0.92);
+    f.homeY = clamp(y + rand(-0.08, 0.08), 0.54, 0.82);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -1081,10 +1081,19 @@ body{
 
     if (BARB_COUNT >= 1) {
       createBarb(
-        isMobile ? 0.32 : 0.30,
-        isMobile ? 0.54 : 0.52,
+        isMobile ? 0.30 : 0.28,
+        isMobile ? 0.62 : 0.60,
         isMobile ? 0.82 : 0.88,
         './barb1.png'
+      );
+    }
+
+    if (BARB_COUNT >= 2) {
+      createBarb(
+        isMobile ? 0.70 : 0.72,
+        isMobile ? 0.66 : 0.64,
+        isMobile ? 0.84 : 0.90,
+        './barb2.png'
       );
     }
 
@@ -1294,8 +1303,8 @@ body{
         f.x = clamp(f.x, 0.08, 0.92);
         f.y = clamp(f.y, 0.12, 0.86);
       } else if (f.type === 'barb') {
-        f.x = clamp(f.x, 0.06, 0.94);
-        f.y = clamp(f.y, 0.40, 0.76);
+        f.x = clamp(f.x, 0.05, 0.95);
+        f.y = clamp(f.y, 0.50, 0.90);
       }
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
