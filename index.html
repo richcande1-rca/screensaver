@@ -956,7 +956,7 @@ body{
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
-  const BARB_COUNT = 2;
+  const BARB_COUNT = 3;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -1343,6 +1343,15 @@ body{
         isMobile ? 0.66 : 0.64,
         isMobile ? 0.84 : 0.90,
         './barb2.png'
+      );
+    }
+
+    if (BARB_COUNT >= 3) {
+      createBarb(
+        isMobile ? 0.52 : 0.50,
+        isMobile ? 0.72 : 0.70,
+        isMobile ? 0.86 : 0.92,
+        './barb3.png'
       );
     }
 
