@@ -676,14 +676,29 @@ body{
   transform:translateX(-50%);
   z-index:1000;
   font-size:14px;
-  letter-spacing:.12em;
+  font-weight:700;
+  letter-spacing:.14em;
   text-transform:uppercase;
-  color:rgba(225,240,248,0.80);
-  background:rgba(8,12,18,0.40);
+  color:rgb(var(--beam-rgb) / 0.98);
+  background:linear-gradient(180deg, rgba(8,12,18,0.52), rgba(8,12,18,0.34));
   padding:8px 12px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,0.08);
+  border:1px solid rgb(var(--beam-rgb) / 0.34);
   backdrop-filter:blur(6px);
+  text-shadow:
+    0 0 7px rgb(var(--beam-rgb) / 0.88),
+    0 0 16px rgb(var(--beam-rgb) / 0.62),
+    0 0 32px rgb(var(--beam-rgb) / 0.34);
+  box-shadow:
+    0 0 14px rgb(var(--beam-rgb) / 0.22),
+    0 0 34px rgb(var(--beam-rgb) / 0.12),
+    inset 0 0 12px rgb(var(--beam-rgb) / 0.10);
+  transition:
+    color 220ms linear,
+    border-color 220ms linear,
+    text-shadow 220ms linear,
+    box-shadow 220ms linear,
+    background 220ms linear;
 }
 
 @keyframes beamSway{
