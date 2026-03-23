@@ -20,6 +20,11 @@
 
   --beam-a:rgba(255,255,255,0.13);
   --beam-b:rgba(255,255,255,0.00);
+  --beam-rgb:255,255,255;
+  --beam-alpha-hi:.13;
+  --beam-alpha-lo:0;
+  --light-intensity:1;
+  --shimmer-base:.34;
 
   --tank-glow:rgba(90,170,220,0.20);
   --ui-bg:rgba(10,14,18,0.72);
@@ -188,7 +193,11 @@ body{
   top:-10%;
   width:18%;
   height:70%;
-  background:linear-gradient(180deg, var(--beam-a), var(--beam-b));
+  background:linear-gradient(
+    180deg,
+    rgba(var(--beam-rgb), calc(var(--beam-alpha-hi) * var(--light-intensity))),
+    rgba(var(--beam-rgb), calc(var(--beam-alpha-lo) * var(--light-intensity)))
+  );
   filter:blur(8px);
   transform-origin:top center;
   opacity:.7;
@@ -205,7 +214,7 @@ body{
   top:0;
   width:100%;
   height:44%;
-  opacity:var(--shimmer-opacity);
+  opacity:calc(var(--shimmer-base) * var(--light-intensity));
   mix-blend-mode:screen;
   overflow:hidden;
   -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.95) 38%, rgba(0,0,0,.45) 72%, rgba(0,0,0,0) 100%);
@@ -238,6 +247,12 @@ body{
   transform:translateX(0) translateY(0) scale(1.04);
   animation:topShimmerMove 4.8s linear infinite;
 }
+
+.tank.light-wheel .light-beams,
+.tank.light-wheel .light-shimmer{
+  animation:lightWheelHue 10s linear infinite;
+}
+
 
 .diver-layer{
   z-index:6;
@@ -465,15 +480,26 @@ body{
   transform:translateX(-50%);
   z-index:1000;
   display:flex;
+  flex-direction:column;
   gap:8px;
-  align-items:center;
-  padding:8px;
+  align-items:stretch;
+  justify-content:center;
+  padding:10px;
+  min-width:min(92vw, 720px);
   border:1px solid var(--ui-border);
-  border-radius:16px;
+  border-radius:18px;
   background:var(--ui-bg);
   backdrop-filter:blur(8px);
   box-shadow:0 10px 30px rgba(0,0,0,0.35);
   pointer-events:auto;
+}
+
+.control-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
 }
 
 .controls button{
@@ -498,6 +524,61 @@ body{
   background:rgba(120,210,255,0.16);
   border-color:rgba(150,230,255,0.25);
   box-shadow:0 0 0 1px rgba(150,230,255,0.08) inset;
+}
+
+.sliderWrap,
+.colorWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px;
+  background:rgba(255,255,255,0.04);
+  min-height:38px;
+}
+
+.sliderWrap span,
+.colorWrap span{
+  font-size:12px;
+  letter-spacing:.03em;
+  color:rgba(225,240,248,0.82);
+  white-space:nowrap;
+}
+
+#lightIntensity{
+  width:min(220px, 42vw);
+  accent-color:rgb(140, 220, 255);
+}
+
+#lightIntensityValue{
+  min-width:42px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  color:rgba(225,240,248,0.78);
+}
+
+#lightTint{
+  inline-size:36px;
+  block-size:24px;
+  padding:0;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+
+#lightTint::-webkit-color-swatch-wrapper{
+  padding:0;
+}
+
+#lightTint::-webkit-color-swatch{
+  border:none;
+  border-radius:8px;
+}
+
+#lightTint::-moz-color-swatch{
+  border:none;
+  border-radius:8px;
 }
 
 .title{
@@ -547,6 +628,11 @@ body{
 @keyframes fgPlantSway{
   from{ transform:rotate(-3.2deg) translateY(0); }
   to{ transform:rotate(3.8deg) translateY(-0.4%); }
+}
+
+@keyframes lightWheelHue{
+  from{ filter:hue-rotate(0deg); }
+  to{ filter:hue-rotate(360deg); }
 }
 
 @media (max-width: 800px){
@@ -628,16 +714,29 @@ body{
 
   .controls{
     bottom:calc(14px + env(safe-area-inset-bottom, 0px));
-    padding:6px;
+    padding:8px;
     gap:6px;
-    max-width:94vw;
-    flex-wrap:nowrap;
+    min-width:min(95vw, 520px);
+  }
+
+  .control-row{
+    gap:6px;
   }
 
   .controls button{
     padding:7px 10px;
     font-size:12px;
     border-radius:10px;
+  }
+
+  .sliderWrap,
+  .colorWrap{
+    min-height:34px;
+    padding:5px 8px;
+  }
+
+  #lightIntensity{
+    width:min(170px, 42vw);
   }
 
   .tetra{
@@ -706,9 +805,26 @@ body{
   <div class="title">Ambient Aquarium</div>
 
   <div class="controls">
-    <button class="modeBtn active" data-mode="day">Day</button>
-    <button class="modeBtn" data-mode="moon">Moon</button>
-    <button class="modeBtn" data-mode="uv">UV</button>
+    <div class="control-row">
+      <button class="modeBtn active" data-mode="day">Day</button>
+      <button class="modeBtn" data-mode="moon">Moon</button>
+      <button class="modeBtn" data-mode="uv">UV</button>
+      <button class="modeBtn" data-mode="dusk">Dusk</button>
+      <button class="modeBtn" data-mode="emerald">Emerald</button>
+      <button class="modeBtn" data-mode="rose">Rose</button>
+      <button class="modeBtn" data-mode="wheel">Wheel</button>
+    </div>
+    <div class="control-row">
+      <label class="sliderWrap" for="lightIntensity">
+        <span>Light</span>
+        <input type="range" id="lightIntensity" min="0" max="160" value="100" />
+        <span id="lightIntensityValue">100%</span>
+      </label>
+      <label class="colorWrap" for="lightTint">
+        <span>Tint</span>
+        <input type="color" id="lightTint" value="#bfe6ff" />
+      </label>
+    </div>
   </div>
 </div>
 
@@ -720,6 +836,9 @@ body{
   const particlesEl = document.getElementById('particles');
   const bubblesEl = document.getElementById('bubbles');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
+  const lightIntensity = document.getElementById('lightIntensity');
+  const lightIntensityValue = document.getElementById('lightIntensityValue');
+  const lightTint = document.getElementById('lightTint');
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
@@ -736,13 +855,38 @@ body{
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
-  const BARB_COUNT = 3;
+  const BARB_COUNT = 2;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function hexToRgb(hex) {
+    const clean = String(hex || '').replace('#', '');
+    const full = clean.length === 3 ? clean.split('').map(ch => ch + ch).join('') : clean;
+    const int = parseInt(full, 16);
+    if (Number.isNaN(int) || full.length !== 6) return { r: 191, g: 230, b: 255 };
+    return {
+      r: (int >> 16) & 255,
+      g: (int >> 8) & 255,
+      b: int & 255
+    };
+  }
+
+  function setBeamTint(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    const root = document.documentElement.style;
+    root.setProperty('--beam-rgb', `${r},${g},${b}`);
+    root.setProperty('--tank-glow', `rgba(${r},${g},${b},0.20)`);
+  }
+
+  function applyLightIntensity(value) {
+    const n = clamp(Number(value) || 100, 0, 160);
+    document.documentElement.style.setProperty('--light-intensity', (n / 100).toFixed(2));
+    if (lightIntensityValue) lightIntensityValue.textContent = `${Math.round(n)}%`;
+  }
 
   function makeEl(html) {
     const wrap = document.createElement('div');
@@ -868,7 +1012,6 @@ body{
       bobT: Math.random() * 10,
       schoolPhase: Math.random() * 6.28,
       scale,
-      spriteFacing: 1,
       targetX: x,
       targetY: y,
       state: 'cruise',
@@ -903,7 +1046,6 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
-    f.spriteFacing = 1;
     f.cruiseSpeed = rand(0.000075, 0.00011);
     f.dartSpeed = rand(0.00016, 0.00024);
     f.accel = rand(0.0042, 0.0068);
@@ -924,7 +1066,6 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('barb', el, x, y, scale);
-    f.spriteFacing = (spriteSrc.includes('barb2') || spriteSrc.includes('barb3')) ? 1 : -1;
     f.cruiseSpeed = rand(0.000055, 0.000082);
     f.dartSpeed = rand(0.00012, 0.00018);
     f.accel = rand(0.0038, 0.0059);
@@ -934,7 +1075,6 @@ body{
     f.homeY = clamp(y + rand(-0.08, 0.08), 0.54, 0.82);
     chooseTargetForFish(f);
     fish.push(f);
-    return f;
   }
 
   function createAngel(x, y, scale = 1, spriteSrc = './angel.png', zone = null) {
@@ -947,7 +1087,6 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
-    f.spriteFacing = -1;
     f.zone = zone;
     f.cruiseSpeed = rand(0.00005, 0.000078);
     f.dartSpeed = rand(0.000105, 0.000155);
@@ -970,7 +1109,6 @@ body{
     backFishLayer.appendChild(el);
 
     const f = makeFishBase('discus', el, x, y, scale);
-    f.spriteFacing = -1;
     f.cruiseSpeed = rand(0.000032, 0.000046);
     f.dartSpeed = rand(0.000072, 0.000098);
     f.accel = rand(0.0026, 0.0038);
@@ -1103,15 +1241,6 @@ body{
       );
     }
 
-    if (BARB_COUNT >= 3) {
-      createBarb(
-        isMobile ? 0.46 : 0.48,
-        isMobile ? 0.76 : 0.74,
-        isMobile ? 0.88 : 0.94,
-        './barb3.png'
-      );
-    }
-
     for (let i = 0; i < PARTICLE_COUNT; i++) createParticle();
     for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.015 + Math.random() * 0.03);
     for (let i = 0; i < DIVER_BUBBLE_COUNT; i++) createDiverBubble();
@@ -1121,42 +1250,114 @@ body{
     modeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
 
     const r = document.documentElement.style;
+    tank.classList.remove('light-wheel');
+
     if (mode === 'day') {
       r.setProperty('--water-top', '#18485f');
       r.setProperty('--water-mid', '#103547');
       r.setProperty('--water-bottom', '#08141d');
-      r.setProperty('--tank-glow', 'rgba(90,170,220,0.20)');
-      r.setProperty('--beam-a', 'rgba(255,255,255,0.13)');
-      r.setProperty('--beam-b', 'rgba(255,255,255,0.00)');
+      r.setProperty('--beam-rgb', '255,255,255');
+      r.setProperty('--beam-alpha-hi', '.13');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.34');
       r.setProperty('--mode-sat', '1');
       r.setProperty('--mode-bright', '1');
       r.setProperty('--mode-contrast', '1');
       r.setProperty('--mode-hue', '0deg');
       r.setProperty('--mode-overlay', 'rgba(0,0,0,0)');
+      lightTint.value = '#bfe6ff';
+      setBeamTint(lightTint.value);
     } else if (mode === 'moon') {
       r.setProperty('--water-top', '#0f2745');
       r.setProperty('--water-mid', '#0b1832');
       r.setProperty('--water-bottom', '#040a15');
-      r.setProperty('--tank-glow', 'rgba(80,130,255,0.16)');
-      r.setProperty('--beam-a', 'rgba(150,190,255,0.16)');
-      r.setProperty('--beam-b', 'rgba(150,190,255,0.00)');
+      r.setProperty('--beam-rgb', '150,190,255');
+      r.setProperty('--beam-alpha-hi', '.16');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.28');
       r.setProperty('--mode-sat', '.90');
       r.setProperty('--mode-bright', '.90');
       r.setProperty('--mode-contrast', '1.05');
       r.setProperty('--mode-hue', '-6deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(12,20,46,0.10), rgba(8,14,30,0.18))');
+      lightTint.value = '#9bbcff';
+      setBeamTint(lightTint.value);
     } else if (mode === 'uv') {
       r.setProperty('--water-top', '#241045');
       r.setProperty('--water-mid', '#140c2f');
       r.setProperty('--water-bottom', '#090413');
-      r.setProperty('--tank-glow', 'rgba(170,90,255,0.22)');
-      r.setProperty('--beam-a', 'rgba(180,100,255,0.18)');
-      r.setProperty('--beam-b', 'rgba(180,100,255,0.00)');
+      r.setProperty('--beam-rgb', '180,100,255');
+      r.setProperty('--beam-alpha-hi', '.18');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.32');
       r.setProperty('--mode-sat', '1.22');
       r.setProperty('--mode-bright', '.98');
       r.setProperty('--mode-contrast', '1.08');
       r.setProperty('--mode-hue', '18deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(70,20,100,0.10), rgba(25,8,45,0.16))');
+      lightTint.value = '#b464ff';
+      setBeamTint(lightTint.value);
+    } else if (mode === 'dusk') {
+      r.setProperty('--water-top', '#5d3b2a');
+      r.setProperty('--water-mid', '#2f2533');
+      r.setProperty('--water-bottom', '#120c14');
+      r.setProperty('--beam-rgb', '255,174,108');
+      r.setProperty('--beam-alpha-hi', '.17');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.30');
+      r.setProperty('--mode-sat', '1.04');
+      r.setProperty('--mode-bright', '.96');
+      r.setProperty('--mode-contrast', '1.06');
+      r.setProperty('--mode-hue', '-4deg');
+      r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(140,70,30,0.08), rgba(32,12,20,0.15))');
+      lightTint.value = '#ffae6c';
+      setBeamTint(lightTint.value);
+    } else if (mode === 'emerald') {
+      r.setProperty('--water-top', '#123d39');
+      r.setProperty('--water-mid', '#0c2f2b');
+      r.setProperty('--water-bottom', '#071918');
+      r.setProperty('--beam-rgb', '120,255,210');
+      r.setProperty('--beam-alpha-hi', '.16');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.30');
+      r.setProperty('--mode-sat', '1.12');
+      r.setProperty('--mode-bright', '.98');
+      r.setProperty('--mode-contrast', '1.07');
+      r.setProperty('--mode-hue', '-2deg');
+      r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(10,60,48,0.08), rgba(5,25,22,0.14))');
+      lightTint.value = '#78ffd2';
+      setBeamTint(lightTint.value);
+    } else if (mode === 'rose') {
+      r.setProperty('--water-top', '#3f1539');
+      r.setProperty('--water-mid', '#281328');
+      r.setProperty('--water-bottom', '#120811');
+      r.setProperty('--beam-rgb', '255,120,185');
+      r.setProperty('--beam-alpha-hi', '.17');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.31');
+      r.setProperty('--mode-sat', '1.15');
+      r.setProperty('--mode-bright', '.97');
+      r.setProperty('--mode-contrast', '1.08');
+      r.setProperty('--mode-hue', '8deg');
+      r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(90,20,70,0.08), rgba(26,10,24,0.14))');
+      lightTint.value = '#ff78b9';
+      setBeamTint(lightTint.value);
+    } else if (mode === 'wheel') {
+      r.setProperty('--water-top', '#16324a');
+      r.setProperty('--water-mid', '#101f35');
+      r.setProperty('--water-bottom', '#070e17');
+      r.setProperty('--beam-rgb', '255,255,255');
+      r.setProperty('--beam-alpha-hi', '.18');
+      r.setProperty('--beam-alpha-lo', '0');
+      r.setProperty('--shimmer-base', '.36');
+      r.setProperty('--mode-sat', '1.10');
+      r.setProperty('--mode-bright', '1');
+      r.setProperty('--mode-contrast', '1.08');
+      r.setProperty('--mode-hue', '0deg');
+      r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(10,18,34,0.06), rgba(10,10,18,0.10))');
+      lightTint.value = '#ffffff';
+      setBeamTint(lightTint.value);
+      tank.classList.add('light-wheel');
     }
   }
 
@@ -1347,7 +1548,7 @@ body{
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
       const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
 
-      const spriteFacing = f.spriteFacing ?? ((f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1);
+      const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       f.el.style.transform =
         `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
@@ -1393,8 +1594,18 @@ body{
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
 
+  lightIntensity.addEventListener('input', (e) => {
+    applyLightIntensity(e.target.value);
+  });
+
+  lightTint.addEventListener('input', (e) => {
+    if (tank.classList.contains('light-wheel')) return;
+    setBeamTint(e.target.value);
+  });
+
   seedScene();
   setMode('day');
+  applyLightIntensity(lightIntensity.value);
   requestAnimationFrame(animate);
 })();
 </script>
