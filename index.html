@@ -24,6 +24,8 @@
   --beam-alpha-hi:.13;
   --beam-alpha-lo:0;
   --light-intensity:1;
+  --wheel-speed:10s;
+  --wheel-play:running;
   --shimmer-base:.34;
 
   --tank-glow:rgba(90,170,220,0.20);
@@ -250,7 +252,8 @@ body{
 
 .tank.light-wheel .light-beams,
 .tank.light-wheel .light-shimmer{
-  animation:lightWheelHue 10s linear infinite;
+  animation:lightWheelHue var(--wheel-speed) linear infinite;
+  animation-play-state:var(--wheel-play);
 }
 
 
@@ -527,7 +530,7 @@ body{
 }
 
 .sliderWrap,
-.colorWrap{
+.wheelWrap{
   display:flex;
   align-items:center;
   gap:8px;
@@ -539,7 +542,7 @@ body{
 }
 
 .sliderWrap span,
-.colorWrap span{
+.wheelWrap span{
   font-size:12px;
   letter-spacing:.03em;
   color:rgba(225,240,248,0.82);
@@ -558,27 +561,48 @@ body{
   color:rgba(225,240,248,0.78);
 }
 
-#lightTint{
-  inline-size:36px;
+#wheelSpeed{
+  width:min(150px, 28vw);
+  accent-color:rgb(255, 168, 214);
+}
+
+#wheelSpeedValue{
+  min-width:42px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  color:rgba(225,240,248,0.78);
+}
+
+.wheelBadge{
+  inline-size:24px;
   block-size:24px;
-  padding:0;
-  background:transparent;
-  border:none;
-  cursor:pointer;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.04);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);
+  overflow:hidden;
+  flex:0 0 auto;
 }
 
-#lightTint::-webkit-color-swatch-wrapper{
-  padding:0;
-}
-
-#lightTint::-webkit-color-swatch{
-  border:none;
-  border-radius:8px;
-}
-
-#lightTint::-moz-color-swatch{
-  border:none;
-  border-radius:8px;
+.wheelDisc{
+  inline-size:18px;
+  block-size:18px;
+  border-radius:999px;
+  background:conic-gradient(
+    #ff4d66 0deg,
+    #ffb347 55deg,
+    #ffe84d 100deg,
+    #52ff94 150deg,
+    #45e7ff 210deg,
+    #6f79ff 265deg,
+    #db5bff 320deg,
+    #ff4d66 360deg
+  );
+  filter:saturate(1.08) brightness(1.05);
+  animation:wheelSpin var(--wheel-speed) linear infinite;
+  animation-play-state:var(--wheel-play);
 }
 
 .title{
@@ -633,6 +657,11 @@ body{
 @keyframes lightWheelHue{
   from{ filter:hue-rotate(0deg); }
   to{ filter:hue-rotate(360deg); }
+}
+
+@keyframes wheelSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
 }
 
 @media (max-width: 800px){
@@ -730,7 +759,7 @@ body{
   }
 
   .sliderWrap,
-  .colorWrap{
+  .wheelWrap{
     min-height:34px;
     padding:5px 8px;
   }
@@ -820,9 +849,11 @@ body{
         <input type="range" id="lightIntensity" min="0" max="160" value="100" />
         <span id="lightIntensityValue">100%</span>
       </label>
-      <label class="colorWrap" for="lightTint">
-        <span>Tint</span>
-        <input type="color" id="lightTint" value="#bfe6ff" />
+      <label class="wheelWrap" for="wheelSpeed">
+        <span>Wheel</span>
+        <span class="wheelBadge" aria-hidden="true"><span class="wheelDisc"></span></span>
+        <input type="range" id="wheelSpeed" min="0" max="200" value="100" />
+        <span id="wheelSpeedValue">100%</span>
       </label>
     </div>
   </div>
@@ -838,7 +869,8 @@ body{
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
   const lightIntensity = document.getElementById('lightIntensity');
   const lightIntensityValue = document.getElementById('lightIntensityValue');
-  const lightTint = document.getElementById('lightTint');
+  const wheelSpeed = document.getElementById('wheelSpeed');
+  const wheelSpeedValue = document.getElementById('wheelSpeedValue');
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
@@ -863,23 +895,24 @@ body{
   function lerp(a, b, t) { return a + (b - a) * t; }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-  function hexToRgb(hex) {
-    const clean = String(hex || '').replace('#', '');
-    const full = clean.length === 3 ? clean.split('').map(ch => ch + ch).join('') : clean;
-    const int = parseInt(full, 16);
-    if (Number.isNaN(int) || full.length !== 6) return { r: 191, g: 230, b: 255 };
-    return {
-      r: (int >> 16) & 255,
-      g: (int >> 8) & 255,
-      b: int & 255
-    };
-  }
-
-  function setBeamTint(hex) {
-    const { r, g, b } = hexToRgb(hex);
+  function setPresetBeam(r, g, b) {
     const root = document.documentElement.style;
     root.setProperty('--beam-rgb', `${r},${g},${b}`);
     root.setProperty('--tank-glow', `rgba(${r},${g},${b},0.20)`);
+  }
+
+  function applyWheelSpeed(value) {
+    const n = clamp(Number(value) || 0, 0, 200);
+    if (wheelSpeedValue) wheelSpeedValue.textContent = `${Math.round(n)}%`;
+    const root = document.documentElement.style;
+    if (n <= 0) {
+      root.setProperty('--wheel-speed', '10s');
+      root.setProperty('--wheel-play', 'paused');
+      return;
+    }
+    const duration = (22 - (n / 200) * 18).toFixed(2);
+    root.setProperty('--wheel-speed', `${duration}s`);
+    root.setProperty('--wheel-play', 'running');
   }
 
   function applyLightIntensity(value) {
@@ -1265,8 +1298,7 @@ body{
       r.setProperty('--mode-contrast', '1');
       r.setProperty('--mode-hue', '0deg');
       r.setProperty('--mode-overlay', 'rgba(0,0,0,0)');
-      lightTint.value = '#bfe6ff';
-      setBeamTint(lightTint.value);
+      setPresetBeam(191, 230, 255);
     } else if (mode === 'moon') {
       r.setProperty('--water-top', '#0f2745');
       r.setProperty('--water-mid', '#0b1832');
@@ -1280,8 +1312,7 @@ body{
       r.setProperty('--mode-contrast', '1.05');
       r.setProperty('--mode-hue', '-6deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(12,20,46,0.10), rgba(8,14,30,0.18))');
-      lightTint.value = '#9bbcff';
-      setBeamTint(lightTint.value);
+      setPresetBeam(155, 188, 255);
     } else if (mode === 'uv') {
       r.setProperty('--water-top', '#241045');
       r.setProperty('--water-mid', '#140c2f');
@@ -1295,8 +1326,7 @@ body{
       r.setProperty('--mode-contrast', '1.08');
       r.setProperty('--mode-hue', '18deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(70,20,100,0.10), rgba(25,8,45,0.16))');
-      lightTint.value = '#b464ff';
-      setBeamTint(lightTint.value);
+      setPresetBeam(180, 100, 255);
     } else if (mode === 'dusk') {
       r.setProperty('--water-top', '#5d3b2a');
       r.setProperty('--water-mid', '#2f2533');
@@ -1310,8 +1340,7 @@ body{
       r.setProperty('--mode-contrast', '1.06');
       r.setProperty('--mode-hue', '-4deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(140,70,30,0.08), rgba(32,12,20,0.15))');
-      lightTint.value = '#ffae6c';
-      setBeamTint(lightTint.value);
+      setPresetBeam(255, 174, 108);
     } else if (mode === 'emerald') {
       r.setProperty('--water-top', '#123d39');
       r.setProperty('--water-mid', '#0c2f2b');
@@ -1325,8 +1354,7 @@ body{
       r.setProperty('--mode-contrast', '1.07');
       r.setProperty('--mode-hue', '-2deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(10,60,48,0.08), rgba(5,25,22,0.14))');
-      lightTint.value = '#78ffd2';
-      setBeamTint(lightTint.value);
+      setPresetBeam(120, 255, 210);
     } else if (mode === 'rose') {
       r.setProperty('--water-top', '#3f1539');
       r.setProperty('--water-mid', '#281328');
@@ -1340,8 +1368,7 @@ body{
       r.setProperty('--mode-contrast', '1.08');
       r.setProperty('--mode-hue', '8deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(90,20,70,0.08), rgba(26,10,24,0.14))');
-      lightTint.value = '#ff78b9';
-      setBeamTint(lightTint.value);
+      setPresetBeam(255, 120, 185);
     } else if (mode === 'wheel') {
       r.setProperty('--water-top', '#16324a');
       r.setProperty('--water-mid', '#101f35');
@@ -1355,8 +1382,7 @@ body{
       r.setProperty('--mode-contrast', '1.08');
       r.setProperty('--mode-hue', '0deg');
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(10,18,34,0.06), rgba(10,10,18,0.10))');
-      lightTint.value = '#ffffff';
-      setBeamTint(lightTint.value);
+      setPresetBeam(255, 255, 255);
       tank.classList.add('light-wheel');
     }
   }
@@ -1598,14 +1624,14 @@ body{
     applyLightIntensity(e.target.value);
   });
 
-  lightTint.addEventListener('input', (e) => {
-    if (tank.classList.contains('light-wheel')) return;
-    setBeamTint(e.target.value);
+  wheelSpeed.addEventListener('input', (e) => {
+    applyWheelSpeed(e.target.value);
   });
 
   seedScene();
   setMode('day');
   applyLightIntensity(lightIntensity.value);
+  applyWheelSpeed(wheelSpeed.value);
   requestAnimationFrame(animate);
 })();
 </script>
