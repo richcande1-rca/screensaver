@@ -286,6 +286,10 @@ body{
   z-index:9;
 }
 
+.fish-back-layer{
+  z-index:5;
+}
+
 .foreground-plants{
   z-index:16;
   overflow:hidden;
@@ -665,6 +669,8 @@ body{
 
       <div class="layer light-shimmer"></div>
 
+      <div class="layer fish-back-layer" id="backFishLayer"></div>
+
       <div class="layer diver-layer">
         <img src="./diver.png" alt="" class="diver-ornament" id="diverOrnament">
       </div>
@@ -734,50 +740,36 @@ body{
 
   function chooseTargetForFish(f) {
     if (f.type === 'angel') {
-      if (f.zone === 'left') {
-        f.targetX = rand(0.18, 0.48);
-        f.targetY = rand(0.12, 0.30);
-      } else if (f.zone === 'right') {
-        f.targetX = rand(0.54, 0.84);
-        f.targetY = rand(0.14, 0.34);
-      } else if (f.zone === 'top') {
-        f.targetX = rand(0.34, 0.72);
-        f.targetY = rand(0.10, 0.24);
-      } else {
-        f.targetX = rand(0.20, 0.84);
-        f.targetY = rand(0.12, 0.36);
-      }
+      const cx = f.homeX ?? 0.50;
+      const cy = f.homeY ?? 0.18;
+      const spreadX = isMobile ? 0.34 : 0.40;
+      const spreadY = isMobile ? 0.09 : 0.11;
+      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.06, 0.94);
+      f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.05, 0.31);
     } else if (f.type === 'tetra') {
       const cx = f.homeX ?? 0.50;
-      const cy = f.homeY ?? 0.56;
-      const spreadX = isMobile ? 0.20 : 0.26;
-      const spreadY = isMobile ? 0.08 : 0.10;
-      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.10, 0.90);
-      f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
-    } else if (f.type === 'discus') {
-      const plantLanes = isMobile ? [0.30, 0.44, 0.60, 0.76] : [0.28, 0.42, 0.58, 0.74];
-      const canRise = !f.riseCooldown || f.riseCooldown <= 0;
-      const doRise = canRise && Math.random() < 0.10;
+      const cy = f.homeY ?? 0.58;
+      const spreadX = isMobile ? 0.24 : 0.31;
+      const spreadY = isMobile ? 0.10 : 0.13;
+      const dipToBottom = Math.random() < 0.16;
 
-      if (doRise) {
-        f.targetX = clamp(f.x + rand(-0.06, 0.06), 0.26, 0.78);
-        f.targetY = rand(0.69, 0.75);
-        f.riseCooldown = rand(16, 24);
+      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.06, 0.94);
+
+      if (dipToBottom) {
+        f.targetY = rand(0.70, 0.82);
       } else {
-        let options = plantLanes.filter(lane => Math.abs(lane - f.x) > 0.05);
-        if (!options.length) options = plantLanes.slice();
+        f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.36, 0.74);
+      }
+    } else if (f.type === 'discus') {
+      const cruiseBandRoll = Math.random();
+      f.targetX = rand(0.08, 0.92);
 
-        let lane;
-        if (f.dir >= 0) {
-          lane = options.find(v => v > f.x + 0.018) ?? options[0];
-        } else {
-          lane = [...options].reverse().find(v => v < f.x - 0.018) ?? options[options.length - 1];
-        }
-
-        if (Math.random() < 0.34) lane = pick(options);
-
-        f.targetX = clamp(lane + rand(-0.024, 0.024), 0.24, 0.80);
-        f.targetY = rand(0.80, 0.86);
+      if (cruiseBandRoll < 0.24) {
+        f.targetY = rand(0.12, 0.34);
+      } else if (cruiseBandRoll < 0.68) {
+        f.targetY = rand(0.34, 0.68);
+      } else {
+        f.targetY = rand(0.68, 0.86);
       }
     }
   }
@@ -884,8 +876,8 @@ body{
     f.accel = rand(0.0042, 0.0068);
     f.drag = rand(0.992, 0.9955);
     f.turnEase = rand(0.042, 0.065);
-    f.homeX = clamp(x + rand(-0.14, 0.14), 0.12, 0.88);
-    f.homeY = clamp(y + rand(-0.04, 0.04), 0.43, 0.70);
+    f.homeX = clamp(x + rand(-0.18, 0.18), 0.08, 0.92);
+    f.homeY = clamp(y + rand(-0.06, 0.06), 0.44, 0.70);
     fish.push(f);
   }
 
@@ -905,8 +897,8 @@ body{
     f.accel = rand(0.0033, 0.0052);
     f.drag = rand(0.9925, 0.9955);
     f.turnEase = rand(0.031, 0.045);
-    f.homeX = clamp(x + rand(-0.05, 0.05), 0.18, 0.86);
-    f.homeY = clamp(y + rand(-0.03, 0.03), 0.10, 0.38);
+    f.homeX = clamp(x + rand(-0.16, 0.16), 0.10, 0.90);
+    f.homeY = clamp(y + rand(-0.03, 0.03), 0.08, 0.24);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -918,7 +910,7 @@ body{
       </div>
     `);
 
-    fishLayer.appendChild(el);
+    backFishLayer.appendChild(el);
 
     const f = makeFishBase('discus', el, x, y, scale);
     f.cruiseSpeed = rand(0.000032, 0.000046);
@@ -928,9 +920,9 @@ body{
     f.turnEase = rand(0.022, 0.034);
     f.shyness = rand(0.68, 0.92);
     f.idleBob = rand(0.55, 0.85);
-    f.riseCooldown = rand(8, 14);
-    f.homeX = clamp(x + rand(-0.05, 0.05), 0.30, 0.76);
-    f.homeY = clamp(y + rand(-0.015, 0.015), 0.80, 0.88);
+    f.riseCooldown = 0;
+    f.homeX = clamp(x + rand(-0.10, 0.10), 0.18, 0.82);
+    f.homeY = clamp(y + rand(-0.08, 0.08), 0.34, 0.74);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -1028,8 +1020,8 @@ body{
 
     if (DISCUS_COUNT >= 1) {
       createDiscus(
-        isMobile ? 0.61 : 0.63,
-        isMobile ? 0.86 : 0.85,
+        isMobile ? 0.56 : 0.58,
+        isMobile ? 0.66 : 0.64,
         isMobile ? 0.82 : 0.88,
         './fish5.png'
       );
@@ -1148,7 +1140,7 @@ body{
 
     const tetraList = fish.filter(f => f.type === 'tetra');
     let tetraCenterX = 0.5;
-    let tetraCenterY = 0.58;
+    let tetraCenterY = 0.60;
 
     if (tetraList.length) {
       tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
@@ -1167,8 +1159,6 @@ body{
 
       let repelX = 0;
       let repelY = 0;
-      let discusAvoidActive = false;
-      let discusAvoidDirX = 0;
 
       if (mouse.inside && dist2 < 0.05) {
         const strength = (0.05 - dist2) * 0.015 * f.shyness;
@@ -1176,37 +1166,6 @@ body{
         repelY = dym * strength;
         if (f.type !== 'discus' && f.state !== 'dart' && dist2 < 0.012) {
           pickState(f, 'dart');
-        }
-      }
-
-      if (f.type === 'discus') {
-        f.riseCooldown -= dtSec;
-
-        const diverX = 0.535;
-        const diverY = isMobile ? 0.842 : 0.838;
-        const avoidRX = isMobile ? 0.11 : 0.10;
-        const avoidRY = isMobile ? 0.09 : 0.085;
-        const ddx = f.x - diverX;
-        const ddy = f.y - diverY;
-
-        if (Math.abs(ddx) < avoidRX && Math.abs(ddy) < avoidRY) {
-          discusAvoidActive = true;
-
-          const safeLanes = isMobile ? [0.30, 0.44, 0.60, 0.76] : [0.28, 0.42, 0.58, 0.74];
-          const laneBias = f.dir < 0 ? -0.05 : 0.05;
-          const safeLane = safeLanes
-            .slice()
-            .sort((a, b) => Math.abs((a + laneBias) - f.x) - Math.abs((b + laneBias) - f.x))
-            .find(lane => Math.abs(lane - diverX) > (isMobile ? 0.085 : 0.075)) ?? safeLanes[0];
-
-          discusAvoidDirX = safeLane >= f.x ? 1 : -1;
-          f.targetX = lerp(f.targetX, safeLane, 0.16);
-          f.targetY = lerp(f.targetY, 0.823, 0.12);
-          f.state = 'cruise';
-          f.stateTimer = Math.max(f.stateTimer, 1.8);
-
-          repelX += discusAvoidDirX * 0.000042;
-          repelY += (ddy > 0 ? 1 : -1) * 0.000012;
         }
       }
 
@@ -1250,9 +1209,7 @@ body{
         f.vy *= f.drag;
       }
 
-      const intentX = discusAvoidActive
-        ? (discusAvoidDirX || f.dir || 1)
-        : (Math.abs(tx) > 0.01 ? tx : desiredVX);
+      const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
       const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : 0.16);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponse);
@@ -1267,25 +1224,14 @@ body{
       f.y += f.vy * dt;
 
       if (f.type === 'angel') {
-        if (f.zone === 'left') {
-          f.x = clamp(f.x, 0.16, 0.54);
-          f.y = clamp(f.y, 0.10, 0.34);
-        } else if (f.zone === 'right') {
-          f.x = clamp(f.x, 0.46, 0.88);
-          f.y = clamp(f.y, 0.12, 0.38);
-        } else if (f.zone === 'top') {
-          f.x = clamp(f.x, 0.30, 0.76);
-          f.y = clamp(f.y, 0.09, 0.28);
-        } else {
-          f.x = clamp(f.x, 0.18, 0.86);
-          f.y = clamp(f.y, 0.10, 0.40);
-        }
+        f.x = clamp(f.x, 0.05, 0.95);
+        f.y = clamp(f.y, 0.04, 0.32);
       } else if (f.type === 'tetra') {
-        f.x = clamp(f.x, 0.10, 0.90);
-        f.y = clamp(f.y, 0.40, 0.72);
+        f.x = clamp(f.x, 0.06, 0.94);
+        f.y = clamp(f.y, 0.34, 0.82);
       } else if (f.type === 'discus') {
-        f.x = clamp(f.x, 0.20, 0.82);
-        f.y = clamp(f.y, 0.67, 0.87);
+        f.x = clamp(f.x, 0.08, 0.92);
+        f.y = clamp(f.y, 0.12, 0.86);
       }
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
