@@ -453,6 +453,11 @@ body{
   height:74px;
 }
 
+.barb{
+  width:60px;
+  height:34px;
+}
+
 .controls{
   position:fixed;
   left:50%;
@@ -649,6 +654,11 @@ body{
     width:68px;
     height:68px;
   }
+
+  .barb{
+    width:52px;
+    height:30px;
+  }
 }
 </style>
 </head>
@@ -706,6 +716,7 @@ body{
 (() => {
   const tank = document.getElementById('tank');
   const fishLayer = document.getElementById('fishLayer');
+  const backFishLayer = document.getElementById('backFishLayer');
   const particlesEl = document.getElementById('particles');
   const bubblesEl = document.getElementById('bubbles');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
@@ -725,6 +736,7 @@ body{
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
+  const BARB_COUNT = 1;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -771,6 +783,20 @@ body{
       } else {
         f.targetY = rand(0.68, 0.86);
       }
+    } else if (f.type === 'barb') {
+      const cx = f.homeX ?? 0.42;
+      const cy = f.homeY ?? 0.54;
+      const spreadX = isMobile ? 0.34 : 0.42;
+      const spreadY = isMobile ? 0.11 : 0.14;
+      const lowerDrift = Math.random() < 0.18;
+
+      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.06, 0.94);
+
+      if (lowerDrift) {
+        f.targetY = rand(0.62, 0.76);
+      } else {
+        f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
+      }
     }
   }
 
@@ -805,6 +831,11 @@ body{
         if (r < 0.30) f.state = 'idle';
         else if (r < 0.93) f.state = 'cruise';
         else if (r < 0.99) f.state = 'turn';
+        else f.state = 'dart';
+      } else if (f.type === 'barb') {
+        if (r < 0.20) f.state = 'idle';
+        else if (r < 0.91) f.state = 'cruise';
+        else if (r < 0.985) f.state = 'turn';
         else f.state = 'dart';
       }
     }
@@ -878,6 +909,27 @@ body{
     f.turnEase = rand(0.042, 0.065);
     f.homeX = clamp(x + rand(-0.18, 0.18), 0.08, 0.92);
     f.homeY = clamp(y + rand(-0.06, 0.06), 0.44, 0.70);
+    fish.push(f);
+  }
+
+  function createBarb(x, y, scale = 1, spriteSrc = './barb1.png') {
+    const el = makeEl(`
+      <div class="fish barb">
+        <img class="fish-sprite" src="${spriteSrc}" alt="">
+      </div>
+    `);
+
+    fishLayer.appendChild(el);
+
+    const f = makeFishBase('barb', el, x, y, scale);
+    f.cruiseSpeed = rand(0.000055, 0.000082);
+    f.dartSpeed = rand(0.00012, 0.00018);
+    f.accel = rand(0.0038, 0.0059);
+    f.drag = rand(0.9924, 0.9953);
+    f.turnEase = rand(0.040, 0.056);
+    f.homeX = clamp(x + rand(-0.18, 0.18), 0.10, 0.90);
+    f.homeY = clamp(y + rand(-0.07, 0.07), 0.44, 0.68);
+    chooseTargetForFish(f);
     fish.push(f);
   }
 
@@ -1024,6 +1076,15 @@ body{
         isMobile ? 0.66 : 0.64,
         isMobile ? 0.82 : 0.88,
         './fish5.png'
+      );
+    }
+
+    if (BARB_COUNT >= 1) {
+      createBarb(
+        isMobile ? 0.32 : 0.30,
+        isMobile ? 0.54 : 0.52,
+        isMobile ? 0.82 : 0.88,
+        './barb1.png'
       );
     }
 
@@ -1211,7 +1272,7 @@ body{
 
       const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
-      const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : 0.16);
+      const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : (f.type === 'barb' ? 0.13 : 0.16));
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponse);
 
       if (f.turnMomentum > 0.08) f.dir = 1;
@@ -1232,6 +1293,9 @@ body{
       } else if (f.type === 'discus') {
         f.x = clamp(f.x, 0.08, 0.92);
         f.y = clamp(f.y, 0.12, 0.86);
+      } else if (f.type === 'barb') {
+        f.x = clamp(f.x, 0.06, 0.94);
+        f.y = clamp(f.y, 0.40, 0.76);
       }
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
@@ -1255,12 +1319,12 @@ body{
         : 0;
 
       const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
-      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.22 : 0.33);
-      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : 9000));
-      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : -8, f.type === 'discus' ? 5 : 8);
+      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.22 : (f.type === 'barb' ? 0.28 : 0.33));
+      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
+      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
 
-      const spriteFacing = (f.type === 'angel' || f.type === 'discus') ? -1 : 1;
-      f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : '1');
+      const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
+      f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       f.el.style.transform =
         `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
     }
