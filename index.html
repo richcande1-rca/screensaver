@@ -755,28 +755,28 @@ body{
       f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.10, 0.90);
       f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.40, 0.72);
     } else if (f.type === 'discus') {
-      const plantLanes = isMobile ? [0.40, 0.66, 0.76] : [0.43, 0.68, 0.78];
+      const plantLanes = isMobile ? [0.30, 0.44, 0.60, 0.76] : [0.28, 0.42, 0.58, 0.74];
       const canRise = !f.riseCooldown || f.riseCooldown <= 0;
       const doRise = canRise && Math.random() < 0.10;
 
       if (doRise) {
-        f.targetX = clamp(f.x + rand(-0.05, 0.05), 0.38, 0.80);
+        f.targetX = clamp(f.x + rand(-0.06, 0.06), 0.26, 0.78);
         f.targetY = rand(0.69, 0.75);
         f.riseCooldown = rand(16, 24);
       } else {
-        let options = plantLanes.filter(lane => Math.abs(lane - f.x) > 0.06);
+        let options = plantLanes.filter(lane => Math.abs(lane - f.x) > 0.05);
         if (!options.length) options = plantLanes.slice();
 
         let lane;
         if (f.dir >= 0) {
-          lane = options.find(v => v > f.x + 0.02) ?? options[0];
+          lane = options.find(v => v > f.x + 0.018) ?? options[0];
         } else {
-          lane = [...options].reverse().find(v => v < f.x - 0.02) ?? options[options.length - 1];
+          lane = [...options].reverse().find(v => v < f.x - 0.018) ?? options[options.length - 1];
         }
 
-        if (Math.random() < 0.28) lane = pick(options);
+        if (Math.random() < 0.34) lane = pick(options);
 
-        f.targetX = clamp(lane + rand(-0.022, 0.022), 0.38, 0.82);
+        f.targetX = clamp(lane + rand(-0.024, 0.024), 0.24, 0.80);
         f.targetY = rand(0.80, 0.86);
       }
     }
@@ -929,7 +929,7 @@ body{
     f.shyness = rand(0.68, 0.92);
     f.idleBob = rand(0.55, 0.85);
     f.riseCooldown = rand(8, 14);
-    f.homeX = clamp(x + rand(-0.02, 0.02), 0.46, 0.74);
+    f.homeX = clamp(x + rand(-0.05, 0.05), 0.30, 0.76);
     f.homeY = clamp(y + rand(-0.015, 0.015), 0.80, 0.88);
     chooseTargetForFish(f);
     fish.push(f);
@@ -1192,18 +1192,21 @@ body{
         if (Math.abs(ddx) < avoidRX && Math.abs(ddy) < avoidRY) {
           discusAvoidActive = true;
 
-          const safeLane = f.x < diverX
-            ? (isMobile ? 0.40 : 0.43)
-            : (isMobile ? 0.76 : 0.78);
+          const safeLanes = isMobile ? [0.30, 0.44, 0.60, 0.76] : [0.28, 0.42, 0.58, 0.74];
+          const laneBias = f.dir < 0 ? -0.05 : 0.05;
+          const safeLane = safeLanes
+            .slice()
+            .sort((a, b) => Math.abs((a + laneBias) - f.x) - Math.abs((b + laneBias) - f.x))
+            .find(lane => Math.abs(lane - diverX) > (isMobile ? 0.085 : 0.075)) ?? safeLanes[0];
 
           discusAvoidDirX = safeLane >= f.x ? 1 : -1;
-          f.targetX = lerp(f.targetX, safeLane, 0.08);
-          f.targetY = lerp(f.targetY, 0.825, 0.10);
+          f.targetX = lerp(f.targetX, safeLane, 0.16);
+          f.targetY = lerp(f.targetY, 0.823, 0.12);
           f.state = 'cruise';
-          f.stateTimer = Math.max(f.stateTimer, 4.8);
+          f.stateTimer = Math.max(f.stateTimer, 1.8);
 
-          repelX += discusAvoidDirX * 0.00005;
-          repelY += (ddy > 0 ? 1 : -1) * 0.000015;
+          repelX += discusAvoidDirX * 0.000042;
+          repelY += (ddy > 0 ? 1 : -1) * 0.000012;
         }
       }
 
@@ -1281,7 +1284,7 @@ body{
         f.x = clamp(f.x, 0.10, 0.90);
         f.y = clamp(f.y, 0.40, 0.72);
       } else if (f.type === 'discus') {
-        f.x = clamp(f.x, 0.12, 0.90);
+        f.x = clamp(f.x, 0.20, 0.82);
         f.y = clamp(f.y, 0.67, 0.87);
       }
 
