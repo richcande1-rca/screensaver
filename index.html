@@ -979,7 +979,7 @@ body{
       root.setProperty('--wheel-play', 'paused');
       return;
     }
-    const duration = 22 - (n / 200) * 18;
+    const duration = 11 - (n / 200) * 9;
     const sweepDuration = duration * 0.72;
     root.setProperty('--wheel-speed', `${duration.toFixed(2)}s`);
     root.setProperty('--wheel-sweep-speed', `${sweepDuration.toFixed(2)}s`);
@@ -988,7 +988,7 @@ body{
 
   function applyLightIntensity(value) {
     const n = clamp(Number(value) || 100, 0, 160);
-    document.documentElement.style.setProperty('--light-intensity', (n / 100).toFixed(2));
+    document.documentElement.style.setProperty('--light-intensity', (n / 50).toFixed(2));
     if (lightIntensityValue) lightIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
@@ -1024,7 +1024,7 @@ body{
     const speed = clamp(Number(cycleSpeed?.value) || 100, 0, 200);
 
     if (speed > 0) {
-      const duration = 68 - (speed / 200) * 56;
+      const duration = 34 - (speed / 200) * 28;
       cyclePhase = ((timeMs * 0.001) / duration) % 1;
     }
 
