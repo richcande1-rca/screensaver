@@ -250,12 +250,76 @@ body{
   animation:topShimmerMove 4.8s linear infinite;
 }
 
-.tank.light-wheel .light-beams,
-.tank.light-wheel .light-shimmer{
-  animation:lightWheelHue var(--wheel-speed) linear infinite;
+.wheel-spectrum{
+  z-index:5;
+  opacity:0;
+  overflow:hidden;
+  mix-blend-mode:screen;
+  transition:opacity .35s ease;
+  -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.96) 38%, rgba(0,0,0,.52) 72%, rgba(0,0,0,0) 100%);
+  mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.96) 38%, rgba(0,0,0,.52) 72%, rgba(0,0,0,0) 100%);
+}
+
+.wheel-spectrum::before{
+  content:"";
+  position:absolute;
+  inset:-34% -30% -22% -30%;
+  border-radius:50%;
+  background:conic-gradient(
+    from 0deg,
+    rgba(255,82,112,0.00) 0deg,
+    rgba(255,82,112,0.95) 38deg,
+    rgba(255,176,74,0.95) 82deg,
+    rgba(255,233,96,0.92) 122deg,
+    rgba(98,255,168,0.90) 170deg,
+    rgba(82,235,255,0.90) 220deg,
+    rgba(100,132,255,0.92) 270deg,
+    rgba(214,96,255,0.94) 322deg,
+    rgba(255,82,112,0.95) 360deg
+  );
+  filter:blur(46px) saturate(1.15) brightness(1.06);
+  transform-origin:50% 42%;
+  animation:wheelSpin var(--wheel-speed) linear infinite;
   animation-play-state:var(--wheel-play);
 }
 
+.wheel-spectrum::after{
+  content:"";
+  position:absolute;
+  inset:-2% -28% 32% -28%;
+  background:linear-gradient(
+    90deg,
+    rgba(255,92,120,0.00) 0%,
+    rgba(255,92,120,0.38) 12%,
+    rgba(255,182,86,0.36) 24%,
+    rgba(255,239,110,0.34) 36%,
+    rgba(98,255,170,0.34) 50%,
+    rgba(86,232,255,0.34) 64%,
+    rgba(110,136,255,0.36) 78%,
+    rgba(220,100,255,0.38) 90%,
+    rgba(255,92,120,0.00) 100%
+  );
+  background-size:220% 100%;
+  filter:blur(20px) saturate(1.12) brightness(1.05);
+  animation:wheelSweep var(--wheel-sweep-speed) linear infinite;
+  animation-play-state:var(--wheel-play);
+}
+
+.tank.light-wheel .wheel-spectrum{
+  opacity:calc(.72 * var(--light-intensity));
+}
+
+.tank.light-wheel .light-beams{
+  opacity:1;
+}
+
+.tank.light-wheel .light-shimmer{
+  opacity:calc((var(--shimmer-base) + .10) * var(--light-intensity));
+}
+
+.tank.light-wheel .beam.b1{ left:15%; }
+.tank.light-wheel .beam.b2{ left:39%; }
+.tank.light-wheel .beam.b3{ left:63%; }
 
 .diver-layer{
   z-index:6;
@@ -654,9 +718,13 @@ body{
   to{ transform:rotate(3.8deg) translateY(-0.4%); }
 }
 
-@keyframes lightWheelHue{
-  from{ filter:hue-rotate(0deg); }
-  to{ filter:hue-rotate(360deg); }
+@keyframes wheelSweep{
+  from{
+    transform:translateX(-12%) translateY(0) scaleX(1.03);
+  }
+  to{
+    transform:translateX(12%) translateY(0) scaleX(1.03);
+  }
 }
 
 @keyframes wheelSpin{
@@ -806,6 +874,7 @@ body{
       </div>
 
       <div class="layer light-shimmer"></div>
+      <div class="layer wheel-spectrum"></div>
 
       <div class="layer fish-back-layer" id="backFishLayer"></div>
 
@@ -907,11 +976,14 @@ body{
     const root = document.documentElement.style;
     if (n <= 0) {
       root.setProperty('--wheel-speed', '10s');
+      root.setProperty('--wheel-sweep-speed', '7.2s');
       root.setProperty('--wheel-play', 'paused');
       return;
     }
-    const duration = (22 - (n / 200) * 18).toFixed(2);
-    root.setProperty('--wheel-speed', `${duration}s`);
+    const duration = 22 - (n / 200) * 18;
+    const sweepDuration = duration * 0.72;
+    root.setProperty('--wheel-speed', `${duration.toFixed(2)}s`);
+    root.setProperty('--wheel-sweep-speed', `${sweepDuration.toFixed(2)}s`);
     root.setProperty('--wheel-play', 'running');
   }
 
