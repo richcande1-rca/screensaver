@@ -717,7 +717,7 @@ body{
   const BUBBLE_COUNT = isMobile ? 10 : 18;
   const DIVER_BUBBLE_COUNT = isMobile ? 6 : 10;
   const TETRA_COUNT = 8;
-  const ANGEL_COUNT = 2;
+  const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
@@ -735,14 +735,17 @@ body{
   function chooseTargetForFish(f) {
     if (f.type === 'angel') {
       if (f.zone === 'left') {
-        f.targetX = rand(0.22, 0.58);
-        f.targetY = rand(0.20, 0.47);
+        f.targetX = rand(0.18, 0.48);
+        f.targetY = rand(0.12, 0.30);
       } else if (f.zone === 'right') {
-        f.targetX = rand(0.44, 0.84);
-        f.targetY = rand(0.24, 0.53);
+        f.targetX = rand(0.54, 0.84);
+        f.targetY = rand(0.14, 0.34);
+      } else if (f.zone === 'top') {
+        f.targetX = rand(0.34, 0.72);
+        f.targetY = rand(0.10, 0.24);
       } else {
-        f.targetX = rand(0.24, 0.84);
-        f.targetY = rand(0.22, 0.51);
+        f.targetX = rand(0.20, 0.84);
+        f.targetY = rand(0.12, 0.36);
       }
     } else if (f.type === 'tetra') {
       const cx = f.homeX ?? 0.50;
@@ -902,8 +905,8 @@ body{
     f.accel = rand(0.0033, 0.0052);
     f.drag = rand(0.9925, 0.9955);
     f.turnEase = rand(0.031, 0.045);
-    f.homeX = clamp(x + rand(-0.05, 0.05), 0.22, 0.82);
-    f.homeY = clamp(y + rand(-0.03, 0.03), 0.20, 0.51);
+    f.homeX = clamp(x + rand(-0.05, 0.05), 0.18, 0.86);
+    f.homeY = clamp(y + rand(-0.03, 0.03), 0.10, 0.38);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -983,11 +986,15 @@ body{
 
   function seedScene() {
     if (ANGEL_COUNT >= 1) {
-      createAngel(0.47, 0.33, 0.72, './angel.png', 'left');
+      createAngel(0.41, 0.23, 0.74, './angel.png', 'left');
     }
 
     if (ANGEL_COUNT >= 2) {
-      createAngel(0.61, 0.39, 0.68, './angel2.png', 'right');
+      createAngel(0.69, 0.27, 0.68, './angel2.png', 'right');
+    }
+
+    if (ANGEL_COUNT >= 3) {
+      createAngel(0.55, 0.17, 0.64, './angel3.png', 'top');
     }
 
     const tetraSeedsDesktop = [
@@ -1258,14 +1265,17 @@ body{
 
       if (f.type === 'angel') {
         if (f.zone === 'left') {
-          f.x = clamp(f.x, 0.18, 0.62);
-          f.y = clamp(f.y, 0.18, 0.47);
+          f.x = clamp(f.x, 0.16, 0.54);
+          f.y = clamp(f.y, 0.10, 0.34);
         } else if (f.zone === 'right') {
-          f.x = clamp(f.x, 0.40, 0.88);
-          f.y = clamp(f.y, 0.22, 0.53);
+          f.x = clamp(f.x, 0.46, 0.88);
+          f.y = clamp(f.y, 0.12, 0.38);
+        } else if (f.zone === 'top') {
+          f.x = clamp(f.x, 0.30, 0.76);
+          f.y = clamp(f.y, 0.09, 0.28);
         } else {
-          f.x = clamp(f.x, 0.20, 0.86);
-          f.y = clamp(f.y, 0.21, 0.51);
+          f.x = clamp(f.x, 0.18, 0.86);
+          f.y = clamp(f.y, 0.10, 0.40);
         }
       } else if (f.type === 'tetra') {
         f.x = clamp(f.x, 0.10, 0.90);
