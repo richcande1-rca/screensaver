@@ -1097,6 +1097,7 @@ body{
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
   const BARB_COUNT = 3;
+  const FISH_SIZE_MULTIPLIER = 2;
   const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -1863,8 +1864,9 @@ body{
 
       const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
+      const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
       f.el.style.transform =
-        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
+        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
     }
 
     requestAnimationFrame(animate);
