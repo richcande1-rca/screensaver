@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -957,6 +958,38 @@ body{
   .wheelWrap{
     min-height:32px;
     padding:5px 7px;
+  }
+}
+
+
+
+@media (min-width: 801px){
+  :root{
+    --tank-w:min(78vw, 980px);
+    --tank-h:min(68vh, 720px);
+  }
+
+  .tank-wrap{
+    top:42%;
+    transform:translate(-50%,-50%);
+    transform-origin:center center;
+  }
+
+  .controls{
+    bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+    min-width:min(90vw, 760px);
+    max-width:90vw;
+  }
+}
+
+@media (min-width: 1200px){
+  :root{
+    --tank-w:min(74vw, 1100px);
+    --tank-h:min(66vh, 760px);
+  }
+
+  .tank-wrap{
+    top:41%;
   }
 }
 
