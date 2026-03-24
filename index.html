@@ -1427,6 +1427,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
+    f.nativeFacing = 1;
     f.zone = zone;
     f.cruiseSpeed = rand(0.00005, 0.000078);
     f.dartSpeed = rand(0.000105, 0.000155);
@@ -1449,6 +1450,7 @@ body{
     backFishLayer.appendChild(el);
 
     const f = makeFishBase('discus', el, x, y, scale);
+    f.nativeFacing = 1;
     f.cruiseSpeed = rand(0.000032, 0.000046);
     f.dartSpeed = rand(0.000072, 0.000098);
     f.accel = rand(0.0026, 0.0038);
