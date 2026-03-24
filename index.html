@@ -37,7 +37,7 @@
   --particle:rgba(230,245,255,0.18);
   --bubble:rgba(230,247,255,0.45);
 
-  --fish-glow:drop-shadow(0 0 8px rgba(120,220,255,0.15));
+  --fish-glow:drop-shadow(0 0 4px rgba(120,220,255,0.08));
 
   --mode-sat:1;
   --mode-bright:1;
@@ -518,7 +518,7 @@ body{
   -webkit-user-drag:none;
   image-rendering:auto;
   background:transparent;
-  filter:drop-shadow(0 0 8px rgba(120,220,255,0.10));
+  filter:drop-shadow(0 0 3px rgba(120,220,255,0.06));
 }
 
 .tetra{
@@ -1346,8 +1346,8 @@ body{
       turnEase: 0.045,
       wander: rand(0.85, 1.15),
       shyness: rand(0.8, 1.2),
-      idleBob: rand(0.8, 1.2),
-      depthOffset: rand(-0.006, 0.006),
+      idleBob: rand(0.45, 0.75),
+      depthOffset: rand(-0.0035, 0.0035),
       turnMomentum: 0,
       riseCooldown: 0,
       zone: null,
@@ -1850,17 +1850,17 @@ body{
 
       const bodyBob =
         f.state === 'idle'
-          ? Math.sin(f.bobT * 1.5 + f.schoolPhase) * 0.0012 * f.idleBob
-          : Math.sin(f.bobT * 1.8 + f.schoolPhase) * 0.0008 * f.idleBob;
+          ? Math.sin(f.bobT * 1.5 + f.schoolPhase) * 0.00045 * f.idleBob
+          : Math.sin(f.bobT * 1.8 + f.schoolPhase) * 0.00030 * f.idleBob;
 
       const extraSchoolY = f.type === 'tetra'
-        ? Math.sin(t * 0.7 + f.schoolPhase) * 0.0014
+        ? Math.sin(t * 0.7 + f.schoolPhase) * 0.0006
         : 0;
 
       const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
-      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.22 : (f.type === 'barb' ? 0.28 : 0.33));
-      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
-      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
+      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.14 : (f.type === 'barb' ? 0.18 : 0.20));
+      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 2400 : (f.type === 'barb' ? 3000 : 3600)));
+      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -2.2 : (f.type === 'barb' ? -2.6 : -3.2), f.type === 'discus' ? 2.2 : (f.type === 'barb' ? 2.6 : 3.2));
 
       const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
