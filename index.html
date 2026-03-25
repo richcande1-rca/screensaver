@@ -203,7 +203,7 @@ body{
   );
   filter:blur(8px);
   transform-origin:top center;
-  opacity:.7;
+  opacity:.86;
   animation:beamSway 10s ease-in-out infinite alternate;
 }
 
@@ -495,9 +495,9 @@ body{
   width:10px;
   height:10px;
   border-radius:50%;
-  border:1px solid rgba(255,255,255,0.35);
-  background:radial-gradient(circle at 35% 35%, rgba(255,255,255,0.45), rgba(255,255,255,0.05) 55%, transparent 65%);
-  box-shadow:inset -1px -1px 3px rgba(255,255,255,0.18);
+  border:1.4px solid rgba(255,255,255,0.58);
+  background:radial-gradient(circle at 34% 32%, rgba(255,255,255,0.82), rgba(210,242,255,0.20) 44%, rgba(255,255,255,0.06) 62%, transparent 72%);
+  box-shadow:inset -1px -1px 4px rgba(255,255,255,0.30), 0 0 8px rgba(210,242,255,0.22);
   opacity:.7;
 }
 
@@ -1476,7 +1476,7 @@ body{
       y: 1.02 + Math.random() * 0.15,
       vx: (Math.random() - 0.5) * 0.00012,
       vy: 0.00045 + Math.random() * 0.00035,
-      size: isMobile ? 4 + Math.random() * 7 : 5 + Math.random() * 10,
+      size: isMobile ? 5 + Math.random() * 8 : 6.5 + Math.random() * 11.5,
       wobble: Math.random() * 100
     });
   }
@@ -1492,7 +1492,7 @@ body{
       y: 0.804,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00028 + Math.random() * 0.00014,
-      size: isMobile ? 3.5 + Math.random() * 5 : 4 + Math.random() * 7,
+      size: isMobile ? 4.6 + Math.random() * 5.8 : 5.2 + Math.random() * 8.2,
       wobble: Math.random() * 100
     });
   }
@@ -1720,7 +1720,7 @@ body{
       b.el.style.width = `${s}px`;
       b.el.style.height = `${s}px`;
       b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-      b.el.style.opacity = 0.35 + ((1 - b.y) * 0.22);
+      b.el.style.opacity = 0.48 + ((1 - b.y) * 0.28);
     }
 
     for (const b of diverBubbles) {
@@ -1737,7 +1737,7 @@ body{
       b.el.style.width = `${s}px`;
       b.el.style.height = `${s}px`;
       b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-      b.el.style.opacity = 0.42 + ((1 - b.y) * 0.26);
+      b.el.style.opacity = 0.58 + ((1 - b.y) * 0.28);
     }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
