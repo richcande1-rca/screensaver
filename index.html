@@ -1860,9 +1860,9 @@ body{
         : 0;
 
       const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
-      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.22 : (f.type === 'barb' ? 0.28 : 0.33));
+      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.12 : (f.type === 'barb' ? 0.15 : 0.18));
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
-      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
+      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -3 : (f.type === 'barb' ? -3.5 : -4.5), f.type === 'discus' ? 3 : (f.type === 'barb' ? 3.5 : 4.5));
 
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
