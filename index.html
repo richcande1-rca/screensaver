@@ -1092,7 +1092,10 @@ body{
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
   const BARB_COUNT = 3;
-  const TETRA_SPRITES = ['./tetra1.png', './tetra2.png'];
+  const TETRA_SPRITES = [
+    { src: './tetra1.png', facing: 1 },
+    { src: './tetra2.png', facing: -1 }
+  ];
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -1353,7 +1356,10 @@ body{
     return f;
   }
 
-  function createTetra(x, y, scale = 1, spriteSrc = pick(TETRA_SPRITES)) {
+  function createTetra(x, y, scale = 1, sprite = pick(TETRA_SPRITES)) {
+    const spriteSrc = typeof sprite === 'string' ? sprite : sprite.src;
+    const nativeFacing = typeof sprite === 'string' ? 1 : (sprite.facing ?? 1);
+
     const el = makeEl(`
       <div class="fish tetra">
         <img class="fish-sprite" src="${spriteSrc}" alt="">
@@ -1363,6 +1369,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('tetra', el, x, y, scale);
+    f.nativeFacing = nativeFacing;
     f.cruiseSpeed = rand(0.000075, 0.00011);
     f.dartSpeed = rand(0.00016, 0.00024);
     f.accel = rand(0.0042, 0.0068);
@@ -1383,6 +1390,7 @@ body{
     fishLayer.appendChild(el);
 
     const f = makeFishBase('barb', el, x, y, scale);
+    f.nativeFacing = 1;
     f.cruiseSpeed = rand(0.000055, 0.000082);
     f.dartSpeed = rand(0.00012, 0.00018);
     f.accel = rand(0.0038, 0.0059);
@@ -1856,7 +1864,7 @@ body{
       const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
       const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -5 : (f.type === 'barb' ? -6 : -8), f.type === 'discus' ? 5 : (f.type === 'barb' ? 6 : 8));
 
-      const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
+      const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
       f.el.style.transform =
