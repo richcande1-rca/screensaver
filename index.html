@@ -961,6 +961,35 @@ body{
   }
 }
 
+
+@media (min-width: 801px){
+  :root{
+    --tank-w:min(52vw, 640px);
+    --tank-h:min(76vh, 840px);
+  }
+
+  .tank-wrap{
+    top:44%;
+  }
+
+  .controls{
+    bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+    min-width:min(90vw, 760px);
+    max-width:90vw;
+  }
+}
+
+@media (min-width: 1200px){
+  :root{
+    --tank-w:min(48vw, 680px);
+    --tank-h:min(78vh, 900px);
+  }
+
+  .tank-wrap{
+    top:43.5%;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1055,6 +1084,7 @@ body{
   const diverBubbles = [];
 
   const FISH_SPEED = isMobile ? 3.6 : 3.95;
+  const FISH_SIZE_MULTIPLIER = 2;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 10 : 18;
   const DIVER_BUBBLE_COUNT = isMobile ? 6 : 10;
@@ -1828,8 +1858,9 @@ body{
 
       const spriteFacing = (f.type === 'angel' || f.type === 'discus' || f.type === 'barb') ? -1 : 1;
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
+      const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
       f.el.style.transform =
-        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * f.scale}, ${f.scale}) rotate(${finalRot}deg)`;
+        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
     }
 
     requestAnimationFrame(animate);
