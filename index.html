@@ -965,11 +965,12 @@ body{
 @media (min-width: 801px){
   :root{
     --tank-w:min(52vw, 640px);
-    --tank-h:min(74vh, 820px);
+    --tank-h:min(76vh, 840px);
   }
 
   .tank-wrap{
-    top:43.2%;
+    top:44.6%;
+    transform:translate(-50%,-50%);
   }
 
   .controls{
@@ -982,11 +983,12 @@ body{
 @media (min-width: 1200px){
   :root{
     --tank-w:min(48vw, 680px);
-    --tank-h:min(76vh, 860px);
+    --tank-h:min(78vh, 880px);
   }
 
   .tank-wrap{
-    top:42.7%;
+    top:44.2%;
+    transform:translate(-50%,-50%);
   }
 }
 
@@ -1376,7 +1378,7 @@ body{
     f.drag = rand(0.992, 0.9955);
     f.turnEase = rand(0.042, 0.065);
     f.homeX = clamp(x + rand(-0.18, 0.18), 0.08, 0.92);
-    f.homeY = clamp(y + rand(-0.05, 0.05), 0.56, 0.84);
+    f.homeY = clamp(y + rand(-0.05, 0.05), 0.64, 0.90);
     fish.push(f);
   }
 
@@ -1511,25 +1513,25 @@ body{
     }
 
     const tetraSeedsDesktop = [
-      [0.14, 0.66, 0.86],
-      [0.24, 0.70, 0.82],
-      [0.36, 0.68, 0.88],
-      [0.50, 0.73, 0.84],
-      [0.64, 0.69, 0.82],
-      [0.76, 0.72, 0.86],
-      [0.87, 0.67, 0.84],
-      [0.43, 0.77, 0.78]
+      [0.14, 0.74, 0.86],
+      [0.24, 0.79, 0.82],
+      [0.36, 0.76, 0.88],
+      [0.50, 0.81, 0.84],
+      [0.64, 0.77, 0.82],
+      [0.76, 0.80, 0.86],
+      [0.87, 0.75, 0.84],
+      [0.43, 0.84, 0.78]
     ];
 
     const tetraSeedsMobile = [
-      [0.16, 0.68, 0.86],
-      [0.28, 0.72, 0.82],
-      [0.40, 0.70, 0.88],
-      [0.52, 0.74, 0.84],
-      [0.64, 0.71, 0.82],
-      [0.76, 0.74, 0.84],
-      [0.24, 0.77, 0.78],
-      [0.80, 0.78, 0.80]
+      [0.16, 0.76, 0.86],
+      [0.28, 0.80, 0.82],
+      [0.40, 0.78, 0.88],
+      [0.52, 0.82, 0.84],
+      [0.64, 0.79, 0.82],
+      [0.76, 0.82, 0.84],
+      [0.24, 0.85, 0.78],
+      [0.80, 0.86, 0.80]
     ];
 
     const seeds = isMobile ? tetraSeedsMobile : tetraSeedsDesktop;
@@ -1742,7 +1744,7 @@ body{
 
     const tetraList = fish.filter(f => f.type === 'tetra');
     let tetraCenterX = 0.5;
-    let tetraCenterY = 0.70;
+    let tetraCenterY = 0.78;
 
     if (tetraList.length) {
       tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
