@@ -1118,7 +1118,7 @@ html.perf-lite .diver-ornament{
       </label>
       <label class="sliderWrap" for="bubbleIntensity">
         <span>Bubbles</span>
-        <input type="range" id="bubbleIntensity" min="0" max="200" value="100" />
+        <input type="range" id="bubbleIntensity" min="0" max="400" value="100" />
         <span id="bubbleIntensityValue">100%</span>
       </label>
     </div>
@@ -1155,8 +1155,8 @@ html.perf-lite .diver-ornament{
   const FISH_SPEED = isMobile ? 3.6 : 4.05;
   const FISH_SIZE_MULTIPLIER = 2;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
-  const BUBBLE_COUNT = isMobile ? 20 : 36;
-  const DIVER_BUBBLE_COUNT = isMobile ? 12 : 20;
+  const BUBBLE_COUNT = isMobile ? 40 : 72;
+  const DIVER_BUBBLE_COUNT = isMobile ? 24 : 40;
   const TETRA_COUNT = 8;
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
@@ -1257,7 +1257,7 @@ html.perf-lite .diver-ornament{
 
   function applyBubbleIntensity(value) {
     const n = clamp(Number(value) || 0, 0, 100);
-    bubbleIntensityScale = n / 200;
+    bubbleIntensityScale = n / 400;
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
