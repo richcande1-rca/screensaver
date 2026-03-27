@@ -1851,6 +1851,15 @@ html.perf-lite .diver-ornament{
     if (updateBubblesThisFrame) {
       const bubbleDt = perfLite ? dt * 2 : dt;
       for (const b of bubbles) {
+        const isActive = b.intensityRank <= bubbleIntensityScale;
+
+        if (!isActive) {
+          b.y = 1.05 + Math.random() * 0.15;
+          b.x = 0.015 + Math.random() * 0.03;
+          b.el.style.opacity = '0';
+          continue;
+        }
+
         b.wobble += bubbleDt * 0.0016;
         b.y -= b.vy * bubbleDt;
         b.x += b.vx * bubbleDt + Math.sin(b.wobble) * 0.00010;
@@ -1860,20 +1869,23 @@ html.perf-lite .diver-ornament{
           b.x = 0.015 + Math.random() * 0.03;
         }
 
-        const visibility = clamp((bubbleIntensityScale - b.intensityRank + 0.22) / 0.22, 0, 1);
-        if (visibility <= 0.001) {
-          b.el.style.opacity = '0';
-          continue;
-        }
-
         const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
         b.el.style.width = `${s}px`;
         b.el.style.height = `${s}px`;
         b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-        b.el.style.opacity = ((0.48 + ((1 - b.y) * 0.28)) * visibility).toFixed(3);
+        b.el.style.opacity = (0.48 + ((1 - b.y) * 0.28)).toFixed(3);
       }
 
       for (const b of diverBubbles) {
+        const isActive = b.intensityRank <= bubbleIntensityScale;
+
+        if (!isActive) {
+          b.x = 0.535 + (Math.random() - 0.5) * 0.010;
+          b.y = 0.812 + Math.random() * 0.010;
+          b.el.style.opacity = '0';
+          continue;
+        }
+
         b.wobble += bubbleDt * 0.0011;
         b.y -= b.vy * bubbleDt;
         b.x += b.vx * bubbleDt + Math.sin(b.wobble * 1.15) * 0.00008;
@@ -1883,17 +1895,11 @@ html.perf-lite .diver-ornament{
           b.y = 0.812 + Math.random() * 0.010;
         }
 
-        const visibility = clamp((bubbleIntensityScale - b.intensityRank + 0.26) / 0.26, 0, 1);
-        if (visibility <= 0.001) {
-          b.el.style.opacity = '0';
-          continue;
-        }
-
         const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
         b.el.style.width = `${s}px`;
         b.el.style.height = `${s}px`;
         b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-        b.el.style.opacity = ((0.58 + ((1 - b.y) * 0.28)) * visibility).toFixed(3);
+        b.el.style.opacity = (0.58 + ((1 - b.y) * 0.28)).toFixed(3);
       }
     }
 
