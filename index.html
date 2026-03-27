@@ -1221,24 +1221,19 @@ html.perf-lite .diver-ornament{
       <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
     </div>
     <div class="control-row">
-      <label class="sliderWrap" for="lightIntensity">
-        <span>Light</span>
-        <input type="range" id="lightIntensity" min="0" max="160" value="100" />
-        <span id="lightIntensityValue">100%</span>
-      </label>
       <label class="sliderWrap" for="cycleSpeed">
         <span>Cycle</span>
-        <input type="range" id="cycleSpeed" min="0" max="200" value="100" />
+        <input type="range" id="cycleSpeed" min="0" max="100" value="50" />
         <span id="cycleSpeedValue">100%</span>
       </label>
       <label class="sliderWrap" for="swimSpeed">
         <span>Speed</span>
-        <input type="range" id="swimSpeed" min="0" max="100" value="100" />
+        <input type="range" id="swimSpeed" min="0" max="100" value="20" />
         <span id="swimSpeedValue">100%</span>
       </label>
       <label class="sliderWrap" for="bubbleIntensity">
         <span>Bubbles</span>
-        <input type="range" id="bubbleIntensity" min="0" max="400" value="100" />
+        <input type="range" id="bubbleIntensity" min="0" max="100" value="25" />
         <span id="bubbleIntensityValue">100%</span>
       </label>
     </div>
@@ -1255,8 +1250,6 @@ html.perf-lite .diver-ornament{
   const bubblesEl = document.getElementById('bubbles');
   const titleEl = document.getElementById('appTitle');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
-  const lightIntensity = document.getElementById('lightIntensity');
-  const lightIntensityValue = document.getElementById('lightIntensityValue');
   const cycleSpeed = document.getElementById('cycleSpeed');
   const cycleSpeedValue = document.getElementById('cycleSpeedValue');
   const swimSpeed = document.getElementById('swimSpeed');
@@ -1379,7 +1372,7 @@ html.perf-lite .diver-ornament{
   }
 
   function applyCycleSpeed(value) {
-    const n = clamp(Number(value) || 0, 0, 200);
+    const n = clamp(Number(value) || 0, 0, 100);
     if (cycleSpeedValue) cycleSpeedValue.textContent = `${Math.round(n)}%`;
     const root = rootEl.style;
     if (n <= 0) {
@@ -1388,17 +1381,16 @@ html.perf-lite .diver-ornament{
       root.setProperty('--wheel-play', 'paused');
       return;
     }
-    const duration = 11 - (n / 200) * 9;
+    const duration = 11 - (n / 100) * 9;
     const sweepDuration = duration * 0.72;
     root.setProperty('--wheel-speed', `${duration.toFixed(2)}s`);
     root.setProperty('--wheel-sweep-speed', `${sweepDuration.toFixed(2)}s`);
     root.setProperty('--wheel-play', 'running');
   }
 
-  function applyLightIntensity(value) {
-    const n = clamp(Number(value) || 100, 0, 160);
+  function applyFixedLightIntensity() {
+    const n = 20;
     rootEl.style.setProperty('--light-intensity', (n / 50).toFixed(2));
-    if (lightIntensityValue) lightIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
   function applySwimSpeed(value) {
@@ -1408,8 +1400,8 @@ html.perf-lite .diver-ornament{
   }
 
   function applyBubbleIntensity(value) {
-    const n = clamp(Number(value) || 0, 0, 400);
-    bubbleIntensityScale = n / 400;
+    const n = clamp(Number(value) || 0, 0, 100);
+    bubbleIntensityScale = n / 100;
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
@@ -1495,10 +1487,10 @@ html.perf-lite .diver-ornament{
   }
 
   function applyCyclePalette(timeMs) {
-    const speed = clamp(Number(cycleSpeed?.value) || 100, 0, 200);
+    const speed = clamp(Number(cycleSpeed?.value) || 50, 0, 100);
 
     if (speed > 0) {
-      const duration = 34 - (speed / 200) * 28;
+      const duration = 34 - (speed / 100) * 28;
       cyclePhase = ((timeMs * 0.001) / duration) % 1;
     }
 
@@ -2284,10 +2276,6 @@ html.perf-lite .diver-ornament{
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
 
-  lightIntensity.addEventListener('input', (e) => {
-    applyLightIntensity(e.target.value);
-  });
-
   cycleSpeed.addEventListener('input', (e) => {
     applyCycleSpeed(e.target.value);
     if (currentMode === 'cycle') applyCyclePalette(performance.now());
@@ -2307,7 +2295,7 @@ html.perf-lite .diver-ornament{
   seedScene();
   refreshTankRect();
   setMode('day');
-  applyLightIntensity(lightIntensity.value);
+  applyFixedLightIntensity();
   applyCycleSpeed(cycleSpeed.value);
   applySwimSpeed(swimSpeed.value);
   applyBubbleIntensity(bubbleIntensity.value);
