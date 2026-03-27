@@ -1110,59 +1110,48 @@ html.perf-lite .diver-ornament{
 
 
 
-/* Global fullscreen tank */
-.stage{
+.stage:fullscreen,
+.stage:-webkit-full-screen{
   width:100vw;
-  height:100dvh;
-  min-height:100svh;
+  height:100vh;
+  background:#000;
 }
 
-.tank-wrap{
-  position:absolute;
-  inset:0;
-  left:auto;
-  top:auto;
-  width:100%;
-  height:100%;
+.stage:fullscreen .room-vignette,
+.stage:-webkit-full-screen .room-vignette{
+  opacity:0;
+}
+
+.stage:fullscreen .tank-wrap,
+.stage:-webkit-full-screen .tank-wrap{
+  left:0;
+  top:0;
   transform:none;
+  width:100vw;
+  height:100vh;
   filter:none;
 }
 
-.tank{
+.stage:fullscreen .tank,
+.stage:-webkit-full-screen .tank{
   border-radius:0;
   border:none;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    inset 0 -30px 80px rgba(0,0,0,0.25),
-    inset 24px 0 50px rgba(0,0,0,0.12),
-    inset -24px 0 50px rgba(0,0,0,0.12);
+  box-shadow:none;
 }
 
-body.controls-collapsed .tank-wrap,
-body.controls-open .tank-wrap{
-  top:auto;
+.stage:fullscreen .title,
+.stage:-webkit-full-screen .title{
+  top:max(12px, env(safe-area-inset-top, 0px));
 }
 
-@media (max-width: 800px),
-       (max-width: 800px) and (max-height: 760px),
-       (min-width: 801px) and (max-height: 900px),
-       (min-width: 1100px) and (max-height: 780px),
-       (min-width: 801px),
-       (min-width: 1200px){
-  .tank-wrap{
-    inset:0;
-    left:auto;
-    top:auto;
-    width:100%;
-    height:100%;
-    transform:none;
-  }
+.stage:fullscreen .controls,
+.stage:-webkit-full-screen .controls{
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+}
 
-  body.controls-collapsed .tank-wrap,
-  body.controls-open .tank-wrap{
-    top:auto;
-    transform:none;
-  }
+.stage:fullscreen .controlsToggle,
+.stage:-webkit-full-screen .controlsToggle{
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 </style>
@@ -1222,6 +1211,7 @@ body.controls-open .tank-wrap{
       <button class="modeBtn" data-mode="emerald">Emerald</button>
       <button class="modeBtn" data-mode="rose">Rose</button>
       <button class="modeBtn" data-mode="cycle">Cycle</button>
+      <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
     </div>
     <div class="control-row">
       <label class="sliderWrap" for="lightIntensity">
@@ -1251,6 +1241,7 @@ body.controls-open .tank-wrap{
 <script>
 (() => {
   const tank = document.getElementById('tank');
+  const stage = document.getElementById('stage');
   const fishLayer = document.getElementById('fishLayer');
   const backFishLayer = document.getElementById('backFishLayer');
   const particlesEl = document.getElementById('particles');
@@ -1267,6 +1258,7 @@ body.controls-open .tank-wrap{
   const bubbleIntensityValue = document.getElementById('bubbleIntensityValue');
   const controlsToggle = document.getElementById('controlsToggle');
   const controlsPanel = document.getElementById('controlsPanel');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
   const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
@@ -1414,12 +1406,56 @@ body.controls-open .tank-wrap{
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
+  function getFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+  }
+
+  async function enterFullscreen() {
+    const el = stage || document.documentElement;
+    try {
+      if (el.requestFullscreen) return await el.requestFullscreen();
+      if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+      if (el.msRequestFullscreen) return el.msRequestFullscreen();
+    } catch (err) {}
+  }
+
+  async function exitFullscreen() {
+    try {
+      if (document.exitFullscreen) return await document.exitFullscreen();
+      if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+      if (document.msExitFullscreen) return document.msExitFullscreen();
+    } catch (err) {}
+  }
+
+  function syncFullscreenUI() {
+    const active = !!getFullscreenElement();
+    if (fullscreenBtn) {
+      fullscreenBtn.classList.toggle('active', active);
+      fullscreenBtn.setAttribute('aria-pressed', String(active));
+      fullscreenBtn.textContent = active ? 'Exit Fullscreen' : 'Fullscreen';
+    }
+    requestAnimationFrame(refreshTankRect);
+    setTimeout(refreshTankRect, 120);
+  }
+
   if (controlsToggle) {
     controlsToggle.addEventListener('click', () => {
       const open = document.body.classList.contains('controls-collapsed');
       setControlsOpen(open);
     });
   }
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', async () => {
+      if (getFullscreenElement()) await exitFullscreen();
+      else await enterFullscreen();
+      syncFullscreenUI();
+    });
+  }
+
+  document.addEventListener('fullscreenchange', syncFullscreenUI);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
+  document.addEventListener('msfullscreenchange', syncFullscreenUI);
 
   let currentMode = 'day';
   let cyclePhase = 0;
@@ -2260,6 +2296,7 @@ body.controls-open .tank-wrap{
 
   setPerfLite(prefersReducedMotion);
   setControlsOpen(getInitialControlsOpen());
+  syncFullscreenUI();
   seedScene();
   refreshTankRect();
   setMode('day');
