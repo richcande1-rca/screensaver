@@ -1116,6 +1116,11 @@ html.perf-lite .diver-ornament{
         <input type="range" id="swimSpeed" min="0" max="100" value="100" />
         <span id="swimSpeedValue">100%</span>
       </label>
+      <label class="sliderWrap" for="bubbleIntensity">
+        <span>Bubbles</span>
+        <input type="range" id="bubbleIntensity" min="0" max="100" value="100" />
+        <span id="bubbleIntensityValue">100%</span>
+      </label>
     </div>
   </div>
 </div>
@@ -1135,6 +1140,8 @@ html.perf-lite .diver-ornament{
   const cycleSpeedValue = document.getElementById('cycleSpeedValue');
   const swimSpeed = document.getElementById('swimSpeed');
   const swimSpeedValue = document.getElementById('swimSpeedValue');
+  const bubbleIntensity = document.getElementById('bubbleIntensity');
+  const bubbleIntensityValue = document.getElementById('bubbleIntensityValue');
   const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
@@ -1248,9 +1255,16 @@ html.perf-lite .diver-ornament{
     if (swimSpeedValue) swimSpeedValue.textContent = `${Math.round(n)}%`;
   }
 
+  function applyBubbleIntensity(value) {
+    const n = clamp(Number(value) || 0, 0, 100);
+    bubbleIntensityScale = n / 100;
+    if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
+  }
+
   let currentMode = 'day';
   let cyclePhase = 0;
   let swimSpeedScale = 1;
+  let bubbleIntensityScale = 1;
 
   function hslToRgb(h, s, l) {
     const hue = ((h % 360) + 360) % 360;
@@ -1577,7 +1591,8 @@ html.perf-lite .diver-ornament{
       vx: (Math.random() - 0.5) * 0.00012,
       vy: 0.00045 + Math.random() * 0.00035,
       size: isMobile ? 5 + Math.random() * 8 : 6.5 + Math.random() * 11.5,
-      wobble: Math.random() * 100
+      wobble: Math.random() * 100,
+      intensityRank: Math.random()
     });
   }
 
@@ -1593,7 +1608,8 @@ html.perf-lite .diver-ornament{
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00028 + Math.random() * 0.00014,
       size: isMobile ? 4.6 + Math.random() * 5.8 : 5.2 + Math.random() * 8.2,
-      wobble: Math.random() * 100
+      wobble: Math.random() * 100,
+      intensityRank: Math.random()
     });
   }
 
@@ -1844,11 +1860,17 @@ html.perf-lite .diver-ornament{
           b.x = 0.015 + Math.random() * 0.03;
         }
 
+        const visibility = clamp((bubbleIntensityScale - b.intensityRank + 0.22) / 0.22, 0, 1);
+        if (visibility <= 0.001) {
+          b.el.style.opacity = '0';
+          continue;
+        }
+
         const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
         b.el.style.width = `${s}px`;
         b.el.style.height = `${s}px`;
         b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-        b.el.style.opacity = 0.48 + ((1 - b.y) * 0.28);
+        b.el.style.opacity = ((0.48 + ((1 - b.y) * 0.28)) * visibility).toFixed(3);
       }
 
       for (const b of diverBubbles) {
@@ -1861,11 +1883,17 @@ html.perf-lite .diver-ornament{
           b.y = 0.812 + Math.random() * 0.010;
         }
 
+        const visibility = clamp((bubbleIntensityScale - b.intensityRank + 0.26) / 0.26, 0, 1);
+        if (visibility <= 0.001) {
+          b.el.style.opacity = '0';
+          continue;
+        }
+
         const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
         b.el.style.width = `${s}px`;
         b.el.style.height = `${s}px`;
         b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-        b.el.style.opacity = 0.58 + ((1 - b.y) * 0.28);
+        b.el.style.opacity = ((0.58 + ((1 - b.y) * 0.28)) * visibility).toFixed(3);
       }
     }
 
@@ -2060,6 +2088,10 @@ html.perf-lite .diver-ornament{
     applySwimSpeed(e.target.value);
   });
 
+  bubbleIntensity.addEventListener('input', (e) => {
+    applyBubbleIntensity(e.target.value);
+  });
+
   setPerfLite(prefersReducedMotion);
   seedScene();
   refreshTankRect();
@@ -2067,6 +2099,7 @@ html.perf-lite .diver-ornament{
   applyLightIntensity(lightIntensity.value);
   applyCycleSpeed(cycleSpeed.value);
   applySwimSpeed(swimSpeed.value);
+  applyBubbleIntensity(bubbleIntensity.value);
   requestAnimationFrame(animate);
 })();
 </script>
