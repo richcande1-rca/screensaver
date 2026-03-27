@@ -163,7 +163,6 @@ body{
 
 .photo-bg{
   z-index:1;
-  overflow:hidden;
   background:
     linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
     url("./aquarium-bg.png") center center / cover no-repeat;
@@ -174,15 +173,6 @@ body{
     blur(var(--photo-blur));
   transform:scale(1.03);
   opacity:.92;
-}
-
-.photo-bg::before,
-.photo-bg::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  opacity:0;
 }
 
 .back-haze{
@@ -1085,6 +1075,13 @@ html.perf-lite .diver-ornament{
 
 
 @media (min-width: 801px){
+  .photo-bg{
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
+      url("./BG2.png") center center / cover no-repeat,
+      url("./aquarium-bg.png") center center / cover no-repeat;
+  }
+
   :root{
     --tank-w:min(52vw, 640px);
     --tank-h:min(76vh, 840px);
@@ -1162,37 +1159,6 @@ html.perf-lite .diver-ornament{
 .stage:fullscreen .controlsToggle,
 .stage:-webkit-full-screen .controlsToggle{
   bottom:calc(12px + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 801px) and (orientation: landscape){
-  .stage:fullscreen .photo-bg,
-  .stage:-webkit-full-screen .photo-bg{
-    background:none;
-    filter:none;
-    transform:none;
-    opacity:1;
-  }
-
-  .stage:fullscreen .photo-bg::before,
-  .stage:-webkit-full-screen .photo-bg::before{
-    opacity:1;
-    inset:-2%;
-    z-index:0;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.34)),
-      url("./aquarium-bg.png") center center / cover no-repeat;
-    filter:blur(14px) saturate(.78) brightness(.52) contrast(1.0);
-    transform:scale(1.05);
-  }
-
-  .stage:fullscreen .photo-bg::after,
-  .stage:-webkit-full-screen .photo-bg::after{
-    opacity:1;
-    z-index:1;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.22)),
-      url("./aquarium-bg.png") center bottom / contain no-repeat;
-  }
 }
 
 </style>
