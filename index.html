@@ -561,6 +561,45 @@ body{
   backdrop-filter:blur(var(--controls-blur, 8px));
   box-shadow:0 10px 30px rgba(0,0,0,0.35);
   pointer-events:auto;
+  transition:opacity .22s ease, transform .22s ease;
+}
+
+.controlsToggle{
+  position:fixed;
+  right:max(12px, env(safe-area-inset-right, 0px));
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index:1002;
+  appearance:none;
+  border:1px solid rgba(191,230,255,0.24);
+  background:rgba(10,14,18,0.72);
+  color:var(--ui-text);
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  backdrop-filter:blur(var(--controls-blur, 8px));
+  box-shadow:0 8px 24px rgba(0,0,0,0.28);
+  cursor:pointer;
+  touch-action:manipulation;
+  transition:background .18s ease, transform .18s ease, border-color .18s ease, opacity .18s ease;
+}
+
+.controlsToggle:hover{
+  background:rgba(22,28,38,0.88);
+  transform:translateY(-1px);
+}
+
+.controlsToggle.is-open{
+  background:rgba(120,210,255,0.16);
+  border-color:rgba(150,230,255,0.28);
+}
+
+body.controls-collapsed .controls{
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(-50%) translateY(12px);
 }
 
 .control-row{
@@ -887,6 +926,23 @@ html.perf-lite .diver-ornament{
     gap:6px;
     min-width:min(96vw, 620px);
     max-width:96vw;
+    max-height:min(40vh, 310px);
+    overflow:auto;
+    overscroll-behavior:contain;
+  }
+
+  .controlsToggle{
+    padding:9px 13px;
+    font-size:11px;
+    letter-spacing:.09em;
+  }
+
+  body.controls-collapsed .tank-wrap{
+    top:45.2%;
+  }
+
+  body.controls-open .tank-wrap{
+    top:39.5%;
   }
 
   .control-row{
@@ -940,8 +996,12 @@ html.perf-lite .diver-ornament{
     --tank-h:min(58vh, 470px);
   }
 
-  .tank-wrap{
-    top:39.5%;
+  body.controls-collapsed .tank-wrap{
+    top:43%;
+  }
+
+  body.controls-open .tank-wrap{
+    top:37.8%;
   }
 }
 
@@ -1030,6 +1090,10 @@ html.perf-lite .diver-ornament{
     min-width:min(90vw, 760px);
     max-width:90vw;
   }
+
+  .controlsToggle{
+    bottom:calc(14px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (min-width: 1200px){
@@ -1046,7 +1110,7 @@ html.perf-lite .diver-ornament{
 
 </style>
 </head>
-<body>
+<body class="controls-collapsed">
 <div class="stage" id="stage">
   <div class="room-vignette"></div>
 
@@ -1090,7 +1154,9 @@ html.perf-lite .diver-ornament{
 
   <div class="title" id="appTitle">Ambient Aquarium</div>
 
-  <div class="controls">
+  <button class="controlsToggle" id="controlsToggle" type="button" aria-expanded="false" aria-controls="controlsPanel">Show Controls</button>
+
+  <div class="controls" id="controlsPanel" aria-hidden="true">
     <div class="control-row">
       <button class="modeBtn active" data-mode="day">Day</button>
       <button class="modeBtn" data-mode="moon">Moon</button>
@@ -1142,9 +1208,39 @@ html.perf-lite .diver-ornament{
   const swimSpeedValue = document.getElementById('swimSpeedValue');
   const bubbleIntensity = document.getElementById('bubbleIntensity');
   const bubbleIntensityValue = document.getElementById('bubbleIntensityValue');
+  const controlsToggle = document.getElementById('controlsToggle');
+  const controlsPanel = document.getElementById('controlsPanel');
   const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
+
+  const CONTROLS_STORAGE_KEY = 'ambientAquarium.controlsOpen.v2';
+
+  function setControlsOpen(open) {
+    document.body.classList.toggle('controls-open', open);
+    document.body.classList.toggle('controls-collapsed', !open);
+    if (controlsToggle) {
+      controlsToggle.classList.toggle('is-open', open);
+      controlsToggle.setAttribute('aria-expanded', String(open));
+      controlsToggle.textContent = open ? 'Hide Controls' : 'Show Controls';
+    }
+    if (controlsPanel) {
+      controlsPanel.setAttribute('aria-hidden', String(!open));
+    }
+    try {
+      localStorage.setItem(CONTROLS_STORAGE_KEY, open ? '1' : '0');
+    } catch (err) {}
+  }
+
+  function getInitialControlsOpen() {
+    try {
+      const stored = localStorage.getItem(CONTROLS_STORAGE_KEY);
+      if (stored === '1') return true;
+      if (stored === '0') return false;
+    } catch (err) {}
+    return false;
+  }
+
 
   const mouse = { x: 0.5, y: 0.5, inside: false };
   const fish = [];
@@ -1259,6 +1355,13 @@ html.perf-lite .diver-ornament{
     const n = clamp(Number(value) || 0, 0, 400);
     bubbleIntensityScale = n / 400;
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
+  }
+
+  if (controlsToggle) {
+    controlsToggle.addEventListener('click', () => {
+      const open = document.body.classList.contains('controls-collapsed');
+      setControlsOpen(open);
+    });
   }
 
   let currentMode = 'day';
@@ -2099,6 +2202,7 @@ html.perf-lite .diver-ornament{
   });
 
   setPerfLite(prefersReducedMotion);
+  setControlsOpen(getInitialControlsOpen());
   seedScene();
   refreshTankRect();
   setMode('day');
