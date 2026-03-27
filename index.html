@@ -1256,7 +1256,7 @@ html.perf-lite .diver-ornament{
   }
 
   function applyBubbleIntensity(value) {
-    const n = clamp(Number(value) || 0, 0, 100);
+    const n = clamp(Number(value) || 0, 0, 400);
     bubbleIntensityScale = n / 400;
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
   }
