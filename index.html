@@ -1111,6 +1111,11 @@ html.perf-lite .diver-ornament{
         <input type="range" id="cycleSpeed" min="0" max="200" value="100" />
         <span id="cycleSpeedValue">100%</span>
       </label>
+      <label class="sliderWrap" for="swimSpeed">
+        <span>Speed</span>
+        <input type="range" id="swimSpeed" min="0" max="100" value="100" />
+        <span id="swimSpeedValue">100%</span>
+      </label>
     </div>
   </div>
 </div>
@@ -1128,6 +1133,8 @@ html.perf-lite .diver-ornament{
   const lightIntensityValue = document.getElementById('lightIntensityValue');
   const cycleSpeed = document.getElementById('cycleSpeed');
   const cycleSpeedValue = document.getElementById('cycleSpeedValue');
+  const swimSpeed = document.getElementById('swimSpeed');
+  const swimSpeedValue = document.getElementById('swimSpeedValue');
   const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
@@ -1235,8 +1242,15 @@ html.perf-lite .diver-ornament{
     if (lightIntensityValue) lightIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
+  function applySwimSpeed(value) {
+    const n = clamp(Number(value) || 0, 0, 100);
+    swimSpeedScale = n / 100;
+    if (swimSpeedValue) swimSpeedValue.textContent = `${Math.round(n)}%`;
+  }
+
   let currentMode = 'day';
   let cyclePhase = 0;
+  let swimSpeedScale = 1;
 
   function hslToRgb(h, s, l) {
     const hue = ((h % 360) + 360) % 360;
@@ -1913,8 +1927,9 @@ html.perf-lite .diver-ornament{
       if (f.state === 'dart') desiredSpeed = f.dartSpeed;
 
       const motionBoost = perfLite && !isMobile ? 1.42 : 1;
-      const desiredVX = (tx / dist) * desiredSpeed * FISH_SPEED * motionBoost + repelX;
-      const desiredVY = (ty / dist) * desiredSpeed * FISH_SPEED * motionBoost + repelY;
+      const fishSpeedNow = FISH_SPEED * motionBoost * swimSpeedScale;
+      const desiredVX = (tx / dist) * desiredSpeed * fishSpeedNow + repelX;
+      const desiredVY = (ty / dist) * desiredSpeed * fishSpeedNow + repelY;
 
       const accelT = 1 - Math.pow(1 - f.accel, frameScale);
       f.vx = lerp(f.vx, desiredVX, accelT);
@@ -2041,12 +2056,17 @@ html.perf-lite .diver-ornament{
     if (currentMode === 'cycle') applyCyclePalette(performance.now());
   });
 
+  swimSpeed.addEventListener('input', (e) => {
+    applySwimSpeed(e.target.value);
+  });
+
   setPerfLite(prefersReducedMotion);
   seedScene();
   refreshTankRect();
   setMode('day');
   applyLightIntensity(lightIntensity.value);
   applyCycleSpeed(cycleSpeed.value);
+  applySwimSpeed(swimSpeed.value);
   requestAnimationFrame(animate);
 })();
 </script>
