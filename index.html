@@ -202,7 +202,7 @@ body{
     rgba(var(--beam-rgb), calc(var(--beam-alpha-hi) * var(--light-intensity))),
     rgba(var(--beam-rgb), calc(var(--beam-alpha-lo) * var(--light-intensity)))
   );
-  filter:blur(8px);
+  filter:blur(var(--beam-blur, 8px));
   transform-origin:top center;
   opacity:.86;
   animation:beamSway 10s ease-in-out infinite alternate;
@@ -247,7 +247,7 @@ body{
       rgba(255,255,255,0.10) 48px,
       rgba(255,255,255,0.00) 72px
     );
-  filter:blur(1.5px);
+  filter:blur(var(--shimmer-blur, 1.5px));
   transform:translateX(0) translateY(0) scale(1.04);
   animation:topShimmerMove 4.8s linear infinite;
 }
@@ -279,7 +279,7 @@ body{
     rgba(214,96,255,0.94) 322deg,
     rgba(255,82,112,0.95) 360deg
   );
-  filter:blur(46px) saturate(1.15) brightness(1.06);
+  filter:blur(var(--wheel-core-blur, 46px)) saturate(1.15) brightness(1.06);
   transform-origin:50% 42%;
   animation:wheelSpin var(--wheel-speed) linear infinite;
   animation-play-state:var(--wheel-play);
@@ -302,7 +302,7 @@ body{
     rgba(255,92,120,0.00) 100%
   );
   background-size:220% 100%;
-  filter:blur(20px) saturate(1.12) brightness(1.05);
+  filter:blur(var(--wheel-sweep-blur, 20px)) saturate(1.12) brightness(1.05);
   animation:wheelSweep var(--wheel-sweep-speed) linear infinite;
   animation-play-state:var(--wheel-play);
 }
@@ -505,7 +505,7 @@ body{
 .fish{
   position:absolute;
   will-change:transform;
-  filter:var(--fish-glow);
+  filter:var(--fish-filter, var(--fish-glow));
 }
 
 .fish-sprite{
@@ -519,7 +519,7 @@ body{
   -webkit-user-drag:none;
   image-rendering:auto;
   background:transparent;
-  filter:drop-shadow(0 0 8px rgba(120,220,255,0.10));
+  filter:var(--fish-sprite-filter, drop-shadow(0 0 8px rgba(120,220,255,0.10)));
 }
 
 .tetra{
@@ -558,7 +558,7 @@ body{
   border:1px solid var(--ui-border);
   border-radius:18px;
   background:var(--ui-bg);
-  backdrop-filter:blur(8px);
+  backdrop-filter:blur(var(--controls-blur, 8px));
   box-shadow:0 10px 30px rgba(0,0,0,0.35);
   pointer-events:auto;
 }
@@ -686,7 +686,7 @@ body{
   padding:8px 12px;
   border-radius:999px;
   border:1px solid rgba(191,230,255,0.50);
-  backdrop-filter:blur(6px);
+  backdrop-filter:blur(var(--title-blur, 6px));
   -webkit-text-stroke:.85px rgba(191,230,255,0.78);
   paint-order:stroke fill;
   text-shadow:
@@ -751,6 +751,57 @@ body{
 @keyframes wheelSpin{
   from{ transform:rotate(0deg); }
   to{ transform:rotate(360deg); }
+}
+
+html.perf-lite{
+  --ripple-display:none;
+  --ripple-opacity:0;
+  --controls-blur:0px;
+  --title-blur:0px;
+  --beam-blur:4px;
+  --shimmer-blur:.6px;
+  --wheel-core-blur:24px;
+  --wheel-sweep-blur:10px;
+  --fish-filter:none;
+  --fish-sprite-filter:none;
+}
+
+html.perf-lite .controls{
+  background:rgba(10,14,18,0.88);
+}
+
+html.perf-lite .title{
+  background:linear-gradient(180deg, rgba(170,235,255,0.13), rgba(8,12,18,0.62));
+}
+
+html.perf-lite .back-haze{
+  opacity:.72;
+  animation-duration:22s;
+}
+
+html.perf-lite .glass-reflection{
+  opacity:.56;
+}
+
+html.perf-lite .tank-wrap{
+  filter:
+    drop-shadow(0 12px 32px rgba(0,0,0,0.46))
+    drop-shadow(0 0 18px var(--tank-glow));
+}
+
+html.perf-lite .light-shimmer{
+  opacity:calc((var(--shimmer-base) - .06) * var(--light-intensity));
+}
+
+html.perf-lite .fg4{
+  filter:none;
+}
+
+html.perf-lite .diver-ornament{
+  filter:
+    saturate(.90)
+    brightness(.94)
+    contrast(1.08);
 }
 
 @media (max-width: 800px){
@@ -1077,6 +1128,7 @@ body{
   const lightIntensityValue = document.getElementById('lightIntensityValue');
   const cycleSpeed = document.getElementById('cycleSpeed');
   const cycleSpeedValue = document.getElementById('cycleSpeedValue');
+  const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
@@ -1086,7 +1138,7 @@ body{
   const bubbles = [];
   const diverBubbles = [];
 
-  const FISH_SPEED = isMobile ? 3.6 : 3.95;
+  const FISH_SPEED = isMobile ? 3.6 : 4.05;
   const FISH_SIZE_MULTIPLIER = 2;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 10 : 18;
@@ -1099,6 +1151,37 @@ body{
     { src: './tetra1.png', facing: 1 },
     { src: './tetra2.png', facing: -1 }
   ];
+  const NOMINAL_FRAME_MS = 1000 / 60;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let perfLite = false;
+  let frameAvg = 16.7;
+  let lowPerfMs = 0;
+  let goodPerfMs = 0;
+  let frameTick = 0;
+  let tankRect = tank.getBoundingClientRect();
+
+  function refreshTankRect() {
+    tankRect = tank.getBoundingClientRect();
+  }
+
+  function setPerfLite(enabled) {
+    const next = !!enabled;
+    if (perfLite === next) return;
+    perfLite = next;
+    rootEl.classList.toggle('perf-lite', perfLite);
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const resizeObserver = new ResizeObserver(refreshTankRect);
+    resizeObserver.observe(tank);
+  } else {
+    window.addEventListener('resize', refreshTankRect, { passive:true });
+  }
+
+  window.addEventListener('orientationchange', refreshTankRect, { passive:true });
+  window.addEventListener('resize', refreshTankRect, { passive:true });
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -1106,7 +1189,7 @@ body{
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function setPresetBeam(r, g, b) {
-    const root = document.documentElement.style;
+    const root = rootEl.style;
     root.setProperty('--beam-rgb', `${r},${g},${b}`);
     root.setProperty('--tank-glow', `rgba(${r},${g},${b},0.20)`);
 
@@ -1132,7 +1215,7 @@ body{
   function applyCycleSpeed(value) {
     const n = clamp(Number(value) || 0, 0, 200);
     if (cycleSpeedValue) cycleSpeedValue.textContent = `${Math.round(n)}%`;
-    const root = document.documentElement.style;
+    const root = rootEl.style;
     if (n <= 0) {
       root.setProperty('--wheel-speed', '10s');
       root.setProperty('--wheel-sweep-speed', '7.2s');
@@ -1148,7 +1231,7 @@ body{
 
   function applyLightIntensity(value) {
     const n = clamp(Number(value) || 100, 0, 160);
-    document.documentElement.style.setProperty('--light-intensity', (n / 50).toFixed(2));
+    rootEl.style.setProperty('--light-intensity', (n / 50).toFixed(2));
     if (lightIntensityValue) lightIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
@@ -1195,7 +1278,7 @@ body{
     const [beamR, beamG, beamB] = hslToRgb(hue + 26, 92, 72);
     const [overlayR, overlayG, overlayB] = hslToRgb(hue + 8, 58, 24);
 
-    const r = document.documentElement.style;
+    const r = rootEl.style;
     r.setProperty('--water-top', `rgb(${topR},${topG},${topB})`);
     r.setProperty('--water-mid', `rgb(${midR},${midG},${midB})`);
     r.setProperty('--water-bottom', `rgb(${bottomR},${bottomG},${bottomB})`);
@@ -1587,7 +1670,7 @@ body{
     currentMode = mode;
     modeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
 
-    const r = document.documentElement.style;
+    const r = rootEl.style;
     tank.classList.remove('light-wheel');
 
     if (mode === 'day') {
@@ -1682,65 +1765,94 @@ body{
   let last = performance.now();
 
   function animate(now) {
-    const dt = Math.min(33, now - last);
-    const dtSec = dt / 1000;
+    const rawDt = now - last;
     last = now;
+
+    frameAvg = lerp(frameAvg, rawDt, 0.08);
+
+    if (!isMobile) {
+      const underLoad = rawDt > 24 || frameAvg > 22.5;
+      if (underLoad) {
+        lowPerfMs += rawDt;
+        goodPerfMs = 0;
+      } else {
+        goodPerfMs += rawDt;
+        lowPerfMs = Math.max(0, lowPerfMs - rawDt * 0.5);
+      }
+
+      if (!perfLite && lowPerfMs > 1200) setPerfLite(true);
+      if (perfLite && goodPerfMs > 2400 && frameAvg < 19.5) setPerfLite(false);
+    }
+
+    const dt = Math.min(110, rawDt);
+    const dtSec = dt / 1000;
+    const frameScale = Math.max(0.5, dt / NOMINAL_FRAME_MS);
     const t = now * 0.001;
+    frameTick += 1;
+
     if (currentMode === 'cycle') applyCyclePalette(now);
-    const tankRect = tank.getBoundingClientRect();
     const mx = mouse.x;
     const my = mouse.y;
 
-    for (const p of particles) {
-      p.drift += dt * 0.0007;
-      p.x += p.vx * dt + Math.sin(p.drift * 0.5) * 0.00002;
-      p.y += p.vy * dt;
+    const updateParticlesThisFrame = !perfLite || (frameTick % 2 === 0);
+    const updateBubblesThisFrame = !perfLite || (frameTick % 2 === 0);
 
-      if (p.y < -0.03) {
-        p.y = 1.03;
-        p.x = Math.random();
+    if (updateParticlesThisFrame) {
+      const particleDt = perfLite ? dt * 2 : dt;
+      for (const p of particles) {
+        p.drift += particleDt * 0.0007;
+        p.x += p.vx * particleDt + Math.sin(p.drift * 0.5) * 0.00002;
+        p.y += p.vy * particleDt;
+
+        if (p.y < -0.03) {
+          p.y = 1.03;
+          p.x = Math.random();
+        }
+        if (p.x < -0.03) p.x = 1.03;
+        if (p.x > 1.03) p.x = -0.03;
+
+        p.el.style.width = `${p.size}px`;
+        p.el.style.height = `${p.size}px`;
+        p.el.style.opacity = p.a + 0.03 * Math.sin(t + p.drift);
+        p.el.style.transform = `translate(${p.x * tankRect.width}px, ${p.y * tankRect.height}px)`;
       }
-      if (p.x < -0.03) p.x = 1.03;
-      if (p.x > 1.03) p.x = -0.03;
-
-      p.el.style.width = `${p.size}px`;
-      p.el.style.height = `${p.size}px`;
-      p.el.style.opacity = p.a + 0.03 * Math.sin(t + p.drift);
-      p.el.style.transform = `translate(${p.x * tankRect.width}px, ${p.y * tankRect.height}px)`;
     }
 
-    for (const b of bubbles) {
-      b.wobble += dt * 0.0016;
-      b.y -= b.vy * dt;
-      b.x += b.vx * dt + Math.sin(b.wobble) * 0.00010;
+    if (updateBubblesThisFrame) {
+      const bubbleDt = perfLite ? dt * 2 : dt;
+      for (const b of bubbles) {
+        b.wobble += bubbleDt * 0.0016;
+        b.y -= b.vy * bubbleDt;
+        b.x += b.vx * bubbleDt + Math.sin(b.wobble) * 0.00010;
 
-      if (b.y < -0.06) {
-        b.y = 1.05 + Math.random() * 0.15;
-        b.x = 0.015 + Math.random() * 0.03;
+        if (b.y < -0.06) {
+          b.y = 1.05 + Math.random() * 0.15;
+          b.x = 0.015 + Math.random() * 0.03;
+        }
+
+        const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
+        b.el.style.width = `${s}px`;
+        b.el.style.height = `${s}px`;
+        b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+        b.el.style.opacity = 0.48 + ((1 - b.y) * 0.28);
       }
 
-      const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
-      b.el.style.width = `${s}px`;
-      b.el.style.height = `${s}px`;
-      b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-      b.el.style.opacity = 0.48 + ((1 - b.y) * 0.28);
-    }
+      for (const b of diverBubbles) {
+        b.wobble += bubbleDt * 0.0011;
+        b.y -= b.vy * bubbleDt;
+        b.x += b.vx * bubbleDt + Math.sin(b.wobble * 1.15) * 0.00008;
 
-    for (const b of diverBubbles) {
-      b.wobble += dt * 0.0011;
-      b.y -= b.vy * dt;
-      b.x += b.vx * dt + Math.sin(b.wobble * 1.15) * 0.00008;
+        if (b.y < 0.43) {
+          b.x = 0.535 + (Math.random() - 0.5) * 0.010;
+          b.y = 0.812 + Math.random() * 0.010;
+        }
 
-      if (b.y < 0.43) {
-        b.x = 0.535 + (Math.random() - 0.5) * 0.010;
-        b.y = 0.812 + Math.random() * 0.010;
+        const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
+        b.el.style.width = `${s}px`;
+        b.el.style.height = `${s}px`;
+        b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+        b.el.style.opacity = 0.58 + ((1 - b.y) * 0.28);
       }
-
-      const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
-      b.el.style.width = `${s}px`;
-      b.el.style.height = `${s}px`;
-      b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
-      b.el.style.opacity = 0.58 + ((1 - b.y) * 0.28);
     }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
@@ -1800,24 +1912,29 @@ body{
       if (f.state === 'cruise') desiredSpeed = f.cruiseSpeed;
       if (f.state === 'dart') desiredSpeed = f.dartSpeed;
 
-      const desiredVX = (tx / dist) * desiredSpeed * FISH_SPEED + repelX;
-      const desiredVY = (ty / dist) * desiredSpeed * FISH_SPEED + repelY;
+      const motionBoost = perfLite && !isMobile ? 1.42 : 1;
+      const desiredVX = (tx / dist) * desiredSpeed * FISH_SPEED * motionBoost + repelX;
+      const desiredVY = (ty / dist) * desiredSpeed * FISH_SPEED * motionBoost + repelY;
 
-      f.vx = lerp(f.vx, desiredVX, f.accel);
-      f.vy = lerp(f.vy, desiredVY, f.accel);
+      const accelT = 1 - Math.pow(1 - f.accel, frameScale);
+      f.vx = lerp(f.vx, desiredVX, accelT);
+      f.vy = lerp(f.vy, desiredVY, accelT);
 
       if (f.state === 'idle') {
-        f.vx *= 0.992;
-        f.vy *= 0.992;
+        const idleDrag = Math.pow(0.992, frameScale);
+        f.vx *= idleDrag;
+        f.vy *= idleDrag;
       } else {
-        f.vx *= f.drag;
-        f.vy *= f.drag;
+        const dragT = Math.pow(f.drag, frameScale);
+        f.vx *= dragT;
+        f.vy *= dragT;
       }
 
       const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
       const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : (f.type === 'barb' ? 0.13 : 0.16));
-      f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponse);
+      const dirResponseT = 1 - Math.pow(1 - dirResponse, frameScale);
+      f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponseT);
 
       if (f.turnMomentum > 0.08) f.dir = 1;
       if (f.turnMomentum < -0.08) f.dir = -1;
@@ -1844,7 +1961,8 @@ body{
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
       const moveAngle = Math.atan2(f.vy, displayVX);
-      f.angle = lerp(f.angle, moveAngle, f.turnEase);
+      const turnEaseT = 1 - Math.pow(1 - f.turnEase, frameScale);
+      f.angle = lerp(f.angle, moveAngle, turnEaseT);
 
       const speedMag = Math.hypot(f.vx, f.vy);
 
@@ -1923,7 +2041,9 @@ body{
     if (currentMode === 'cycle') applyCyclePalette(performance.now());
   });
 
+  setPerfLite(prefersReducedMotion);
   seedScene();
+  refreshTankRect();
   setMode('day');
   applyLightIntensity(lightIntensity.value);
   applyCycleSpeed(cycleSpeed.value);
