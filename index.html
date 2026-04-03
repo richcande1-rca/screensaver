@@ -489,6 +489,9 @@ body{
   border-radius:50%;
   background:var(--particle);
   filter:blur(.2px);
+  will-change:transform, opacity;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
 }
 
 .bubble{
@@ -500,11 +503,16 @@ body{
   background:radial-gradient(circle at 34% 32%, rgba(255,255,255,0.82), rgba(210,242,255,0.20) 44%, rgba(255,255,255,0.06) 62%, transparent 72%);
   box-shadow:inset -1px -1px 4px rgba(255,255,255,0.30), 0 0 8px rgba(210,242,255,0.22);
   opacity:.7;
+  will-change:transform, opacity;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
 }
 
 .fish{
   position:absolute;
   will-change:transform;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
   filter:var(--fish-filter, var(--fish-glow));
 }
 
@@ -1785,15 +1793,20 @@ html.perf-lite .diver-ornament{
     el.className = 'particle';
     particlesEl.appendChild(el);
 
+    const size = isMobile ? 1.8 + Math.random() * 2.0 : 2 + Math.random() * 3;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+
     particles.push({
       el,
       x: Math.random(),
       y: Math.random(),
       vx: (Math.random() - 0.5) * 0.00008,
       vy: -(0.00008 + Math.random() * 0.00012),
-      size: isMobile ? 1.8 + Math.random() * 2.0 : 2 + Math.random() * 3,
+      size,
       drift: Math.random() * 100,
-      a: 0.08 + Math.random() * 0.18
+      a: 0.08 + Math.random() * 0.18,
+      perfRank: Math.random()
     });
   }
 
@@ -1802,13 +1815,17 @@ html.perf-lite .diver-ornament{
     el.className = 'bubble';
     bubblesEl.appendChild(el);
 
+    const size = isMobile ? 5 + Math.random() * 8 : 6.5 + Math.random() * 11.5;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+
     bubbles.push({
       el,
       x: xNorm,
       y: 1.02 + Math.random() * 0.15,
       vx: (Math.random() - 0.5) * 0.00012,
       vy: 0.00045 + Math.random() * 0.00035,
-      size: isMobile ? 5 + Math.random() * 8 : 6.5 + Math.random() * 11.5,
+      size,
       wobble: Math.random() * 100,
       intensityRank: Math.random()
     });
@@ -1819,13 +1836,17 @@ html.perf-lite .diver-ornament{
     el.className = 'bubble';
     bubblesEl.appendChild(el);
 
+    const size = isMobile ? 4.6 + Math.random() * 5.8 : 5.2 + Math.random() * 8.2;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+
     diverBubbles.push({
       el,
       x: 0.535,
       y: 0.804,
       vx: (Math.random() - 0.5) * 0.00005,
       vy: 0.00028 + Math.random() * 0.00014,
-      size: isMobile ? 4.6 + Math.random() * 5.8 : 5.2 + Math.random() * 8.2,
+      size,
       wobble: Math.random() * 100,
       intensityRank: Math.random()
     });
@@ -2042,12 +2063,16 @@ html.perf-lite .diver-ornament{
     const mx = mouse.x;
     const my = mouse.y;
 
-    const updateParticlesThisFrame = !perfLite || (frameTick % 2 === 0);
-    const updateBubblesThisFrame = !perfLite || (frameTick % 2 === 0);
+    const updateParticlesThisFrame = true;
+    const updateBubblesThisFrame = true;
 
     if (updateParticlesThisFrame) {
-      const particleDt = perfLite ? dt * 2 : dt;
+      const particleDt = dt;
       for (const p of particles) {
+        if (perfLite && !isMobile && p.perfRank > 0.62) {
+          p.el.style.opacity = '0';
+          continue;
+        }
         p.drift += particleDt * 0.0007;
         p.x += p.vx * particleDt + Math.sin(p.drift * 0.5) * 0.00002;
         p.y += p.vy * particleDt;
@@ -2059,15 +2084,13 @@ html.perf-lite .diver-ornament{
         if (p.x < -0.03) p.x = 1.03;
         if (p.x > 1.03) p.x = -0.03;
 
-        p.el.style.width = `${p.size}px`;
-        p.el.style.height = `${p.size}px`;
         p.el.style.opacity = p.a + 0.03 * Math.sin(t + p.drift);
-        p.el.style.transform = `translate(${p.x * tankRect.width}px, ${p.y * tankRect.height}px)`;
+        p.el.style.transform = `translate3d(${p.x * tankRect.width}px, ${p.y * tankRect.height}px, 0)`;
       }
     }
 
     if (updateBubblesThisFrame) {
-      const bubbleDt = perfLite ? dt * 2 : dt;
+      const bubbleDt = dt;
       for (const b of bubbles) {
         const isActive = b.intensityRank <= bubbleIntensityScale;
 
@@ -2087,10 +2110,8 @@ html.perf-lite .diver-ornament{
           b.x = 0.015 + Math.random() * 0.03;
         }
 
-        const s = b.size * (0.96 + 0.06 * Math.sin(b.wobble * 1.4));
-        b.el.style.width = `${s}px`;
-        b.el.style.height = `${s}px`;
-        b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+        const scale = 0.96 + 0.06 * Math.sin(b.wobble * 1.4);
+        b.el.style.transform = `translate3d(${b.x * tankRect.width}px, ${b.y * tankRect.height}px, 0) scale(${scale})`;
         b.el.style.opacity = (0.48 + ((1 - b.y) * 0.28)).toFixed(3);
       }
 
@@ -2113,10 +2134,8 @@ html.perf-lite .diver-ornament{
           b.y = 0.812 + Math.random() * 0.010;
         }
 
-        const s = b.size * (0.95 + 0.08 * Math.sin(b.wobble * 1.5));
-        b.el.style.width = `${s}px`;
-        b.el.style.height = `${s}px`;
-        b.el.style.transform = `translate(${b.x * tankRect.width}px, ${b.y * tankRect.height}px)`;
+        const scale = 0.95 + 0.08 * Math.sin(b.wobble * 1.5);
+        b.el.style.transform = `translate3d(${b.x * tankRect.width}px, ${b.y * tankRect.height}px, 0) scale(${scale})`;
         b.el.style.opacity = (0.58 + ((1 - b.y) * 0.28)).toFixed(3);
       }
     }
@@ -2256,7 +2275,7 @@ html.perf-lite .diver-ornament{
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
       f.el.style.transform =
-        `translate(${f.x * tankRect.width}px, ${drawY * tankRect.height}px) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
+        `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
     }
 
     requestAnimationFrame(animate);
