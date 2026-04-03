@@ -374,6 +374,26 @@ body{
   z-index:5;
 }
 
+.crab-layer{
+  z-index:8;
+  overflow:hidden;
+}
+
+.crab{
+  position:absolute;
+  left:0;
+  top:0;
+  width:clamp(52px, 6.8vw, 96px);
+  opacity:.98;
+  will-change:transform, opacity;
+  transform:translate3d(0,0,0);
+  transform-origin:50% 100%;
+  backface-visibility:hidden;
+  filter:
+    drop-shadow(0 2px 5px rgba(0,0,0,0.28))
+    drop-shadow(0 0 4px rgba(0,0,0,0.12));
+}
+
 .foreground-plants{
   z-index:16;
   overflow:hidden;
@@ -851,6 +871,10 @@ html.perf-lite .diver-ornament{
     contrast(1.08);
 }
 
+html.perf-lite .crab{
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.22));
+}
+
 @media (max-width: 800px){
   :root{
     --tank-w:min(98vw, 620px);
@@ -921,6 +945,10 @@ html.perf-lite .diver-ornament{
     width:14%;
     max-width:68px;
     opacity:.88;
+  }
+
+  .crab{
+    width:clamp(44px, 12vw, 78px);
   }
 
   .title{
@@ -1159,6 +1187,11 @@ html.perf-lite .diver-ornament{
   top:max(12px, env(safe-area-inset-top, 0px));
 }
 
+.stage:fullscreen .crab,
+.stage:-webkit-full-screen .crab{
+  width:clamp(56px, 6vw, 108px);
+}
+
 .stage:fullscreen .controls,
 .stage:-webkit-full-screen .controls{
   bottom:calc(12px + env(safe-area-inset-bottom, 0px));
@@ -1219,6 +1252,7 @@ html.perf-lite .diver-ornament{
       </div>
 
       <div class="layer diver-fade"></div>
+      <div class="layer crab-layer" id="crabLayer"></div>
 
       <div class="layer particles" id="particles"></div>
       <div class="layer bubbles" id="bubbles"></div>
@@ -1279,6 +1313,7 @@ html.perf-lite .diver-ornament{
   const backFishLayer = document.getElementById('backFishLayer');
   const particlesEl = document.getElementById('particles');
   const bubblesEl = document.getElementById('bubbles');
+  const crabLayer = document.getElementById('crabLayer');
   const titleEl = document.getElementById('appTitle');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
   const cycleSpeed = document.getElementById('cycleSpeed');
@@ -1327,6 +1362,7 @@ html.perf-lite .diver-ornament{
   const particles = [];
   const bubbles = [];
   const diverBubbles = [];
+  let crab = null;
 
   const FISH_SPEED = isMobile ? 3.6 : 4.05;
   const FISH_SIZE_MULTIPLIER = 2;
@@ -1852,6 +1888,29 @@ html.perf-lite .diver-ornament{
     });
   }
 
+  function createCrab() {
+    if (!crabLayer) return;
+
+    const el = document.createElement('img');
+    el.className = 'crab';
+    el.src = './crab.png';
+    el.alt = '';
+    el.draggable = false;
+    crabLayer.appendChild(el);
+
+    crab = {
+      el,
+      x: isMobile ? 0.12 : 0.10,
+      dir: 1,
+      speed: isMobile ? 0.000017 : 0.0000145,
+      baseY: isMobile ? 0.936 : 0.928,
+      phase: Math.random() * 6.28,
+      pause: 0,
+      minX: isMobile ? 0.06 : 0.05,
+      maxX: isMobile ? 0.94 : 0.95
+    };
+  }
+
   function seedScene() {
     if (ANGEL_COUNT >= 1) {
       createAngel(0.41, 0.23, 0.74, './angel.png', 'left');
@@ -1933,6 +1992,7 @@ html.perf-lite .diver-ornament{
     for (let i = 0; i < PARTICLE_COUNT; i++) createParticle();
     for (let i = 0; i < BUBBLE_COUNT; i++) createBubble(0.015 + Math.random() * 0.03);
     for (let i = 0; i < DIVER_BUBBLE_COUNT; i++) createDiverBubble();
+    createCrab();
   }
 
   function setMode(mode) {
@@ -2138,6 +2198,32 @@ html.perf-lite .diver-ornament{
         b.el.style.transform = `translate3d(${b.x * tankRect.width}px, ${b.y * tankRect.height}px, 0) scale(${scale})`;
         b.el.style.opacity = (0.58 + ((1 - b.y) * 0.28)).toFixed(3);
       }
+    }
+
+    if (crab) {
+      if (crab.pause > 0) {
+        crab.pause -= dtSec;
+      } else {
+        crab.x += crab.dir * crab.speed * dt;
+      }
+
+      if (crab.x <= crab.minX) {
+        crab.x = crab.minX;
+        crab.dir = 1;
+        crab.pause = rand(0.45, 1.15);
+      } else if (crab.x >= crab.maxX) {
+        crab.x = crab.maxX;
+        crab.dir = -1;
+        crab.pause = rand(0.45, 1.15);
+      }
+
+      crab.phase += dtSec * (crab.pause > 0 ? 2.2 : 8.5);
+
+      const crawlLift = Math.sin(crab.phase) * (crab.pause > 0 ? 0.0007 : 0.0015);
+      const bodyTilt = Math.sin(crab.phase * 0.55) * (crab.pause > 0 ? 0.7 : 1.4);
+      const bodyScaleY = 1 + Math.sin(crab.phase * 2) * 0.015;
+      crab.el.style.transform =
+        `translate3d(${crab.x * tankRect.width}px, ${(crab.baseY + crawlLift) * tankRect.height}px, 0) translate(-50%,-50%) scale(${crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
     }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
