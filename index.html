@@ -1900,14 +1900,14 @@ html.perf-lite .crab{
 
     crab = {
       el,
-      x: isMobile ? 0.12 : 0.10,
+      x: isMobile ? 0.18 : 0.16,
       dir: 1,
-      speed: isMobile ? 0.000017 : 0.0000145,
+      speed: isMobile ? 0.000019 : 0.000016,
       baseY: isMobile ? 0.936 : 0.928,
       phase: Math.random() * 6.28,
       pause: 0,
-      minX: isMobile ? 0.06 : 0.05,
-      maxX: isMobile ? 0.94 : 0.95
+      minX: isMobile ? 0.13 : 0.11,
+      maxX: isMobile ? 0.84 : 0.86
     };
   }
 
@@ -2210,11 +2210,11 @@ html.perf-lite .crab{
       if (crab.x <= crab.minX) {
         crab.x = crab.minX;
         crab.dir = 1;
-        crab.pause = rand(0.45, 1.15);
+        crab.pause = rand(0.18, 0.42);
       } else if (crab.x >= crab.maxX) {
         crab.x = crab.maxX;
         crab.dir = -1;
-        crab.pause = rand(0.45, 1.15);
+        crab.pause = rand(0.18, 0.42);
       }
 
       crab.phase += dtSec * (crab.pause > 0 ? 2.2 : 8.5);
