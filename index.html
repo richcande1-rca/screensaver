@@ -1287,11 +1287,6 @@ html.perf-lite .crab{
       <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
     </div>
     <div class="control-row">
-      <label class="sliderWrap" for="cycleSpeed">
-        <span>Cycle</span>
-        <input type="range" id="cycleSpeed" min="0" max="100" value="50" />
-        <span id="cycleSpeedValue">100%</span>
-      </label>
       <label class="sliderWrap" for="swimSpeed">
         <span>Speed</span>
         <input type="range" id="swimSpeed" min="0" max="100" value="20" />
@@ -1317,8 +1312,6 @@ html.perf-lite .crab{
   const crabLayer = document.getElementById('crabLayer');
   const titleEl = document.getElementById('appTitle');
   const modeBtns = [...document.querySelectorAll('.modeBtn')];
-  const cycleSpeed = document.getElementById('cycleSpeed');
-  const cycleSpeedValue = document.getElementById('cycleSpeedValue');
   const swimSpeed = document.getElementById('swimSpeed');
   const swimSpeedValue = document.getElementById('swimSpeedValue');
   const bubbleIntensity = document.getElementById('bubbleIntensity');
@@ -1328,6 +1321,8 @@ html.perf-lite .crab{
   const bubbleSoundBtn = document.getElementById('bubbleSoundBtn');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
   const rootEl = document.documentElement;
+
+  const FIXED_CYCLE_SPEED = 50;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
@@ -1450,9 +1445,8 @@ html.perf-lite .crab{
     }
   }
 
-  function applyCycleSpeed(value) {
+  function applyCycleSpeed(value = FIXED_CYCLE_SPEED) {
     const n = clamp(Number(value) || 0, 0, 100);
-    if (cycleSpeedValue) cycleSpeedValue.textContent = `${Math.round(n)}%`;
     const root = rootEl.style;
     if (n <= 0) {
       root.setProperty('--wheel-speed', '10s');
@@ -1482,6 +1476,7 @@ html.perf-lite .crab{
     const n = clamp(Number(value) || 0, 0, 100);
     bubbleIntensityScale = n / 100;
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
+    if (audioCtx && bubbleBedGain) updateBubbleBedLevel(audioCtx.currentTime);
   }
 
   function setBubbleSoundButtonUI(enabled) {
@@ -1497,10 +1492,20 @@ html.perf-lite .crab{
     try {
       localStorage.setItem(BUBBLE_SOUND_STORAGE_KEY, bubbleSoundEnabled ? '1' : '0');
     } catch (err) {}
-    if (!bubbleSoundEnabled && bubbleMasterGain) {
-      bubbleMasterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-      bubbleMasterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.08);
+
+    if (audioCtx && bubbleMasterGain) {
+      const now = audioCtx.currentTime;
+      if (!bubbleSoundEnabled) {
+        nextBubbleSoundAt = 0;
+        bubbleMasterGain.gain.cancelScheduledValues(now);
+        bubbleMasterGain.gain.setTargetAtTime(0.0001, now, 0.08);
+      } else {
+        bubbleMasterGain.gain.cancelScheduledValues(now);
+        bubbleMasterGain.gain.setTargetAtTime(0.11, now, 0.22);
+      }
     }
+
+    if (audioCtx && bubbleBedGain) updateBubbleBedLevel(audioCtx.currentTime);
   }
 
   function buildBubbleNoiseBuffer(ctx) {
@@ -1514,6 +1519,52 @@ html.perf-lite .crab{
     return buffer;
   }
 
+  function startBubbleBed() {
+    if (!audioCtx || !bubbleNoiseBuffer || bubbleBedSource) return;
+
+    bubbleBedSource = audioCtx.createBufferSource();
+    bubbleBedSource.buffer = bubbleNoiseBuffer;
+    bubbleBedSource.loop = true;
+
+    bubbleBedHighpass = audioCtx.createBiquadFilter();
+    bubbleBedHighpass.type = 'highpass';
+    bubbleBedHighpass.frequency.value = 420;
+
+    bubbleBedBandpass = audioCtx.createBiquadFilter();
+    bubbleBedBandpass.type = 'bandpass';
+    bubbleBedBandpass.frequency.value = 1180;
+    bubbleBedBandpass.Q.value = 0.85;
+
+    bubbleBedLowpass = audioCtx.createBiquadFilter();
+    bubbleBedLowpass.type = 'lowpass';
+    bubbleBedLowpass.frequency.value = 2400;
+
+    bubbleBedGain = audioCtx.createGain();
+    bubbleBedGain.gain.value = 0.0001;
+
+    bubbleBedSource.connect(bubbleBedHighpass);
+    bubbleBedHighpass.connect(bubbleBedBandpass);
+    bubbleBedBandpass.connect(bubbleBedLowpass);
+    bubbleBedLowpass.connect(bubbleBedGain);
+    bubbleBedGain.connect(bubbleMasterGain);
+
+    bubbleBedSource.start();
+  }
+
+  function updateBubbleBedLevel(now = audioCtx ? audioCtx.currentTime : 0) {
+    if (!audioCtx || !bubbleBedGain) return;
+    const audible = bubbleSoundEnabled && bubbleSoundPrimed && audioCtx.state === 'running' && !document.hidden;
+    const density = clamp(bubbleIntensityScale, 0, 1);
+    const target = audible ? (0.012 + density * 0.036) : 0.0001;
+
+    bubbleBedHighpass.frequency.setTargetAtTime(380 + density * 160, now, 0.18);
+    bubbleBedBandpass.frequency.setTargetAtTime(980 + density * 640, now, 0.18);
+    bubbleBedLowpass.frequency.setTargetAtTime(2050 + density * 900, now, 0.18);
+
+    bubbleBedGain.gain.cancelScheduledValues(now);
+    bubbleBedGain.gain.setTargetAtTime(target, now, 0.22);
+  }
+
   async function ensureBubbleAudio() {
     if (!window.AudioContext && !window.webkitAudioContext) return false;
     if (!audioCtx) {
@@ -1523,6 +1574,7 @@ html.perf-lite .crab{
       bubbleMasterGain.gain.value = 0.0001;
       bubbleMasterGain.connect(audioCtx.destination);
       bubbleNoiseBuffer = buildBubbleNoiseBuffer(audioCtx);
+      startBubbleBed();
     }
 
     if (audioCtx.state === 'suspended') {
@@ -1534,9 +1586,11 @@ html.perf-lite .crab{
     }
 
     bubbleSoundPrimed = audioCtx.state === 'running';
-    if (bubbleSoundPrimed && bubbleMasterGain && bubbleSoundEnabled) {
+    if (bubbleSoundPrimed && bubbleMasterGain) {
+      const target = bubbleSoundEnabled ? 0.11 : 0.0001;
       bubbleMasterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-      bubbleMasterGain.gain.setTargetAtTime(0.055, audioCtx.currentTime, 0.35);
+      bubbleMasterGain.gain.setTargetAtTime(target, audioCtx.currentTime, bubbleSoundEnabled ? 0.25 : 0.08);
+      updateBubbleBedLevel(audioCtx.currentTime);
     }
     return bubbleSoundPrimed;
   }
@@ -1545,11 +1599,11 @@ html.perf-lite .crab{
     if (!audioCtx || !bubbleNoiseBuffer || !bubbleMasterGain || audioCtx.state !== 'running') return;
 
     const densityClamped = clamp(density || 0, 0, 1);
-    const clusterCount = densityClamped < 0.34 ? 1 : (densityClamped < 0.70 ? 2 : 3);
+    const clusterCount = densityClamped < 0.22 ? 2 : (densityClamped < 0.55 ? 3 : (densityClamped < 0.82 ? 4 : 5));
 
     for (let i = 0; i < clusterCount; i += 1) {
-      const start = nowSec + i * rand(0.045, 0.085);
-      const duration = rand(0.11, 0.18);
+      const start = nowSec + i * rand(0.025, 0.060);
+      const duration = rand(0.10, 0.17);
       const gainNode = audioCtx.createGain();
       const bandpass = audioCtx.createBiquadFilter();
       const highpass = audioCtx.createBiquadFilter();
@@ -1560,27 +1614,27 @@ html.perf-lite .crab{
 
       noise.buffer = bubbleNoiseBuffer;
       bandpass.type = 'bandpass';
-      bandpass.frequency.setValueAtTime(rand(480, 980), start);
-      bandpass.Q.setValueAtTime(rand(0.6, 1.2), start);
+      bandpass.frequency.setValueAtTime(rand(650, 1450), start);
+      bandpass.Q.setValueAtTime(rand(0.8, 1.55), start);
 
       highpass.type = 'highpass';
-      highpass.frequency.setValueAtTime(rand(220, 420), start);
+      highpass.frequency.setValueAtTime(rand(280, 520), start);
 
       lowpass.type = 'lowpass';
-      lowpass.frequency.setValueAtTime(rand(1200, 2200), start);
+      lowpass.frequency.setValueAtTime(rand(1600, 3200), start);
 
       gainNode.gain.setValueAtTime(0.0001, start);
-      gainNode.gain.linearRampToValueAtTime(rand(0.010, 0.022) * (0.55 + densityClamped * 0.9), start + 0.03);
+      gainNode.gain.linearRampToValueAtTime(rand(0.020, 0.040) * (0.65 + densityClamped * 1.05), start + 0.018);
       gainNode.gain.exponentialRampToValueAtTime(0.0001, start + duration);
 
-      toneOsc.type = 'sine';
-      const baseFreq = rand(260, 430);
+      toneOsc.type = 'triangle';
+      const baseFreq = rand(340, 620);
       toneOsc.frequency.setValueAtTime(baseFreq, start);
-      toneOsc.frequency.exponentialRampToValueAtTime(baseFreq * rand(1.35, 1.9), start + duration * 0.9);
+      toneOsc.frequency.exponentialRampToValueAtTime(baseFreq * rand(1.45, 2.10), start + duration * 0.88);
 
       toneGain.gain.setValueAtTime(0.0001, start);
-      toneGain.gain.linearRampToValueAtTime(rand(0.003, 0.007) * (0.55 + densityClamped * 0.8), start + 0.025);
-      toneGain.gain.exponentialRampToValueAtTime(0.0001, start + duration * 0.95);
+      toneGain.gain.linearRampToValueAtTime(rand(0.006, 0.014) * (0.60 + densityClamped * 0.95), start + 0.016);
+      toneGain.gain.exponentialRampToValueAtTime(0.0001, start + duration * 0.94);
 
       noise.connect(bandpass);
       bandpass.connect(highpass);
@@ -1604,14 +1658,14 @@ html.perf-lite .crab{
     if (bubbleIntensityScale <= 0.01) return;
 
     if (nextBubbleSoundAt === 0) {
-      nextBubbleSoundAt = nowMs + rand(120, 420);
+      nextBubbleSoundAt = nowMs + rand(80, 180);
     }
 
     if (nowMs >= nextBubbleSoundAt) {
       triggerBubblePopCluster(audioCtx.currentTime + 0.01, bubbleIntensityScale);
       const density = clamp(bubbleIntensityScale, 0, 1);
-      const minGap = lerp(1150, 260, density);
-      const maxGap = lerp(2200, 650, density);
+      const minGap = lerp(760, 110, density);
+      const maxGap = lerp(1350, 340, density);
       nextBubbleSoundAt = nowMs + rand(minGap, maxGap);
     }
   }
@@ -1671,7 +1725,8 @@ html.perf-lite .crab{
       if (next) {
         const ready = await ensureBubbleAudio();
         if (ready) {
-          nextBubbleSoundAt = performance.now() + 120;
+          triggerBubblePopCluster(audioCtx.currentTime + 0.02, Math.max(0.45, bubbleIntensityScale));
+          nextBubbleSoundAt = performance.now() + 90;
         }
       }
     });
@@ -1684,6 +1739,7 @@ html.perf-lite .crab{
   document.addEventListener('visibilitychange', async () => {
     if (!audioCtx) return;
     if (document.hidden) {
+      updateBubbleBedLevel(audioCtx.currentTime);
       if (audioCtx.state === 'running') {
         try { await audioCtx.suspend(); } catch (err) {}
       }
@@ -1692,8 +1748,10 @@ html.perf-lite .crab{
     if (bubbleSoundEnabled) {
       const ready = await ensureBubbleAudio();
       if (ready && nextBubbleSoundAt === 0) {
-        nextBubbleSoundAt = performance.now() + 260;
+        nextBubbleSoundAt = performance.now() + 160;
       }
+    } else {
+      updateBubbleBedLevel(audioCtx.currentTime);
     }
   });
 
@@ -1701,7 +1759,8 @@ html.perf-lite .crab{
     if (bubbleSoundPrimed) return;
     const ready = await ensureBubbleAudio();
     if (ready && bubbleSoundEnabled && nextBubbleSoundAt === 0) {
-      nextBubbleSoundAt = performance.now() + 240;
+      triggerBubblePopCluster(audioCtx.currentTime + 0.03, Math.max(0.38, bubbleIntensityScale));
+      nextBubbleSoundAt = performance.now() + 180;
     }
   };
 
@@ -1716,6 +1775,11 @@ html.perf-lite .crab{
   let audioCtx = null;
   let bubbleMasterGain = null;
   let bubbleNoiseBuffer = null;
+  let bubbleBedSource = null;
+  let bubbleBedGain = null;
+  let bubbleBedHighpass = null;
+  let bubbleBedBandpass = null;
+  let bubbleBedLowpass = null;
   let bubbleSoundPrimed = false;
   let nextBubbleSoundAt = 0;
 
@@ -1745,7 +1809,7 @@ html.perf-lite .crab{
   }
 
   function applyCyclePalette(timeMs) {
-    const speed = clamp(Number(cycleSpeed?.value) || 50, 0, 100);
+    const speed = FIXED_CYCLE_SPEED;
 
     if (speed > 0) {
       const duration = 34 - (speed / 100) * 28;
@@ -2636,11 +2700,6 @@ html.perf-lite .crab{
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
 
-  cycleSpeed.addEventListener('input', (e) => {
-    applyCycleSpeed(e.target.value);
-    if (currentMode === 'cycle') applyCyclePalette(performance.now());
-  });
-
   swimSpeed.addEventListener('input', (e) => {
     applySwimSpeed(e.target.value);
   });
@@ -2657,7 +2716,7 @@ html.perf-lite .crab{
   refreshTankRect();
   setMode('day');
   applyFixedLightIntensity();
-  applyCycleSpeed(cycleSpeed.value);
+  applyCycleSpeed();
   applySwimSpeed(swimSpeed.value);
   applyBubbleIntensity(bubbleIntensity.value);
   requestAnimationFrame(animate);
