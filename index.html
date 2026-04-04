@@ -1888,6 +1888,37 @@ html.perf-lite .crab{
     });
   }
 
+  function chooseNewCrabGoal() {
+    if (!crab) return;
+
+    const zone = crab.maxX - crab.minX;
+    const leftBuffer = crab.minX + zone * 0.16;
+    const rightBuffer = crab.maxX - zone * 0.16;
+
+    let dir;
+    if (crab.x <= leftBuffer) {
+      dir = 1;
+    } else if (crab.x >= rightBuffer) {
+      dir = -1;
+    } else if (Math.random() < 0.58) {
+      dir = crab.dir || (Math.random() < 0.5 ? -1 : 1);
+    } else {
+      dir = Math.random() < 0.5 ? -1 : 1;
+    }
+
+    const step = rand(zone * 0.05, zone * 0.16);
+    crab.targetX = clamp(crab.x + dir * step, crab.minX, crab.maxX);
+
+    if (Math.abs(crab.targetX - crab.x) < zone * 0.03) {
+      crab.targetX = clamp(crab.x + dir * zone * 0.08, crab.minX, crab.maxX);
+    }
+
+    crab.dir = crab.targetX >= crab.x ? 1 : -1;
+    crab.currentSpeed = rand(crab.speedMin, crab.speedMax);
+    crab.pause = 0;
+    crab.pauseAfterMove = rand(0.35, 1.05);
+  }
+
   function createCrab() {
     if (!crabLayer) return;
 
@@ -1900,14 +1931,18 @@ html.perf-lite .crab{
 
     crab = {
       el,
-      x: isMobile ? 0.18 : 0.16,
+      x: isMobile ? 0.21 : 0.19,
       dir: 1,
-      speed: isMobile ? 0.000019 : 0.000016,
+      speedMin: isMobile ? 0.0000068 : 0.0000058,
+      speedMax: isMobile ? 0.0000108 : 0.0000092,
+      currentSpeed: 0,
+      targetX: isMobile ? 0.27 : 0.25,
       baseY: isMobile ? 0.936 : 0.928,
       phase: Math.random() * 6.28,
-      pause: 0,
-      minX: isMobile ? 0.13 : 0.11,
-      maxX: isMobile ? 0.84 : 0.86
+      pause: rand(0.8, 1.4),
+      pauseAfterMove: rand(0.45, 1.1),
+      minX: isMobile ? 0.16 : 0.14,
+      maxX: isMobile ? 0.80 : 0.82
     };
   }
 
@@ -2203,25 +2238,30 @@ html.perf-lite .crab{
     if (crab) {
       if (crab.pause > 0) {
         crab.pause -= dtSec;
+        if (crab.pause <= 0) chooseNewCrabGoal();
       } else {
-        crab.x += crab.dir * crab.speed * dt;
+        const deltaX = crab.targetX - crab.x;
+        const stepX = crab.currentSpeed * dt;
+
+        if (Math.abs(deltaX) <= stepX) {
+          crab.x = crab.targetX;
+          crab.pause = crab.pauseAfterMove || rand(0.35, 1.05);
+        } else {
+          crab.x += Math.sign(deltaX) * stepX;
+        }
+
+        if (Math.abs(deltaX) > 0.0004) {
+          crab.dir = deltaX >= 0 ? 1 : -1;
+        }
       }
 
-      if (crab.x <= crab.minX) {
-        crab.x = crab.minX;
-        crab.dir = 1;
-        crab.pause = rand(0.18, 0.42);
-      } else if (crab.x >= crab.maxX) {
-        crab.x = crab.maxX;
-        crab.dir = -1;
-        crab.pause = rand(0.18, 0.42);
-      }
+      crab.x = clamp(crab.x, crab.minX, crab.maxX);
 
-      crab.phase += dtSec * (crab.pause > 0 ? 2.2 : 8.5);
+      crab.phase += dtSec * (crab.pause > 0 ? 1.5 : 4.2);
 
-      const crawlLift = Math.sin(crab.phase) * (crab.pause > 0 ? 0.0007 : 0.0015);
-      const bodyTilt = Math.sin(crab.phase * 0.55) * (crab.pause > 0 ? 0.7 : 1.4);
-      const bodyScaleY = 1 + Math.sin(crab.phase * 2) * 0.015;
+      const crawlLift = Math.sin(crab.phase) * (crab.pause > 0 ? 0.00045 : 0.0011);
+      const bodyTilt = Math.sin(crab.phase * 0.55) * (crab.pause > 0 ? 0.35 : 0.9);
+      const bodyScaleY = 1 + Math.sin(crab.phase * 2) * (crab.pause > 0 ? 0.006 : 0.012);
       crab.el.style.transform =
         `translate3d(${crab.x * tankRect.width}px, ${(crab.baseY + crawlLift) * tankRect.height}px, 0) translate(-50%,-50%) scale(${crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
     }
