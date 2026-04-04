@@ -1283,6 +1283,7 @@ html.perf-lite .crab{
       <button class="modeBtn" data-mode="emerald">Emerald</button>
       <button class="modeBtn" data-mode="rose">Rose</button>
       <button class="modeBtn" data-mode="cycle">Cycle</button>
+      <button id="bubbleSoundBtn" type="button" aria-pressed="false">Bubble Sound: Off</button>
       <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
     </div>
     <div class="control-row">
@@ -1324,12 +1325,14 @@ html.perf-lite .crab{
   const bubbleIntensityValue = document.getElementById('bubbleIntensityValue');
   const controlsToggle = document.getElementById('controlsToggle');
   const controlsPanel = document.getElementById('controlsPanel');
+  const bubbleSoundBtn = document.getElementById('bubbleSoundBtn');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
   const rootEl = document.documentElement;
 
   const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
   const CONTROLS_STORAGE_KEY = 'ambientAquarium.controlsOpen.v2';
+  const BUBBLE_SOUND_STORAGE_KEY = 'ambientAquarium.bubbleSoundEnabled.v1';
 
   function setControlsOpen(open) {
     document.body.classList.toggle('controls-open', open);
@@ -1350,6 +1353,15 @@ html.perf-lite .crab{
   function getInitialControlsOpen() {
     try {
       const stored = localStorage.getItem(CONTROLS_STORAGE_KEY);
+      if (stored === '1') return true;
+      if (stored === '0') return false;
+    } catch (err) {}
+    return false;
+  }
+
+  function getInitialBubbleSoundEnabled() {
+    try {
+      const stored = localStorage.getItem(BUBBLE_SOUND_STORAGE_KEY);
       if (stored === '1') return true;
       if (stored === '0') return false;
     } catch (err) {}
@@ -1472,6 +1484,138 @@ html.perf-lite .crab{
     if (bubbleIntensityValue) bubbleIntensityValue.textContent = `${Math.round(n)}%`;
   }
 
+  function setBubbleSoundButtonUI(enabled) {
+    if (!bubbleSoundBtn) return;
+    bubbleSoundBtn.classList.toggle('active', enabled);
+    bubbleSoundBtn.setAttribute('aria-pressed', String(enabled));
+    bubbleSoundBtn.textContent = enabled ? 'Bubble Sound: On' : 'Bubble Sound: Off';
+  }
+
+  function setBubbleSoundEnabled(enabled) {
+    bubbleSoundEnabled = !!enabled;
+    setBubbleSoundButtonUI(bubbleSoundEnabled);
+    try {
+      localStorage.setItem(BUBBLE_SOUND_STORAGE_KEY, bubbleSoundEnabled ? '1' : '0');
+    } catch (err) {}
+    if (!bubbleSoundEnabled && bubbleMasterGain) {
+      bubbleMasterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      bubbleMasterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.08);
+    }
+  }
+
+  function buildBubbleNoiseBuffer(ctx) {
+    const length = Math.max(1, Math.floor(ctx.sampleRate * 0.22));
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i += 1) {
+      const falloff = 1 - (i / length);
+      data[i] = (Math.random() * 2 - 1) * falloff;
+    }
+    return buffer;
+  }
+
+  async function ensureBubbleAudio() {
+    if (!window.AudioContext && !window.webkitAudioContext) return false;
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextCtor();
+      bubbleMasterGain = audioCtx.createGain();
+      bubbleMasterGain.gain.value = 0.0001;
+      bubbleMasterGain.connect(audioCtx.destination);
+      bubbleNoiseBuffer = buildBubbleNoiseBuffer(audioCtx);
+    }
+
+    if (audioCtx.state === 'suspended') {
+      try {
+        await audioCtx.resume();
+      } catch (err) {
+        return false;
+      }
+    }
+
+    bubbleSoundPrimed = audioCtx.state === 'running';
+    if (bubbleSoundPrimed && bubbleMasterGain && bubbleSoundEnabled) {
+      bubbleMasterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      bubbleMasterGain.gain.setTargetAtTime(0.055, audioCtx.currentTime, 0.35);
+    }
+    return bubbleSoundPrimed;
+  }
+
+  function triggerBubblePopCluster(nowSec, density = bubbleIntensityScale) {
+    if (!audioCtx || !bubbleNoiseBuffer || !bubbleMasterGain || audioCtx.state !== 'running') return;
+
+    const densityClamped = clamp(density || 0, 0, 1);
+    const clusterCount = densityClamped < 0.34 ? 1 : (densityClamped < 0.70 ? 2 : 3);
+
+    for (let i = 0; i < clusterCount; i += 1) {
+      const start = nowSec + i * rand(0.045, 0.085);
+      const duration = rand(0.11, 0.18);
+      const gainNode = audioCtx.createGain();
+      const bandpass = audioCtx.createBiquadFilter();
+      const highpass = audioCtx.createBiquadFilter();
+      const lowpass = audioCtx.createBiquadFilter();
+      const toneOsc = audioCtx.createOscillator();
+      const toneGain = audioCtx.createGain();
+      const noise = audioCtx.createBufferSource();
+
+      noise.buffer = bubbleNoiseBuffer;
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(rand(480, 980), start);
+      bandpass.Q.setValueAtTime(rand(0.6, 1.2), start);
+
+      highpass.type = 'highpass';
+      highpass.frequency.setValueAtTime(rand(220, 420), start);
+
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(rand(1200, 2200), start);
+
+      gainNode.gain.setValueAtTime(0.0001, start);
+      gainNode.gain.linearRampToValueAtTime(rand(0.010, 0.022) * (0.55 + densityClamped * 0.9), start + 0.03);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+      toneOsc.type = 'sine';
+      const baseFreq = rand(260, 430);
+      toneOsc.frequency.setValueAtTime(baseFreq, start);
+      toneOsc.frequency.exponentialRampToValueAtTime(baseFreq * rand(1.35, 1.9), start + duration * 0.9);
+
+      toneGain.gain.setValueAtTime(0.0001, start);
+      toneGain.gain.linearRampToValueAtTime(rand(0.003, 0.007) * (0.55 + densityClamped * 0.8), start + 0.025);
+      toneGain.gain.exponentialRampToValueAtTime(0.0001, start + duration * 0.95);
+
+      noise.connect(bandpass);
+      bandpass.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(gainNode);
+      gainNode.connect(bubbleMasterGain);
+
+      toneOsc.connect(toneGain);
+      toneGain.connect(bubbleMasterGain);
+
+      noise.start(start);
+      noise.stop(start + duration);
+      toneOsc.start(start);
+      toneOsc.stop(start + duration);
+    }
+  }
+
+  function scheduleBubbleAudio(nowMs) {
+    if (!bubbleSoundEnabled || !bubbleSoundPrimed || !audioCtx || audioCtx.state !== 'running') return;
+    if (document.hidden) return;
+    if (bubbleIntensityScale <= 0.01) return;
+
+    if (nextBubbleSoundAt === 0) {
+      nextBubbleSoundAt = nowMs + rand(120, 420);
+    }
+
+    if (nowMs >= nextBubbleSoundAt) {
+      triggerBubblePopCluster(audioCtx.currentTime + 0.01, bubbleIntensityScale);
+      const density = clamp(bubbleIntensityScale, 0, 1);
+      const minGap = lerp(1150, 260, density);
+      const maxGap = lerp(2200, 650, density);
+      nextBubbleSoundAt = nowMs + rand(minGap, maxGap);
+    }
+  }
+
   function getFullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
   }
@@ -1513,9 +1657,23 @@ html.perf-lite .crab{
 
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener('click', async () => {
+      await ensureBubbleAudio();
       if (getFullscreenElement()) await exitFullscreen();
       else await enterFullscreen();
       syncFullscreenUI();
+    });
+  }
+
+  if (bubbleSoundBtn) {
+    bubbleSoundBtn.addEventListener('click', async () => {
+      const next = !bubbleSoundEnabled;
+      setBubbleSoundEnabled(next);
+      if (next) {
+        const ready = await ensureBubbleAudio();
+        if (ready) {
+          nextBubbleSoundAt = performance.now() + 120;
+        }
+      }
     });
   }
 
@@ -1523,10 +1681,43 @@ html.perf-lite .crab{
   document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
   document.addEventListener('msfullscreenchange', syncFullscreenUI);
 
+  document.addEventListener('visibilitychange', async () => {
+    if (!audioCtx) return;
+    if (document.hidden) {
+      if (audioCtx.state === 'running') {
+        try { await audioCtx.suspend(); } catch (err) {}
+      }
+      return;
+    }
+    if (bubbleSoundEnabled) {
+      const ready = await ensureBubbleAudio();
+      if (ready && nextBubbleSoundAt === 0) {
+        nextBubbleSoundAt = performance.now() + 260;
+      }
+    }
+  });
+
+  const primeBubbleAudioFromGesture = async () => {
+    if (bubbleSoundPrimed) return;
+    const ready = await ensureBubbleAudio();
+    if (ready && bubbleSoundEnabled && nextBubbleSoundAt === 0) {
+      nextBubbleSoundAt = performance.now() + 240;
+    }
+  };
+
+  window.addEventListener('pointerdown', primeBubbleAudioFromGesture, { passive:true });
+  window.addEventListener('touchstart', primeBubbleAudioFromGesture, { passive:true });
+
   let currentMode = 'day';
   let cyclePhase = 0;
   let swimSpeedScale = 1;
   let bubbleIntensityScale = 1;
+  let bubbleSoundEnabled = false;
+  let audioCtx = null;
+  let bubbleMasterGain = null;
+  let bubbleNoiseBuffer = null;
+  let bubbleSoundPrimed = false;
+  let nextBubbleSoundAt = 0;
 
   function hslToRgb(h, s, l) {
     const hue = ((h % 360) + 360) % 360;
@@ -2404,6 +2595,7 @@ html.perf-lite .crab{
         `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
     }
 
+    scheduleBubbleAudio(now);
     requestAnimationFrame(animate);
   }
 
@@ -2459,6 +2651,7 @@ html.perf-lite .crab{
 
   setPerfLite(prefersReducedMotion);
   setControlsOpen(getInitialControlsOpen());
+  setBubbleSoundEnabled(getInitialBubbleSoundEnabled());
   syncFullscreenUI();
   seedScene();
   refreshTankRect();
