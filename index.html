@@ -51,6 +51,9 @@
   --shimmer-opacity:.34;
   --ripple-display:block;
   --ripple-opacity:.14;
+
+  --bg-mobile-image:url("./aquarium-bg.png");
+  --bg-desktop-image:url("./BG2.png");
 }
 
 *{box-sizing:border-box}
@@ -165,7 +168,7 @@ body{
   z-index:1;
   background:
     linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
-    url("./aquarium-bg.png") center center / cover no-repeat;
+    var(--bg-mobile-image) center center / cover no-repeat;
   filter:
     saturate(.92)
     brightness(.78)
@@ -1114,8 +1117,8 @@ html.perf-lite .crab{
   .photo-bg{
     background:
       linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.24)),
-      url("./BG2.png") center center / cover no-repeat,
-      url("./aquarium-bg.png") center center / cover no-repeat;
+      var(--bg-desktop-image) center center / cover no-repeat,
+      var(--bg-mobile-image) center center / cover no-repeat;
   }
 
   :root{
@@ -1283,6 +1286,7 @@ html.perf-lite .crab{
       <button class="modeBtn" data-mode="emerald">Emerald</button>
       <button class="modeBtn" data-mode="rose">Rose</button>
       <button class="modeBtn" data-mode="cycle">Cycle</button>
+      <button id="bgToggleBtn" type="button">BG: Classic</button>
       <button id="bubbleSoundBtn" type="button" aria-pressed="false">Bubble Sound: Off</button>
       <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
     </div>
@@ -1325,6 +1329,7 @@ html.perf-lite .crab{
   const bubbleVolumeValue = document.getElementById('bubbleVolumeValue');
   const controlsToggle = document.getElementById('controlsToggle');
   const controlsPanel = document.getElementById('controlsPanel');
+  const bgToggleBtn = document.getElementById('bgToggleBtn');
   const bubbleSoundBtn = document.getElementById('bubbleSoundBtn');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
   const rootEl = document.documentElement;
@@ -1336,6 +1341,24 @@ html.perf-lite .crab{
   const CONTROLS_STORAGE_KEY = 'ambientAquarium.controlsOpen.v2';
   const BUBBLE_SOUND_STORAGE_KEY = 'ambientAquarium.bubbleSoundEnabled.v1';
   const BUBBLE_VOLUME_STORAGE_KEY = 'ambientAquarium.bubbleVolume.v1';
+  const BG_SET_STORAGE_KEY = 'ambientAquarium.bgSet.v1';
+
+  const BG_SETS = [
+    {
+      id: 'classic',
+      label: 'Classic',
+      mobile: './aquarium-bg.png',
+      desktop: './BG2.png'
+    },
+    {
+      id: 'rocky',
+      label: 'Rocky',
+      mobile: './bg2.png',
+      desktop: './bg2.1.png'
+    }
+  ];
+
+  let currentBgSetId = 'classic';
 
   function setControlsOpen(open) {
     document.body.classList.toggle('controls-open', open);
@@ -1378,6 +1401,41 @@ html.perf-lite .crab{
       if (Number.isFinite(value)) return clamp(value, 0, 100);
     } catch (err) {}
     return 100;
+  }
+
+  function getBgSetById(id) {
+    return BG_SETS.find((set) => set.id === id) || BG_SETS[0];
+  }
+
+  function getInitialBgSetId() {
+    try {
+      const stored = localStorage.getItem(BG_SET_STORAGE_KEY);
+      if (stored && BG_SETS.some((set) => set.id === stored)) return stored;
+    } catch (err) {}
+    return BG_SETS[0].id;
+  }
+
+  function updateBgToggleButton() {
+    if (!bgToggleBtn) return;
+    const activeSet = getBgSetById(currentBgSetId);
+    bgToggleBtn.textContent = `BG: ${activeSet.label}`;
+  }
+
+  function applyBgSet(id) {
+    const activeSet = getBgSetById(id);
+    currentBgSetId = activeSet.id;
+    rootEl.style.setProperty('--bg-mobile-image', `url("${activeSet.mobile}")`);
+    rootEl.style.setProperty('--bg-desktop-image', `url("${activeSet.desktop}")`);
+    updateBgToggleButton();
+    try {
+      localStorage.setItem(BG_SET_STORAGE_KEY, currentBgSetId);
+    } catch (err) {}
+  }
+
+  function cycleBgSet() {
+    const currentIndex = BG_SETS.findIndex((set) => set.id === currentBgSetId);
+    const nextSet = BG_SETS[(currentIndex + 1) % BG_SETS.length] || BG_SETS[0];
+    applyBgSet(nextSet.id);
   }
 
 
@@ -1701,6 +1759,10 @@ html.perf-lite .crab{
       const open = document.body.classList.contains('controls-collapsed');
       setControlsOpen(open);
     });
+  }
+
+  if (bgToggleBtn) {
+    bgToggleBtn.addEventListener('click', cycleBgSet);
   }
 
   if (fullscreenBtn) {
@@ -2694,6 +2756,7 @@ html.perf-lite .crab{
 
   setPerfLite(prefersReducedMotion);
   setControlsOpen(getInitialControlsOpen());
+  applyBgSet(getInitialBgSetId());
   applyBubbleVolume(bubbleVolume ? bubbleVolume.value : 100);
   setBubbleSoundEnabled(getInitialBubbleSoundEnabled());
   syncFullscreenUI();
