@@ -311,20 +311,27 @@ body{
 }
 
 .tank.light-wheel .wheel-spectrum{
-  opacity:calc(.72 * var(--light-intensity));
+  opacity:calc(.88 * var(--light-intensity));
 }
 
 .tank.light-wheel .light-beams{
   opacity:1;
 }
 
-.tank.light-wheel .light-shimmer{
-  opacity:calc((var(--shimmer-base) + .10) * var(--light-intensity));
+.tank.light-wheel .beam{
+  width:20%;
+  height:78%;
+  opacity:.96;
+  filter:blur(6px) saturate(1.10);
 }
 
-.tank.light-wheel .beam.b1{ left:15%; }
-.tank.light-wheel .beam.b2{ left:39%; }
-.tank.light-wheel .beam.b3{ left:63%; }
+.tank.light-wheel .light-shimmer{
+  opacity:calc((var(--shimmer-base) + .18) * var(--light-intensity));
+}
+
+.tank.light-wheel .beam.b1{ left:14%; }
+.tank.light-wheel .beam.b2{ left:39%; opacity:.80; }
+.tank.light-wheel .beam.b3{ left:64%; opacity:.72; }
 
 .diver-layer{
   z-index:6;
@@ -1828,6 +1835,9 @@ html.perf-lite .crab{
   let bubbleAudioBuffer = null;
   let bubbleAudioSource = null;
   let bubbleAudioLoadPromise = null;
+  const CYCLE_PALETTE_INTERVAL_MS = 90;
+  let lastCyclePaletteUpdateMs = -Infinity;
+  let lastCyclePaletteBucket = -1;
 
   function hslToRgb(h, s, l) {
     const hue = ((h % 360) + 360) % 360;
@@ -1854,7 +1864,7 @@ html.perf-lite .crab{
     ];
   }
 
-  function applyCyclePalette(timeMs) {
+  function applyCyclePalette(timeMs, force = false) {
     const speed = FIXED_CYCLE_SPEED;
 
     if (speed > 0) {
@@ -1862,27 +1872,38 @@ html.perf-lite .crab{
       cyclePhase = ((timeMs * 0.001) / duration) % 1;
     }
 
+    const bucket = Math.floor(cyclePhase * 180);
+
+    if (!force) {
+      const tooSoon = (timeMs - lastCyclePaletteUpdateMs) < CYCLE_PALETTE_INTERVAL_MS;
+      if (tooSoon || bucket === lastCyclePaletteBucket) return;
+    }
+
+    lastCyclePaletteUpdateMs = timeMs;
+    lastCyclePaletteBucket = bucket;
+
     const hue = (205 + cyclePhase * 360) % 360;
-    const [topR, topG, topB] = hslToRgb(hue, 48, 21);
-    const [midR, midG, midB] = hslToRgb(hue + 10, 42, 14);
-    const [bottomR, bottomG, bottomB] = hslToRgb(hue + 20, 45, 7);
-    const [beamR, beamG, beamB] = hslToRgb(hue + 26, 92, 72);
-    const [overlayR, overlayG, overlayB] = hslToRgb(hue + 8, 58, 24);
+    const [topR, topG, topB] = hslToRgb(hue, 58, 25);
+    const [midR, midG, midB] = hslToRgb(hue + 10, 52, 17);
+    const [bottomR, bottomG, bottomB] = hslToRgb(hue + 20, 50, 9);
+    const [beamR, beamG, beamB] = hslToRgb(hue + 26, 96, 78);
+    const [overlayR, overlayG, overlayB] = hslToRgb(hue + 8, 66, 29);
 
     const r = rootEl.style;
     r.setProperty('--water-top', `rgb(${topR},${topG},${topB})`);
     r.setProperty('--water-mid', `rgb(${midR},${midG},${midB})`);
     r.setProperty('--water-bottom', `rgb(${bottomR},${bottomG},${bottomB})`);
     r.setProperty('--beam-rgb', `${beamR},${beamG},${beamB}`);
-    r.setProperty('--beam-alpha-hi', '.17');
-    r.setProperty('--beam-alpha-lo', '0');
-    r.setProperty('--shimmer-base', '.33');
-    r.setProperty('--mode-sat', '1.08');
-    r.setProperty('--mode-bright', '.99');
-    r.setProperty('--mode-contrast', '1.07');
+    r.setProperty('--beam-alpha-hi', '.25');
+    r.setProperty('--beam-alpha-lo', '.02');
+    r.setProperty('--shimmer-base', '.40');
+    r.setProperty('--mode-sat', '1.14');
+    r.setProperty('--mode-bright', '1.03');
+    r.setProperty('--mode-contrast', '1.10');
     r.setProperty('--mode-hue', '0deg');
-    r.setProperty('--mode-overlay', `linear-gradient(180deg, rgba(${overlayR},${overlayG},${overlayB},0.08), rgba(${bottomR},${bottomG},${bottomB},0.14))`);
+    r.setProperty('--mode-overlay', `linear-gradient(180deg, rgba(${overlayR},${overlayG},${overlayB},0.12), rgba(${bottomR},${bottomG},${bottomB},0.18))`);
     setPresetBeam(beamR, beamG, beamB);
+    r.setProperty('--tank-glow', `rgba(${beamR},${beamG},${beamB},0.28)`);
   }
 
   function makeEl(html) {
@@ -2423,7 +2444,7 @@ html.perf-lite .crab{
       r.setProperty('--mode-overlay', 'linear-gradient(180deg, rgba(90,20,70,0.08), rgba(26,10,24,0.14))');
       setPresetBeam(255, 120, 185);
     } else if (mode === 'cycle') {
-      applyCyclePalette(performance.now());
+      applyCyclePalette(performance.now(), true);
     }
   }
 
@@ -2564,7 +2585,7 @@ html.perf-lite .crab{
       const bodyTilt = Math.sin(crab.phase * 0.55) * (crab.pause > 0 ? 0.35 : 0.9);
       const bodyScaleY = 1 + Math.sin(crab.phase * 2) * (crab.pause > 0 ? 0.006 : 0.012);
       crab.el.style.transform =
-        `translate3d(${crab.x * tankRect.width}px, ${(crab.baseY + crawlLift) * tankRect.height}px, 0) translate(-50%,-50%) scale(${crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
+        `translate3d(${crab.x * tankRect.width}px, ${(crab.baseY + crawlLift) * tankRect.height}px, 0) translate(-50%,-50%) scale(${-crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
     }
 
     const tetraList = fish.filter(f => f.type === 'tetra');
