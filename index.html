@@ -1286,13 +1286,7 @@ html.perf-lite .crab{
 
   <div class="controls" id="controlsPanel" aria-hidden="true">
     <div class="control-row">
-      <button class="modeBtn active" data-mode="day">Day</button>
-      <button class="modeBtn" data-mode="moon">Moon</button>
-      <button class="modeBtn" data-mode="uv">UV</button>
-      <button class="modeBtn" data-mode="dusk">Dusk</button>
-      <button class="modeBtn" data-mode="emerald">Emerald</button>
-      <button class="modeBtn" data-mode="rose">Rose</button>
-      <button class="modeBtn" data-mode="cycle">Cycle</button>
+      <button id="lightModeBtn" type="button" aria-label="Change light mode">Light: Day</button>
       <button id="bgToggleBtn" type="button">BG: Classic</button>
       <button id="bubbleSoundBtn" type="button" aria-pressed="false">Bubble Sound: Off</button>
       <button id="fullscreenBtn" type="button" aria-pressed="false">Fullscreen</button>
@@ -1327,7 +1321,7 @@ html.perf-lite .crab{
   const bubblesEl = document.getElementById('bubbles');
   const crabLayer = document.getElementById('crabLayer');
   const titleEl = document.getElementById('appTitle');
-  const modeBtns = [...document.querySelectorAll('.modeBtn')];
+  const lightModeBtn = document.getElementById('lightModeBtn');
   const swimSpeed = document.getElementById('swimSpeed');
   const swimSpeedValue = document.getElementById('swimSpeedValue');
   const bubbleIntensity = document.getElementById('bubbleIntensity');
@@ -1372,6 +1366,17 @@ html.perf-lite .crab{
   ];
 
   let currentBgSetId = 'classic';
+
+  const LIGHT_MODE_ORDER = ['day', 'moon', 'uv', 'dusk', 'emerald', 'rose', 'cycle'];
+  const LIGHT_MODE_LABELS = {
+    day: 'Day',
+    moon: 'Moon',
+    uv: 'UV',
+    dusk: 'Dusk',
+    emerald: 'Emerald',
+    rose: 'Rose',
+    cycle: 'Cycle'
+  };
 
   function setControlsOpen(open) {
     document.body.classList.toggle('controls-open', open);
@@ -2354,7 +2359,7 @@ html.perf-lite .crab{
 
   function setMode(mode) {
     currentMode = mode;
-    modeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+    if (lightModeBtn) lightModeBtn.textContent = `Light: ${LIGHT_MODE_LABELS[mode] || mode}`;
 
     const r = rootEl.style;
     tank.classList.remove('light-wheel');
@@ -2763,9 +2768,13 @@ html.perf-lite .crab{
     mouse.y = 0.5;
   }, { passive:true });
 
-  modeBtns.forEach(btn => {
-    btn.addEventListener('click', () => setMode(btn.dataset.mode));
-  });
+  if (lightModeBtn) {
+    lightModeBtn.addEventListener('click', () => {
+      const currentIndex = LIGHT_MODE_ORDER.indexOf(currentMode);
+      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % LIGHT_MODE_ORDER.length;
+      setMode(LIGHT_MODE_ORDER[nextIndex]);
+    });
+  }
 
   swimSpeed.addEventListener('input', (e) => {
     applySwimSpeed(e.target.value);
