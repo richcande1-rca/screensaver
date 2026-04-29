@@ -595,7 +595,16 @@ body{
 ---------------------------------------------------- */
 .discus{
   --fin-speed:1600ms;
+  --fin-speed-tail:1180ms;
   --fin-wag:1.0;
+  --tail-x-a:.32%;
+  --tail-x-b:-.32%;
+  --tail-scale-a:.94;
+  --tail-scale-b:1.06;
+  --tail-skew-a:-1.15deg;
+  --tail-skew-b:1.15deg;
+  --tail-rot-a:-.45deg;
+  --tail-rot-b:.45deg;
 }
 
 .discus .fish-sprite{
@@ -630,7 +639,7 @@ body{
   transform-origin:62% 51%;
   opacity:.98;
   mix-blend-mode:normal;
-  animation:discusTailFin 1180ms ease-in-out infinite;
+  animation:discusTailFin var(--fin-speed-tail, 1180ms) ease-in-out infinite;
   animation-delay:0ms;
   transform:translate3d(0,0,0);
   backface-visibility:hidden;
@@ -652,15 +661,15 @@ body{
 
 @keyframes discusTailFin{
   0%{
-    transform:translate3d(.32%,0,0) scaleX(.925) skewY(-1.15deg) rotate(-.45deg);
+    transform:translate3d(var(--tail-x-a),0,0) scaleX(var(--tail-scale-a)) skewY(var(--tail-skew-a)) rotate(var(--tail-rot-a));
     opacity:.96;
   }
   50%{
-    transform:translate3d(-.32%,0,0) scaleX(1.075) skewY(1.15deg) rotate(.45deg);
+    transform:translate3d(var(--tail-x-b),0,0) scaleX(var(--tail-scale-b)) skewY(var(--tail-skew-b)) rotate(var(--tail-rot-b));
     opacity:.99;
   }
   100%{
-    transform:translate3d(.32%,0,0) scaleX(.925) skewY(-1.15deg) rotate(-.45deg);
+    transform:translate3d(var(--tail-x-a),0,0) scaleX(var(--tail-scale-a)) skewY(var(--tail-skew-a)) rotate(var(--tail-rot-a));
     opacity:.96;
   }
 }
@@ -668,8 +677,6 @@ body{
 @keyframes discusPecFin{
   from{ transform:none; opacity:0; }
   to{ transform:none; opacity:0; }
-}
-  to{ transform:scaleX(1.08) rotate(calc(var(--fin-wag) * 4.6deg)) translateY(.35%); opacity:.46; }
 }
 
 html.perf-lite .discus-fin{
@@ -2247,7 +2254,7 @@ html.perf-lite .crab{
 
   function createDiscus(x, y, scale = 1, spriteSrc = './fish5.png') {
     const el = makeEl(`
-      <div class="fish discus" style="--fish-src:url('${spriteSrc}')">
+      <div class="fish discus has-discus-tail-replacement" style="--fish-src:url('${spriteSrc}')">
         <img class="fish-sprite" src="${spriteSrc}" alt="">
         <span class="discus-fin discus-fin-top" aria-hidden="true"></span>
         <span class="discus-fin discus-fin-bottom" aria-hidden="true"></span>
@@ -2858,8 +2865,11 @@ html.perf-lite .crab{
 
       const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
       const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.12 : (f.type === 'barb' ? 0.15 : 0.18));
-      const tailDeg = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2) * (speedMag * (f.type === 'discus' ? 6400 : (f.type === 'barb' ? 7600 : 9000)));
-      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -3 : (f.type === 'barb' ? -3.5 : -4.5), f.type === 'discus' ? 3 : (f.type === 'barb' ? 3.5 : 4.5));
+      const tailPhase = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2);
+      const tailDeg = f.type === 'discus'
+        ? tailPhase * clamp(speedMag * 650, 0, 0.20)
+        : tailPhase * (speedMag * (f.type === 'barb' ? 7600 : 9000));
+      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -0.20 : (f.type === 'barb' ? -3.5 : -4.5), f.type === 'discus' ? 0.20 : (f.type === 'barb' ? 3.5 : 4.5));
 
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
@@ -2890,11 +2900,25 @@ html.perf-lite .crab{
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
         const finSpeedMs = Math.round(1850 - (speedMood * 260) - (movementPulse * 340));
         const finWag = clamp(0.82 + speedMood * 0.28 + movementPulse * 0.38 + turnPulse * 0.32, 0.82, 1.62);
+        const tailSpeedMs = Math.round(clamp(finSpeedMs * 0.72, 560, 1320));
+        const tailX = clamp(0.24 + finWag * 0.09 + movementPulse * 0.05, 0.24, 0.48);
+        const tailSkew = clamp(0.74 + finWag * 0.42 + movementPulse * 0.18, 0.90, 1.78);
+        const tailRot = clamp(0.28 + finWag * 0.18 + turnPulse * 0.10, 0.36, 0.68);
+        const tailScaleA = clamp(0.965 - finWag * 0.028, 0.915, 0.945);
+        const tailScaleB = clamp(1.035 + finWag * 0.030, 1.058, 1.088);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
-        f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
+        f.el.style.setProperty('--fin-speed-tail', `${tailSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-pec', `${Math.round(finSpeedMs * 0.62)}ms`);
         f.el.style.setProperty('--fin-wag', finWag.toFixed(2));
+        f.el.style.setProperty('--tail-x-a', `${tailX.toFixed(3)}%`);
+        f.el.style.setProperty('--tail-x-b', `${(-tailX).toFixed(3)}%`);
+        f.el.style.setProperty('--tail-scale-a', tailScaleA.toFixed(3));
+        f.el.style.setProperty('--tail-scale-b', tailScaleB.toFixed(3));
+        f.el.style.setProperty('--tail-skew-a', `${(-tailSkew).toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-skew-b', `${tailSkew.toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-rot-a', `${(-tailRot).toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-rot-b', `${tailRot.toFixed(2)}deg`);
       }
 
       const minTurnWidth = f.type === 'discus' ? 0.72 : (f.type === 'angel' ? 0.68 : (f.type === 'barb' ? 0.64 : 0.62));
