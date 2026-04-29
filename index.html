@@ -2049,6 +2049,9 @@ html.perf-lite .crab{
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
       turnMomentum: 0,
+      // Smoothed drawing direction. This lets the fish visually pivot
+      // through a narrow edge-on shape instead of snapping instantly.
+      visualDir: 1,
       riseCooldown: 0,
       zone: null,
       homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
@@ -2675,8 +2678,16 @@ html.perf-lite .crab{
       const dirResponseT = 1 - Math.pow(1 - dirResponse, frameScale);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponseT);
 
+      const previousDir = f.dir;
       if (f.turnMomentum > 0.08) f.dir = 1;
       if (f.turnMomentum < -0.08) f.dir = -1;
+
+      // Give direction changes a tiny brake so they feel like a pivot,
+      // not a hard mirror flip while still moving full-speed.
+      if (f.dir !== previousDir) {
+        const turnBrake = f.type === 'discus' ? 0.25 : (f.type === 'angel' ? 0.32 : (f.type === 'barb' ? 0.42 : 0.48));
+        f.vx *= turnBrake;
+      }
 
       if (f.dir === 1 && f.vx < 0) f.vx *= 0.35;
       if (f.dir === -1 && f.vx > 0) f.vx *= 0.35;
@@ -2727,8 +2738,21 @@ html.perf-lite .crab{
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
+
+      // Visual turn smoothing: draw direction eases through zero width
+      // for an edge-on pivot instead of snapping scaleX from 1 to -1.
+      const visualTurnResponse = f.type === 'discus' ? 0.105 : (f.type === 'angel' ? 0.13 : (f.type === 'barb' ? 0.20 : 0.24));
+      const visualTurnT = 1 - Math.pow(1 - visualTurnResponse, frameScale);
+      f.visualDir = lerp(f.visualDir ?? f.dir, f.dir, visualTurnT);
+      if (Math.abs(f.visualDir - f.dir) < 0.015) f.visualDir = f.dir;
+
+      const turnFlatten = 1 - Math.min(1, Math.abs(f.visualDir));
+      const turnLeanDeg = turnFlatten * f.dir * (f.type === 'discus' ? 4 : (f.type === 'angel' ? 5 : (f.type === 'barb' ? 6 : 7)));
+      const visualScaleX = spriteFacing * f.visualDir * drawScale;
+      const visualScaleY = drawScale * (1 + turnFlatten * 0.045);
+
       f.el.style.transform =
-        `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${spriteFacing * f.dir * drawScale}, ${drawScale}) rotate(${finalRot}deg)`;
+        `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${visualScaleX}, ${visualScaleY}) rotate(${finalRot + turnLeanDeg}deg)`;
     }
 
     scheduleBubbleAudio(now);
