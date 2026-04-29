@@ -597,14 +597,14 @@ body{
   --fin-speed:1600ms;
   --fin-speed-tail:1180ms;
   --fin-wag:1.0;
-  --tail-x-a:.32%;
-  --tail-x-b:-.32%;
-  --tail-scale-a:.94;
-  --tail-scale-b:1.06;
-  --tail-skew-a:-1.15deg;
-  --tail-skew-b:1.15deg;
-  --tail-rot-a:-.45deg;
-  --tail-rot-b:.45deg;
+  --tail-x-a:.40%;
+  --tail-x-b:-.40%;
+  --tail-scale-a:.925;
+  --tail-scale-b:1.075;
+  --tail-skew-a:-1.42deg;
+  --tail-skew-b:1.42deg;
+  --tail-rot-a:-.58deg;
+  --tail-rot-b:.58deg;
 }
 
 .discus .fish-sprite{
@@ -2800,25 +2800,33 @@ html.perf-lite .crab{
 
       const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
-      const dirResponse = f.type === 'angel' ? 0.10 : (f.type === 'discus' ? 0.085 : (f.type === 'barb' ? 0.13 : 0.16));
+
+      // Slow down direction decisions so fish don't snap-flip the instant
+      // their target shifts. Bigger fish get the gentlest response.
+      const dirResponse = f.type === 'angel' ? 0.070 : (f.type === 'discus' ? 0.055 : (f.type === 'barb' ? 0.090 : 0.110));
       const dirResponseT = 1 - Math.pow(1 - dirResponse, frameScale);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponseT);
 
       const previousDir = f.dir;
-      if (f.turnMomentum > 0.08) f.dir = 1;
-      if (f.turnMomentum < -0.08) f.dir = -1;
+      const turnThreshold = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.15 : (f.type === 'barb' ? 0.13 : 0.12));
+      const activeTurnDuration = f.turnDuration ?? 520;
+      const turnStillPlaying = (f.turnAge ?? 999) < activeTurnDuration * 0.82;
 
-      // Give direction changes a tiny brake so they feel like a pivot,
-      // not a hard mirror flip while still moving full-speed.
-      // Start a short visual turn pulse too; this version does NOT pass through
-      // zero-width, so fish stay less like flat paper cutouts.
+      if (!turnStillPlaying) {
+        if (f.turnMomentum > turnThreshold) f.dir = 1;
+        if (f.turnMomentum < -turnThreshold) f.dir = -1;
+      }
+
+      // Give direction changes a real slow pivot instead of a hard mirror flip.
+      // The fish holds the old facing longer, compresses, flips near the middle,
+      // then eases back out.
       if (f.dir !== previousDir) {
-        const turnBrake = f.type === 'discus' ? 0.25 : (f.type === 'angel' ? 0.32 : (f.type === 'barb' ? 0.42 : 0.48));
+        const turnBrake = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.22 : (f.type === 'barb' ? 0.30 : 0.36));
         f.vx *= turnBrake;
         f.turnFromDir = previousDir;
         f.turnToDir = f.dir;
         f.turnAge = 0;
-        f.turnDuration = f.type === 'discus' ? 760 : (f.type === 'angel' ? 680 : (f.type === 'barb' ? 420 : 360));
+        f.turnDuration = f.type === 'discus' ? 1250 : (f.type === 'angel' ? 1120 : (f.type === 'barb' ? 780 : 680));
       }
 
       if (f.dir === 1 && f.vx < 0) f.vx *= 0.35;
@@ -2875,9 +2883,9 @@ html.perf-lite .crab{
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
 
-      // Softer turn illusion, without the paper-thin cutout look:
-      // compress only a little, flip at the middle of the pulse, then expand.
-      const turnDuration = f.turnDuration ?? 420;
+      // Softer, slower turn illusion, without the paper-thin cutout look:
+      // compress, linger through the hidden midpoint, then expand.
+      const turnDuration = f.turnDuration ?? 520;
       const isTurningVisual = (f.turnAge ?? turnDuration) < turnDuration;
       let visualDir = f.dir;
       let turnPulse = 0;
@@ -2888,8 +2896,10 @@ html.perf-lite .crab{
           ? 2 * turnP * turnP
           : 1 - Math.pow(-2 * turnP + 2, 2) / 2;
 
-        // Stay on the old facing for the first half, then flip while compressed.
-        visualDir = easedTurnP < 0.50 ? (f.turnFromDir ?? f.dir) : (f.turnToDir ?? f.dir);
+        // Hold the old facing a touch longer so the actual flip is hidden
+        // inside the compressed part of the turn instead of popping early.
+        const flipPoint = f.type === 'discus' ? 0.62 : (f.type === 'angel' ? 0.60 : 0.56);
+        visualDir = easedTurnP < flipPoint ? (f.turnFromDir ?? f.dir) : (f.turnToDir ?? f.dir);
         turnPulse = Math.sin(Math.PI * easedTurnP);
       }
 
@@ -2899,13 +2909,13 @@ html.perf-lite .crab{
         const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
         const finSpeedMs = Math.round(1850 - (speedMood * 260) - (movementPulse * 340));
-        const finWag = clamp(0.82 + speedMood * 0.28 + movementPulse * 0.38 + turnPulse * 0.32, 0.82, 1.62);
+        const finWag = clamp(0.88 + speedMood * 0.32 + movementPulse * 0.44 + turnPulse * 0.36, 0.88, 1.78);
         const tailSpeedMs = Math.round(clamp(finSpeedMs * 0.72, 560, 1320));
-        const tailX = clamp(0.24 + finWag * 0.09 + movementPulse * 0.05, 0.24, 0.48);
-        const tailSkew = clamp(0.74 + finWag * 0.42 + movementPulse * 0.18, 0.90, 1.78);
-        const tailRot = clamp(0.28 + finWag * 0.18 + turnPulse * 0.10, 0.36, 0.68);
-        const tailScaleA = clamp(0.965 - finWag * 0.028, 0.915, 0.945);
-        const tailScaleB = clamp(1.035 + finWag * 0.030, 1.058, 1.088);
+        const tailX = clamp(0.30 + finWag * 0.115 + movementPulse * 0.06, 0.30, 0.58);
+        const tailSkew = clamp(0.88 + finWag * 0.52 + movementPulse * 0.24, 1.05, 2.10);
+        const tailRot = clamp(0.34 + finWag * 0.24 + turnPulse * 0.12, 0.44, 0.82);
+        const tailScaleA = clamp(0.962 - finWag * 0.033, 0.900, 0.935);
+        const tailScaleB = clamp(1.038 + finWag * 0.037, 1.065, 1.105);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
         f.el.style.setProperty('--fin-speed-tail', `${tailSpeedMs}ms`);
@@ -2921,11 +2931,11 @@ html.perf-lite .crab{
         f.el.style.setProperty('--tail-rot-b', `${tailRot.toFixed(2)}deg`);
       }
 
-      const minTurnWidth = f.type === 'discus' ? 0.72 : (f.type === 'angel' ? 0.68 : (f.type === 'barb' ? 0.64 : 0.62));
+      const minTurnWidth = f.type === 'discus' ? 0.78 : (f.type === 'angel' ? 0.74 : (f.type === 'barb' ? 0.70 : 0.68));
       const widthMultiplier = 1 - turnPulse * (1 - minTurnWidth);
-      const turnLeanDeg = turnPulse * f.dir * (f.type === 'discus' ? 2.4 : (f.type === 'angel' ? 3.0 : (f.type === 'barb' ? 3.6 : 4.0)));
+      const turnLeanDeg = turnPulse * f.dir * (f.type === 'discus' ? 1.4 : (f.type === 'angel' ? 1.8 : (f.type === 'barb' ? 2.5 : 2.8)));
       const visualScaleX = spriteFacing * visualDir * drawScale * widthMultiplier;
-      const visualScaleY = drawScale * (1 + turnPulse * 0.018);
+      const visualScaleY = drawScale * (1 + turnPulse * 0.010);
 
       f.el.style.transform =
         `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${visualScaleX}, ${visualScaleY}) rotate(${finalRot + turnLeanDeg}deg)`;
