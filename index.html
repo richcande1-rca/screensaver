@@ -623,11 +623,11 @@ body{
 }
 
 .discus-fin-tail{
-  clip-path:polygon(63% 22%, 100% 18%, 100% 84%, 63% 78%);
-  transform-origin:66% 51%;
-  opacity:.92;
+  clip-path:polygon(60% 20%, 100% 17%, 100% 85%, 60% 80%);
+  transform-origin:64% 51%;
+  opacity:.96;
   mix-blend-mode:normal;
-  animation:discusTailFin var(--fin-speed-tail, 980ms) ease-in-out infinite alternate;
+  animation:discusTailFin var(--fin-speed-tail, 880ms) ease-in-out infinite alternate;
   animation-delay:-160ms;
 }
 
@@ -646,8 +646,8 @@ body{
 }
 
 @keyframes discusTailFin{
-  from{ transform:translateX(calc(var(--fin-wag) * .50%)) rotate(calc(var(--fin-wag) * -2.6deg)) scaleX(.995); opacity:.86; }
-  to{ transform:translateX(calc(var(--fin-wag) * -.50%)) rotate(calc(var(--fin-wag) * 2.8deg)) scaleX(1.005); opacity:.98; }
+  from{ transform:translateX(calc(var(--fin-wag) * .85%)) rotate(calc(var(--fin-wag) * -4.8deg)) scaleX(.985); opacity:.88; }
+  to{ transform:translateX(calc(var(--fin-wag) * -.85%)) rotate(calc(var(--fin-wag) * 5.1deg)) scaleX(1.015); opacity:1; }
 }
 
 @keyframes discusPecFin{
@@ -2872,8 +2872,8 @@ html.perf-lite .crab{
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
-        const finSpeedMs = Math.round(1750 - (speedMood * 280) - (movementPulse * 380));
-        const finWag = clamp(0.68 + speedMood * 0.26 + movementPulse * 0.36 + turnPulse * 0.32, 0.68, 1.48);
+        const finSpeedMs = Math.round(1550 - (speedMood * 300) - (movementPulse * 420));
+        const finWag = clamp(0.88 + speedMood * 0.34 + movementPulse * 0.46 + turnPulse * 0.42, 0.88, 1.85);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
         f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
