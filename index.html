@@ -580,6 +580,97 @@ body{
   height:34px;
 }
 
+/* ----------------------------------------------------
+   DISCUS FIN TEST
+   Lightweight fake fin movement using tiny clipped overlays
+   from the same discus PNG. This keeps the discus as one fish,
+   with only a few child layers on the single big fish.
+---------------------------------------------------- */
+.discus{
+  --fin-speed:1600ms;
+  --fin-wag:1.0;
+}
+
+.discus .fish-sprite{
+  z-index:1;
+}
+
+.discus-fin{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  background:var(--fish-src) center center / contain no-repeat;
+  opacity:.56;
+  mix-blend-mode:screen;
+  filter:blur(.12px) saturate(1.05) brightness(1.06);
+  will-change:transform, opacity;
+  backface-visibility:hidden;
+}
+
+.discus-fin-top{
+  clip-path:polygon(24% 0%, 74% 0%, 66% 28%, 33% 28%);
+  transform-origin:50% 24%;
+  animation:discusTopFin var(--fin-speed-top, 1600ms) ease-in-out infinite alternate;
+}
+
+.discus-fin-bottom{
+  clip-path:polygon(25% 72%, 70% 72%, 75% 100%, 22% 100%);
+  transform-origin:50% 76%;
+  animation:discusBottomFin var(--fin-speed-bottom, 1720ms) ease-in-out infinite alternate;
+  animation-delay:-340ms;
+}
+
+.discus-fin-tail{
+  clip-path:polygon(0% 27%, 30% 28%, 31% 74%, 0% 78%);
+  transform-origin:26% 50%;
+  opacity:.50;
+  animation:discusTailFin var(--fin-speed-tail, 1150ms) ease-in-out infinite alternate;
+  animation-delay:-180ms;
+}
+
+.discus-fin-pec{
+  clip-path:polygon(56% 38%, 78% 41%, 78% 64%, 56% 62%);
+  transform-origin:61% 51%;
+  opacity:.38;
+  animation:discusPecFin var(--fin-speed-pec, 990ms) ease-in-out infinite alternate;
+  animation-delay:-260ms;
+}
+
+@keyframes discusTopFin{
+  from{ transform:rotate(calc(var(--fin-wag) * -1.4deg)) translateY(-.5%); opacity:.42; }
+  to{ transform:rotate(calc(var(--fin-wag) * 1.6deg)) translateY(.35%); opacity:.62; }
+}
+
+@keyframes discusBottomFin{
+  from{ transform:rotate(calc(var(--fin-wag) * 1.2deg)) translateY(.45%); opacity:.40; }
+  to{ transform:rotate(calc(var(--fin-wag) * -1.5deg)) translateY(-.25%); opacity:.58; }
+}
+
+@keyframes discusTailFin{
+  from{ transform:translateX(calc(var(--fin-wag) * -.9%)) rotate(calc(var(--fin-wag) * -2.6deg)); opacity:.42; }
+  to{ transform:translateX(calc(var(--fin-wag) * .8%)) rotate(calc(var(--fin-wag) * 2.8deg)); opacity:.60; }
+}
+
+@keyframes discusPecFin{
+  from{ transform:scaleX(.94) rotate(calc(var(--fin-wag) * -3.2deg)); opacity:.28; }
+  to{ transform:scaleX(1.06) rotate(calc(var(--fin-wag) * 3.4deg)); opacity:.46; }
+}
+
+html.perf-lite .discus-fin{
+  opacity:.34;
+  filter:none;
+}
+
+@media (max-width: 800px){
+  .discus-fin{
+    opacity:.42;
+    filter:none;
+  }
+}
+
 .controls{
   position:fixed;
   left:50%;
@@ -2138,8 +2229,12 @@ html.perf-lite .crab{
 
   function createDiscus(x, y, scale = 1, spriteSrc = './fish5.png') {
     const el = makeEl(`
-      <div class="fish discus">
+      <div class="fish discus" style="--fish-src:url('${spriteSrc}')">
         <img class="fish-sprite" src="${spriteSrc}" alt="">
+        <span class="discus-fin discus-fin-top" aria-hidden="true"></span>
+        <span class="discus-fin discus-fin-bottom" aria-hidden="true"></span>
+        <span class="discus-fin discus-fin-tail" aria-hidden="true"></span>
+        <span class="discus-fin discus-fin-pec" aria-hidden="true"></span>
       </div>
     `);
 
@@ -2771,6 +2866,18 @@ html.perf-lite .crab{
       }
 
       f.visualDir = visualDir;
+
+      if (f.type === 'discus') {
+        const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
+        const movementPulse = clamp(speedMag * 9500, 0, 1.25);
+        const finSpeedMs = Math.round(2050 - (speedMood * 360) - (movementPulse * 420));
+        const finWag = clamp(0.55 + speedMood * 0.30 + movementPulse * 0.38 + turnPulse * 0.30, 0.55, 1.65);
+        f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
+        f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
+        f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
+        f.el.style.setProperty('--fin-speed-pec', `${Math.round(finSpeedMs * 0.62)}ms`);
+        f.el.style.setProperty('--fin-wag', finWag.toFixed(2));
+      }
 
       const minTurnWidth = f.type === 'discus' ? 0.72 : (f.type === 'angel' ? 0.68 : (f.type === 'barb' ? 0.64 : 0.62));
       const widthMultiplier = 1 - turnPulse * (1 - minTurnWidth);
