@@ -630,9 +630,9 @@ body{
   transform-origin:62% 51%;
   opacity:.98;
   mix-blend-mode:normal;
-  animation:discusTailFin 1180ms ease-in-out infinite;
-  animation-delay:0ms;
+  animation:none;
   transform:translate3d(0,0,0);
+  will-change:transform;
   backface-visibility:hidden;
 }
 
@@ -651,10 +651,9 @@ body{
 }
 
 @keyframes discusTailFin{
-  0%{
-    transform:translate3d(.55%,0,0) rotate(-3.9deg) scaleX(.994);
-    opacity:.98;
-  }
+  from{ transform:translate3d(0,0,0); opacity:.98; }
+  to{ transform:translate3d(0,0,0); opacity:.98; }
+}
   50%{
     transform:translate3d(-.55%,0,0) rotate(4.1deg) scaleX(1.006);
     opacity:.98;
@@ -2157,6 +2156,11 @@ html.perf-lite .crab{
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
       turnMomentum: 0,
+      tailPhase: rand(0, Math.PI * 2),
+      tailRate: 0.006,
+      tailRateTarget: 0.006,
+      tailDepthWag: 0.65,
+      tailDepthTarget: 0.65,
       // Smoothed drawing direction. This lets the fish visually pivot
       // through a narrow edge-on shape instead of snapping instantly.
       visualDir: 1,
