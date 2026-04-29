@@ -630,9 +630,9 @@ body{
   transform-origin:62% 51%;
   opacity:.98;
   mix-blend-mode:normal;
-  animation:none;
+  animation:discusTailFin 1180ms ease-in-out infinite;
+  animation-delay:0ms;
   transform:translate3d(0,0,0);
-  will-change:transform;
   backface-visibility:hidden;
 }
 
@@ -2049,7 +2049,7 @@ html.perf-lite .crab{
       }
     } else if (f.type === 'discus') {
       const cruiseBandRoll = Math.random();
-      f.targetX = rand(0.08, 0.92);
+      f.targetX = rand(0.06, 0.94);
 
       if (cruiseBandRoll < 0.24) {
         f.targetY = rand(0.12, 0.34);
@@ -2080,14 +2080,15 @@ html.perf-lite .crab{
       if (force === 'idle' || force === 'cruise') {
         f.state = force;
       } else {
-        f.state = Math.random() < 0.26 ? 'idle' : 'cruise';
+        // Big boy should still glide and pause, but not fall asleep forever.
+        f.state = Math.random() < 0.14 ? 'idle' : 'cruise';
       }
 
       if (f.state === 'idle') {
-        f.stateTimer = rand(2.8, 5.0);
+        f.stateTimer = rand(1.2, 2.4);
       } else {
         f.state = 'cruise';
-        f.stateTimer = rand(7.0, 12.5);
+        f.stateTimer = rand(4.8, 8.2);
         chooseTargetForFish(f);
       }
       return;
@@ -2157,11 +2158,6 @@ html.perf-lite .crab{
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
       turnMomentum: 0,
-      tailPhase: rand(0, Math.PI * 2),
-      tailRate: 0.006,
-      tailRateTarget: 0.006,
-      tailDepthWag: 0.8,
-      tailDepthTarget: 0.8,
       // Smoothed drawing direction. This lets the fish visually pivot
       // through a narrow edge-on shape instead of snapping instantly.
       visualDir: 1,
@@ -2251,7 +2247,7 @@ html.perf-lite .crab{
 
   function createDiscus(x, y, scale = 1, spriteSrc = './fish5.png') {
     const el = makeEl(`
-      <div class="fish discus has-discus-tail-replacement" style="--fish-src:url('${spriteSrc}')">
+      <div class="fish discus" style="--fish-src:url('${spriteSrc}')">
         <img class="fish-sprite" src="${spriteSrc}" alt="">
         <span class="discus-fin discus-fin-top" aria-hidden="true"></span>
         <span class="discus-fin discus-fin-bottom" aria-hidden="true"></span>
@@ -2263,10 +2259,10 @@ html.perf-lite .crab{
     backFishLayer.appendChild(el);
 
     const f = makeFishBase('discus', el, x, y, scale);
-    f.cruiseSpeed = rand(0.000032, 0.000046);
-    f.dartSpeed = rand(0.000072, 0.000098);
-    f.accel = rand(0.0026, 0.0038);
-    f.drag = rand(0.9938, 0.9962);
+    f.cruiseSpeed = rand(0.000050, 0.000070);
+    f.dartSpeed = rand(0.000105, 0.000145);
+    f.accel = rand(0.0034, 0.0049);
+    f.drag = rand(0.9928, 0.9954);
     f.turnEase = rand(0.022, 0.034);
     f.shyness = rand(0.68, 0.92);
     f.idleBob = rand(0.55, 0.85);
@@ -2831,7 +2827,7 @@ html.perf-lite .crab{
         f.x = clamp(f.x, 0.06, 0.94);
         f.y = clamp(f.y, 0.34, 0.82);
       } else if (f.type === 'discus') {
-        f.x = clamp(f.x, 0.08, 0.92);
+        f.x = clamp(f.x, 0.06, 0.94);
         f.y = clamp(f.y, 0.12, 0.86);
       } else if (f.type === 'barb') {
         f.x = clamp(f.x, 0.05, 0.95);
@@ -2892,38 +2888,13 @@ html.perf-lite .crab{
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
-        const turnTailPulse = turnPulse || 0;
-
-        // JS-driven wag: speed follows swim speed, but eases so the animation never restarts.
-        const targetRate = clamp(0.0048 + speedMood * 0.0017 + movementPulse * 0.0029 + turnTailPulse * 0.0014, 0.0048, 0.0118);
-        const targetDepth = clamp(0.72 + speedMood * 0.16 + movementPulse * 0.26 + turnTailPulse * 0.18, 0.72, 1.35);
-        const tailEaseT = 1 - Math.pow(0.94, frameScale);
-
-        f.tailRateTarget = targetRate;
-        f.tailDepthTarget = targetDepth;
-        f.tailRate = lerp(f.tailRate || targetRate, f.tailRateTarget, tailEaseT);
-        f.tailDepthWag = lerp(f.tailDepthWag || targetDepth, f.tailDepthTarget, tailEaseT);
-        f.tailPhase = (f.tailPhase || 0) + f.tailRate * dt;
-
-        const tailFin = f.el.querySelector('.discus-fin-tail');
-        if (tailFin) {
-          const wave = Math.sin(f.tailPhase);
-          const depth = f.tailDepthWag || 0.8;
-
-          // Depth-style wag: mostly narrow/widen with tiny side shift/skew.
-          // Very little rotate, so it should not look like a vertical flag wave.
-          const tailTranslate = wave * 0.32 * depth;
-          const tailScale = 1 + wave * 0.075 * depth;
-          const tailSkew = wave * 1.45 * depth;
-          const tailRotate = wave * 0.55 * depth;
-
-          tailFin.style.transform =
-            `translate3d(${tailTranslate.toFixed(3)}%,0,0) ` +
-            `scaleX(${tailScale.toFixed(4)}) ` +
-            `skewY(${tailSkew.toFixed(3)}deg) ` +
-            `rotate(${tailRotate.toFixed(3)}deg)`;
-          tailFin.style.opacity = '0.98';
-        }
+        const finSpeedMs = Math.round(1850 - (speedMood * 260) - (movementPulse * 340));
+        const finWag = clamp(0.82 + speedMood * 0.28 + movementPulse * 0.38 + turnPulse * 0.32, 0.82, 1.62);
+        f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
+        f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
+        f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
+        f.el.style.setProperty('--fin-speed-pec', `${Math.round(finSpeedMs * 0.62)}ms`);
+        f.el.style.setProperty('--fin-wag', finWag.toFixed(2));
       }
 
       const minTurnWidth = f.type === 'discus' ? 0.72 : (f.type === 'angel' ? 0.68 : (f.type === 'barb' ? 0.64 : 0.62));
