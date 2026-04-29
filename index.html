@@ -2052,6 +2052,12 @@ html.perf-lite .crab{
       // Smoothed drawing direction. This lets the fish visually pivot
       // through a narrow edge-on shape instead of snapping instantly.
       visualDir: 1,
+      // Turn pulse keeps the fish from compressing all the way to a paper-thin line.
+      // It flips at the middle of a short turn while staying mostly full-bodied.
+      turnFromDir: 1,
+      turnToDir: 1,
+      turnAge: 999,
+      turnDuration: 420,
       riseCooldown: 0,
       zone: null,
       homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
@@ -2684,9 +2690,15 @@ html.perf-lite .crab{
 
       // Give direction changes a tiny brake so they feel like a pivot,
       // not a hard mirror flip while still moving full-speed.
+      // Start a short visual turn pulse too; this version does NOT pass through
+      // zero-width, so fish stay less like flat paper cutouts.
       if (f.dir !== previousDir) {
         const turnBrake = f.type === 'discus' ? 0.25 : (f.type === 'angel' ? 0.32 : (f.type === 'barb' ? 0.42 : 0.48));
         f.vx *= turnBrake;
+        f.turnFromDir = previousDir;
+        f.turnToDir = f.dir;
+        f.turnAge = 0;
+        f.turnDuration = f.type === 'discus' ? 760 : (f.type === 'angel' ? 680 : (f.type === 'barb' ? 420 : 360));
       }
 
       if (f.dir === 1 && f.vx < 0) f.vx *= 0.35;
@@ -2715,6 +2727,7 @@ html.perf-lite .crab{
       f.angle = lerp(f.angle, moveAngle, turnEaseT);
 
       const speedMag = Math.hypot(f.vx, f.vy);
+      f.turnAge = Math.min((f.turnAge ?? 999) + dt, f.turnDuration ?? 420);
 
       const tailBoost =
         f.state === 'dart' ? 2.0 :
@@ -2739,17 +2752,31 @@ html.perf-lite .crab{
       f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
 
-      // Visual turn smoothing: draw direction eases through zero width
-      // for an edge-on pivot instead of snapping scaleX from 1 to -1.
-      const visualTurnResponse = f.type === 'discus' ? 0.105 : (f.type === 'angel' ? 0.13 : (f.type === 'barb' ? 0.20 : 0.24));
-      const visualTurnT = 1 - Math.pow(1 - visualTurnResponse, frameScale);
-      f.visualDir = lerp(f.visualDir ?? f.dir, f.dir, visualTurnT);
-      if (Math.abs(f.visualDir - f.dir) < 0.015) f.visualDir = f.dir;
+      // Softer turn illusion, without the paper-thin cutout look:
+      // compress only a little, flip at the middle of the pulse, then expand.
+      const turnDuration = f.turnDuration ?? 420;
+      const isTurningVisual = (f.turnAge ?? turnDuration) < turnDuration;
+      let visualDir = f.dir;
+      let turnPulse = 0;
 
-      const turnFlatten = 1 - Math.min(1, Math.abs(f.visualDir));
-      const turnLeanDeg = turnFlatten * f.dir * (f.type === 'discus' ? 4 : (f.type === 'angel' ? 5 : (f.type === 'barb' ? 6 : 7)));
-      const visualScaleX = spriteFacing * f.visualDir * drawScale;
-      const visualScaleY = drawScale * (1 + turnFlatten * 0.045);
+      if (isTurningVisual) {
+        const turnP = clamp(f.turnAge / turnDuration, 0, 1);
+        const easedTurnP = turnP < 0.5
+          ? 2 * turnP * turnP
+          : 1 - Math.pow(-2 * turnP + 2, 2) / 2;
+
+        // Stay on the old facing for the first half, then flip while compressed.
+        visualDir = easedTurnP < 0.50 ? (f.turnFromDir ?? f.dir) : (f.turnToDir ?? f.dir);
+        turnPulse = Math.sin(Math.PI * easedTurnP);
+      }
+
+      f.visualDir = visualDir;
+
+      const minTurnWidth = f.type === 'discus' ? 0.72 : (f.type === 'angel' ? 0.68 : (f.type === 'barb' ? 0.64 : 0.62));
+      const widthMultiplier = 1 - turnPulse * (1 - minTurnWidth);
+      const turnLeanDeg = turnPulse * f.dir * (f.type === 'discus' ? 2.4 : (f.type === 'angel' ? 3.0 : (f.type === 'barb' ? 3.6 : 4.0)));
+      const visualScaleX = spriteFacing * visualDir * drawScale * widthMultiplier;
+      const visualScaleY = drawScale * (1 + turnPulse * 0.018);
 
       f.el.style.transform =
         `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${visualScaleX}, ${visualScaleY}) rotate(${finalRot + turnLeanDeg}deg)`;
