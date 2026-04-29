@@ -603,70 +603,70 @@ body{
   user-select:none;
   -webkit-user-drag:none;
   background:var(--fish-src) center center / contain no-repeat;
-  opacity:.56;
+  opacity:.78;
   mix-blend-mode:screen;
-  filter:blur(.12px) saturate(1.05) brightness(1.06);
+  filter:blur(.04px) saturate(1.22) brightness(1.18);
   will-change:transform, opacity;
   backface-visibility:hidden;
 }
 
 .discus-fin-top{
-  clip-path:polygon(24% 0%, 74% 0%, 66% 28%, 33% 28%);
-  transform-origin:50% 24%;
-  animation:discusTopFin var(--fin-speed-top, 1600ms) ease-in-out infinite alternate;
+  clip-path:polygon(18% 0%, 82% 0%, 70% 34%, 30% 34%);
+  transform-origin:50% 28%;
+  animation:discusTopFin var(--fin-speed-top, 1200ms) ease-in-out infinite alternate;
 }
 
 .discus-fin-bottom{
-  clip-path:polygon(25% 72%, 70% 72%, 75% 100%, 22% 100%);
-  transform-origin:50% 76%;
-  animation:discusBottomFin var(--fin-speed-bottom, 1720ms) ease-in-out infinite alternate;
-  animation-delay:-340ms;
-}
-
-.discus-fin-tail{
-  clip-path:polygon(0% 27%, 30% 28%, 31% 74%, 0% 78%);
-  transform-origin:26% 50%;
-  opacity:.50;
-  animation:discusTailFin var(--fin-speed-tail, 1150ms) ease-in-out infinite alternate;
-  animation-delay:-180ms;
-}
-
-.discus-fin-pec{
-  clip-path:polygon(56% 38%, 78% 41%, 78% 64%, 56% 62%);
-  transform-origin:61% 51%;
-  opacity:.38;
-  animation:discusPecFin var(--fin-speed-pec, 990ms) ease-in-out infinite alternate;
+  clip-path:polygon(20% 66%, 76% 66%, 82% 100%, 16% 100%);
+  transform-origin:50% 72%;
+  animation:discusBottomFin var(--fin-speed-bottom, 1300ms) ease-in-out infinite alternate;
   animation-delay:-260ms;
 }
 
+.discus-fin-tail{
+  clip-path:polygon(0% 20%, 38% 24%, 39% 80%, 0% 84%);
+  transform-origin:31% 52%;
+  opacity:.76;
+  animation:discusTailFin var(--fin-speed-tail, 760ms) ease-in-out infinite alternate;
+  animation-delay:-120ms;
+}
+
+.discus-fin-pec{
+  clip-path:polygon(50% 34%, 86% 39%, 86% 68%, 50% 65%);
+  transform-origin:58% 52%;
+  opacity:.68;
+  animation:discusPecFin var(--fin-speed-pec, 620ms) ease-in-out infinite alternate;
+  animation-delay:-160ms;
+}
+
 @keyframes discusTopFin{
-  from{ transform:rotate(calc(var(--fin-wag) * -1.4deg)) translateY(-.5%); opacity:.42; }
-  to{ transform:rotate(calc(var(--fin-wag) * 1.6deg)) translateY(.35%); opacity:.62; }
+  from{ transform:rotate(calc(var(--fin-wag) * -4.2deg)) translateY(-1.6%) scaleY(.96); opacity:.56; }
+  to{ transform:rotate(calc(var(--fin-wag) * 4.6deg)) translateY(1.2%) scaleY(1.04); opacity:.88; }
 }
 
 @keyframes discusBottomFin{
-  from{ transform:rotate(calc(var(--fin-wag) * 1.2deg)) translateY(.45%); opacity:.40; }
-  to{ transform:rotate(calc(var(--fin-wag) * -1.5deg)) translateY(-.25%); opacity:.58; }
+  from{ transform:rotate(calc(var(--fin-wag) * 3.8deg)) translateY(1.4%) scaleY(.96); opacity:.54; }
+  to{ transform:rotate(calc(var(--fin-wag) * -4.3deg)) translateY(-1.0%) scaleY(1.04); opacity:.84; }
 }
 
 @keyframes discusTailFin{
-  from{ transform:translateX(calc(var(--fin-wag) * -.9%)) rotate(calc(var(--fin-wag) * -2.6deg)); opacity:.42; }
-  to{ transform:translateX(calc(var(--fin-wag) * .8%)) rotate(calc(var(--fin-wag) * 2.8deg)); opacity:.60; }
+  from{ transform:translateX(calc(var(--fin-wag) * -2.6%)) rotate(calc(var(--fin-wag) * -7.6deg)) scaleX(.96); opacity:.56; }
+  to{ transform:translateX(calc(var(--fin-wag) * 2.4%)) rotate(calc(var(--fin-wag) * 7.8deg)) scaleX(1.04); opacity:.92; }
 }
 
 @keyframes discusPecFin{
-  from{ transform:scaleX(.94) rotate(calc(var(--fin-wag) * -3.2deg)); opacity:.28; }
-  to{ transform:scaleX(1.06) rotate(calc(var(--fin-wag) * 3.4deg)); opacity:.46; }
+  from{ transform:scaleX(.78) rotate(calc(var(--fin-wag) * -9.5deg)) translateY(-1.0%); opacity:.38; }
+  to{ transform:scaleX(1.18) rotate(calc(var(--fin-wag) * 10.2deg)) translateY(1.0%); opacity:.78; }
 }
 
 html.perf-lite .discus-fin{
-  opacity:.34;
+  opacity:.62;
   filter:none;
 }
 
 @media (max-width: 800px){
   .discus-fin{
-    opacity:.42;
+    opacity:.72;
     filter:none;
   }
 }
@@ -2870,8 +2870,8 @@ html.perf-lite .crab{
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
-        const finSpeedMs = Math.round(2050 - (speedMood * 360) - (movementPulse * 420));
-        const finWag = clamp(0.55 + speedMood * 0.30 + movementPulse * 0.38 + turnPulse * 0.30, 0.55, 1.65);
+        const finSpeedMs = Math.round(1350 - (speedMood * 260) - (movementPulse * 360));
+        const finWag = clamp(1.05 + speedMood * 0.42 + movementPulse * 0.55 + turnPulse * 0.55, 1.05, 2.45);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
         f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
