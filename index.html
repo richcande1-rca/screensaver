@@ -561,7 +561,7 @@ body{
 }
 
 .fish.has-discus-tail-replacement .fish-sprite{
-  clip-path:polygon(25% 0%, 100% 0%, 100% 100%, 25% 100%);
+  clip-path:polygon(0% 0%, 76% 0%, 76% 100%, 0% 100%);
 }
 
 .tetra{
@@ -623,8 +623,8 @@ body{
 }
 
 .discus-fin-tail{
-  clip-path:polygon(0% 22%, 36% 25%, 37% 78%, 0% 82%);
-  transform-origin:31% 51%;
+  clip-path:polygon(63% 22%, 100% 18%, 100% 84%, 63% 78%);
+  transform-origin:66% 51%;
   opacity:.92;
   mix-blend-mode:normal;
   animation:discusTailFin var(--fin-speed-tail, 980ms) ease-in-out infinite alternate;
@@ -646,8 +646,8 @@ body{
 }
 
 @keyframes discusTailFin{
-  from{ transform:translateX(calc(var(--fin-wag) * -.55%)) rotate(calc(var(--fin-wag) * -2.6deg)) scaleX(.995); opacity:.86; }
-  to{ transform:translateX(calc(var(--fin-wag) * .55%)) rotate(calc(var(--fin-wag) * 2.8deg)) scaleX(1.005); opacity:.98; }
+  from{ transform:translateX(calc(var(--fin-wag) * .50%)) rotate(calc(var(--fin-wag) * -2.6deg)) scaleX(.995); opacity:.86; }
+  to{ transform:translateX(calc(var(--fin-wag) * -.50%)) rotate(calc(var(--fin-wag) * 2.8deg)) scaleX(1.005); opacity:.98; }
 }
 
 @keyframes discusPecFin{
