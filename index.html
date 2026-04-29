@@ -562,6 +562,9 @@ body{
 
 .fish.has-discus-tail-replacement .fish-sprite{
   clip-path:polygon(0% 0%, 76% 0%, 76% 100%, 0% 100%);
+  inset:4px;
+  width:calc(100% - 8px);
+  height:calc(100% - 8px);
 }
 
 .tetra{
@@ -575,8 +578,8 @@ body{
 }
 
 .discus{
-  width:74px;
-  height:74px;
+  width:82px;
+  height:82px;
 }
 
 .barb{
@@ -601,7 +604,7 @@ body{
 
 .discus-fin{
   position:absolute;
-  inset:0;
+  inset:4px;
   z-index:2;
   pointer-events:none;
   user-select:none;
@@ -623,12 +626,14 @@ body{
 }
 
 .discus-fin-tail{
-  clip-path:polygon(60% 20%, 100% 17%, 100% 85%, 60% 80%);
-  transform-origin:64% 51%;
-  opacity:.96;
+  clip-path:polygon(56% 18%, 99% 16%, 99% 86%, 56% 82%);
+  transform-origin:62% 51%;
+  opacity:.98;
   mix-blend-mode:normal;
-  animation:discusTailFin var(--fin-speed-tail, 880ms) ease-in-out infinite alternate;
-  animation-delay:-160ms;
+  animation:discusTailFin 1180ms ease-in-out infinite;
+  animation-delay:0ms;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
 }
 
 .discus-fin-pec{
@@ -646,8 +651,18 @@ body{
 }
 
 @keyframes discusTailFin{
-  from{ transform:translateX(calc(var(--fin-wag) * .85%)) rotate(calc(var(--fin-wag) * -4.8deg)) scaleX(.985); opacity:.88; }
-  to{ transform:translateX(calc(var(--fin-wag) * -.85%)) rotate(calc(var(--fin-wag) * 5.1deg)) scaleX(1.015); opacity:1; }
+  0%{
+    transform:translate3d(.55%,0,0) rotate(-3.9deg) scaleX(.994);
+    opacity:.98;
+  }
+  50%{
+    transform:translate3d(-.55%,0,0) rotate(4.1deg) scaleX(1.006);
+    opacity:.98;
+  }
+  100%{
+    transform:translate3d(.55%,0,0) rotate(-3.9deg) scaleX(.994);
+    opacity:.98;
+  }
 }
 
 @keyframes discusPecFin{
@@ -1119,8 +1134,8 @@ html.perf-lite .crab{
   }
 
   .discus{
-    width:68px;
-    height:68px;
+    width:76px;
+    height:76px;
   }
 
   .barb{
@@ -2872,8 +2887,8 @@ html.perf-lite .crab{
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
         const movementPulse = clamp(speedMag * 9500, 0, 1.25);
-        const finSpeedMs = Math.round(1550 - (speedMood * 300) - (movementPulse * 420));
-        const finWag = clamp(0.88 + speedMood * 0.34 + movementPulse * 0.46 + turnPulse * 0.42, 0.88, 1.85);
+        const finSpeedMs = Math.round(1850 - (speedMood * 260) - (movementPulse * 340));
+        const finWag = clamp(0.82 + speedMood * 0.28 + movementPulse * 0.38 + turnPulse * 0.32, 0.82, 1.62);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
         f.el.style.setProperty('--fin-speed-tail', `${Math.round(finSpeedMs * 0.72)}ms`);
