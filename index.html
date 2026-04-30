@@ -587,6 +587,71 @@ body{
   height:34px;
 }
 
+
+/* ----------------------------------------------------
+   ANGEL + BARB TAIL TEST
+   Same trick as the discus: clip the static sprite before
+   the tail, then overlay a small animated tail slice from
+   the same PNG. No extra fish added.
+---------------------------------------------------- */
+.fish.has-tail-replacement .fish-sprite{
+  clip-path:var(--tail-body-clip, polygon(0% 0%, 78% 0%, 78% 100%, 0% 100%));
+}
+
+.fish-tail{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  background:var(--fish-src) center center / contain no-repeat;
+  opacity:.98;
+  filter:blur(.03px) saturate(1.02) brightness(1.02);
+  will-change:transform;
+  backface-visibility:hidden;
+}
+
+.angel-tail{
+  clip-path:polygon(56% 8%, 100% 0%, 100% 100%, 56% 92%);
+  transform-origin:61% 50%;
+  animation:angelTailWag var(--tail-speed, 1700ms) cubic-bezier(.45,.05,.55,.95) infinite;
+}
+
+.barb-tail{
+  clip-path:polygon(56% 14%, 100% 16%, 100% 84%, 56% 86%);
+  transform-origin:61% 50%;
+  animation:barbTailWag var(--tail-speed, 1180ms) cubic-bezier(.45,.05,.55,.95) infinite;
+}
+
+@keyframes angelTailWag{
+  0%{
+    transform:translate3d(var(--tail-x-a, .22%),0,0) scaleX(var(--tail-scale-a, .972)) skewY(var(--tail-skew-a, -.80deg)) rotate(var(--tail-rot-a, -.32deg));
+  }
+  50%{
+    transform:translate3d(var(--tail-x-b, -.22%),0,0) scaleX(var(--tail-scale-b, 1.028)) skewY(var(--tail-skew-b, .80deg)) rotate(var(--tail-rot-b, .32deg));
+  }
+  100%{
+    transform:translate3d(var(--tail-x-a, .22%),0,0) scaleX(var(--tail-scale-a, .972)) skewY(var(--tail-skew-a, -.80deg)) rotate(var(--tail-rot-a, -.32deg));
+  }
+}
+
+@keyframes barbTailWag{
+  0%{
+    transform:translate3d(var(--tail-x-a, .30%),0,0) scaleX(var(--tail-scale-a, .955)) skewY(var(--tail-skew-a, -1.25deg)) rotate(var(--tail-rot-a, -.55deg));
+  }
+  50%{
+    transform:translate3d(var(--tail-x-b, -.30%),0,0) scaleX(var(--tail-scale-b, 1.045)) skewY(var(--tail-skew-b, 1.25deg)) rotate(var(--tail-rot-b, .55deg));
+  }
+  100%{
+    transform:translate3d(var(--tail-x-a, .30%),0,0) scaleX(var(--tail-scale-a, .955)) skewY(var(--tail-skew-a, -1.25deg)) rotate(var(--tail-rot-a, -.55deg));
+  }
+}
+
+html.perf-lite .fish-tail{
+  filter:none;
+}
+
 /* ----------------------------------------------------
    DISCUS FIN TEST
    Lightweight fake fin movement using tiny clipped overlays
@@ -2218,14 +2283,16 @@ html.perf-lite .crab{
 
   function createBarb(x, y, scale = 1, spriteSrc = './barb1.png') {
     const el = makeEl(`
-      <div class="fish barb">
+      <div class="fish barb has-tail-replacement" style="--fish-src:url('${spriteSrc}'); --tail-body-clip:polygon(0% 0%, 76% 0%, 76% 100%, 0% 100%);">
         <img class="fish-sprite" src="${spriteSrc}" alt="">
+        <span class="fish-tail barb-tail" aria-hidden="true"></span>
       </div>
     `);
 
     fishLayer.appendChild(el);
 
     const f = makeFishBase('barb', el, x, y, scale);
+    f.tailAnim = 'barb';
     f.nativeFacing = spriteSrc.includes('barb1') ? -1 : 1;
     f.cruiseSpeed = rand(0.000055, 0.000082);
     f.dartSpeed = rand(0.00012, 0.00018);
@@ -2239,15 +2306,24 @@ html.perf-lite .crab{
   }
 
   function createAngel(x, y, scale = 1, spriteSrc = './angel.png', zone = null) {
+    // Only the biggest/base angel gets this first-pass tail overlay.
+    // The smaller angels stay unchanged until this looks right.
+    const animatedTail = spriteSrc.includes('angel.png');
+    const tailClass = animatedTail ? ' has-tail-replacement angel-tail-replacement' : '';
+    const tailStyle = animatedTail ? ` style="--fish-src:url('${spriteSrc}'); --tail-body-clip:polygon(0% 0%, 78% 0%, 78% 100%, 0% 100%);"` : '';
+    const tailMarkup = animatedTail ? '<span class="fish-tail angel-tail" aria-hidden="true"></span>' : '';
+
     const el = makeEl(`
-      <div class="fish angel">
+      <div class="fish angel${tailClass}"${tailStyle}>
         <img class="fish-sprite" src="${spriteSrc}" alt="">
+        ${tailMarkup}
       </div>
     `);
 
     fishLayer.appendChild(el);
 
     const f = makeFishBase('angel', el, x, y, scale);
+    f.tailAnim = animatedTail ? 'angel' : null;
     f.zone = zone;
     f.cruiseSpeed = rand(0.00005, 0.000078);
     f.dartSpeed = rand(0.000105, 0.000155);
@@ -2939,6 +3015,51 @@ html.perf-lite .crab{
         f.el.style.setProperty('--fin-speed-tail', `${tailSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-pec', `${Math.round(finSpeedMs * 0.62)}ms`);
         f.el.style.setProperty('--fin-wag', finWag.toFixed(2));
+        f.el.style.setProperty('--tail-x-a', `${tailX.toFixed(3)}%`);
+        f.el.style.setProperty('--tail-x-b', `${(-tailX).toFixed(3)}%`);
+        f.el.style.setProperty('--tail-scale-a', tailScaleA.toFixed(3));
+        f.el.style.setProperty('--tail-scale-b', tailScaleB.toFixed(3));
+        f.el.style.setProperty('--tail-skew-a', `${(-tailSkew).toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-skew-b', `${tailSkew.toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-rot-a', `${(-tailRot).toFixed(2)}deg`);
+        f.el.style.setProperty('--tail-rot-b', `${tailRot.toFixed(2)}deg`);
+      }
+
+      if (f.tailAnim === 'angel' || f.tailAnim === 'barb') {
+        const tailKind = f.tailAnim;
+        const speedMood = f.state === 'dart' ? 1.35 : (f.state === 'cruise' ? 1.0 : 0.52);
+        const movementPulse = clamp(speedMag * (tailKind === 'barb' ? 11800 : 8600), 0, 1.15);
+        const targetTailSpeedMs = tailKind === 'angel'
+          ? clamp(1820 - (speedMood * 140) - (movementPulse * 260), 1320, 1880)
+          : clamp(1260 - (speedMood * 150) - (movementPulse * 245), 880, 1320);
+        const targetTailWag = tailKind === 'angel'
+          ? clamp(0.62 + speedMood * 0.15 + movementPulse * 0.32 + turnPulse * 0.10, 0.66, 1.18)
+          : clamp(0.82 + speedMood * 0.18 + movementPulse * 0.42 + turnPulse * 0.14, 0.86, 1.48);
+
+        const tailSmoothT = 1 - Math.pow(tailKind === 'angel' ? 0.955 : 0.935, frameScale);
+        const wagSmoothT = 1 - Math.pow(tailKind === 'angel' ? 0.925 : 0.905, frameScale);
+        f.tailSpeedMs = Number.isFinite(f.tailSpeedMs) ? lerp(f.tailSpeedMs, targetTailSpeedMs, tailSmoothT) : targetTailSpeedMs;
+        f.tailWag = Number.isFinite(f.tailWag) ? lerp(f.tailWag, targetTailWag, wagSmoothT) : targetTailWag;
+
+        const finWag = f.tailWag;
+        const tailSpeedMs = Math.round(f.tailSpeedMs);
+        const tailX = tailKind === 'angel'
+          ? clamp(0.16 + finWag * 0.070 + movementPulse * 0.030, 0.18, 0.32)
+          : clamp(0.24 + finWag * 0.110 + movementPulse * 0.040, 0.28, 0.48);
+        const tailSkew = tailKind === 'angel'
+          ? clamp(0.48 + finWag * 0.52 + movementPulse * 0.12, 0.70, 1.22)
+          : clamp(0.72 + finWag * 0.74 + movementPulse * 0.18, 1.00, 1.92);
+        const tailRot = tailKind === 'angel'
+          ? clamp(0.22 + finWag * 0.20 + turnPulse * 0.04, 0.28, 0.48)
+          : clamp(0.34 + finWag * 0.26 + turnPulse * 0.06, 0.48, 0.78);
+        const tailScaleA = tailKind === 'angel'
+          ? clamp(0.986 - finWag * 0.018, 0.964, 0.976)
+          : clamp(0.978 - finWag * 0.030, 0.932, 0.954);
+        const tailScaleB = tailKind === 'angel'
+          ? clamp(1.014 + finWag * 0.020, 1.026, 1.040)
+          : clamp(1.022 + finWag * 0.034, 1.052, 1.076);
+
+        f.el.style.setProperty('--tail-speed', `${tailSpeedMs}ms`);
         f.el.style.setProperty('--tail-x-a', `${tailX.toFixed(3)}%`);
         f.el.style.setProperty('--tail-x-b', `${(-tailX).toFixed(3)}%`);
         f.el.style.setProperty('--tail-scale-a', tailScaleA.toFixed(3));
