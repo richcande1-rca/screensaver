@@ -595,16 +595,16 @@ body{
 ---------------------------------------------------- */
 .discus{
   --fin-speed:1600ms;
-  --fin-speed-tail:1180ms;
+  --fin-speed-tail:1450ms;
   --fin-wag:1.0;
-  --tail-x-a:.40%;
-  --tail-x-b:-.40%;
+  --tail-x-a:.42%;
+  --tail-x-b:-.42%;
   --tail-scale-a:.925;
   --tail-scale-b:1.075;
-  --tail-skew-a:-1.42deg;
-  --tail-skew-b:1.42deg;
-  --tail-rot-a:-.58deg;
-  --tail-rot-b:.58deg;
+  --tail-skew-a:-1.55deg;
+  --tail-skew-b:1.55deg;
+  --tail-rot-a:-.62deg;
+  --tail-rot-b:.62deg;
 }
 
 .discus .fish-sprite{
@@ -639,7 +639,7 @@ body{
   transform-origin:62% 51%;
   opacity:.98;
   mix-blend-mode:normal;
-  animation:discusTailFin var(--fin-speed-tail, 1180ms) ease-in-out infinite;
+  animation:discusTailFin var(--fin-speed-tail, 1450ms) cubic-bezier(.45,.05,.55,.95) infinite;
   animation-delay:0ms;
   transform:translate3d(0,0,0);
   backface-visibility:hidden;
@@ -664,9 +664,17 @@ body{
     transform:translate3d(var(--tail-x-a),0,0) scaleX(var(--tail-scale-a)) skewY(var(--tail-skew-a)) rotate(var(--tail-rot-a));
     opacity:.96;
   }
+  25%{
+    transform:translate3d(0,0,0) scaleX(1.0) skewY(0deg) rotate(0deg);
+    opacity:.985;
+  }
   50%{
     transform:translate3d(var(--tail-x-b),0,0) scaleX(var(--tail-scale-b)) skewY(var(--tail-skew-b)) rotate(var(--tail-rot-b));
     opacity:.99;
+  }
+  75%{
+    transform:translate3d(0,0,0) scaleX(1.0) skewY(0deg) rotate(0deg);
+    opacity:.985;
   }
   100%{
     transform:translate3d(var(--tail-x-a),0,0) scaleX(var(--tail-scale-a)) skewY(var(--tail-skew-a)) rotate(var(--tail-rot-a));
@@ -2906,16 +2914,26 @@ html.perf-lite .crab{
       f.visualDir = visualDir;
 
       if (f.type === 'discus') {
-        const speedMood = f.state === 'dart' ? 1.65 : (f.state === 'cruise' ? 1.0 : 0.58);
-        const movementPulse = clamp(speedMag * 9500, 0, 1.25);
-        const finSpeedMs = Math.round(1850 - (speedMood * 260) - (movementPulse * 340));
-        const finWag = clamp(0.88 + speedMood * 0.32 + movementPulse * 0.44 + turnPulse * 0.36, 0.88, 1.78);
-        const tailSpeedMs = Math.round(clamp(finSpeedMs * 0.72, 560, 1320));
-        const tailX = clamp(0.30 + finWag * 0.115 + movementPulse * 0.06, 0.30, 0.58);
-        const tailSkew = clamp(0.88 + finWag * 0.52 + movementPulse * 0.24, 1.05, 2.10);
-        const tailRot = clamp(0.34 + finWag * 0.24 + turnPulse * 0.12, 0.44, 0.82);
-        const tailScaleA = clamp(0.962 - finWag * 0.033, 0.900, 0.935);
-        const tailScaleB = clamp(1.038 + finWag * 0.037, 1.065, 1.105);
+        const speedMood = f.state === 'dart' ? 1.45 : (f.state === 'cruise' ? 1.0 : 0.55);
+        const movementPulse = clamp(speedMag * 7600, 0, 1.05);
+        const finSpeedMs = Math.round(1900 - (speedMood * 210) - (movementPulse * 230));
+        const targetFinWag = clamp(0.92 + speedMood * 0.28 + movementPulse * 0.38 + turnPulse * 0.22, 0.92, 1.62);
+
+        // Slow and smooth the CSS variable changes. Changing animation speed every
+        // frame can make the tail look nervous even when the shape is right.
+        const targetTailSpeedMs = clamp(finSpeedMs * 0.92, 1080, 1780);
+        const tailSmoothT = 1 - Math.pow(0.94, frameScale);
+        const wagSmoothT = 1 - Math.pow(0.90, frameScale);
+        f.tailSpeedMs = Number.isFinite(f.tailSpeedMs) ? lerp(f.tailSpeedMs, targetTailSpeedMs, tailSmoothT) : targetTailSpeedMs;
+        f.tailWag = Number.isFinite(f.tailWag) ? lerp(f.tailWag, targetFinWag, wagSmoothT) : targetFinWag;
+
+        const finWag = f.tailWag;
+        const tailSpeedMs = Math.round(f.tailSpeedMs);
+        const tailX = clamp(0.32 + finWag * 0.125 + movementPulse * 0.035, 0.34, 0.58);
+        const tailSkew = clamp(0.96 + finWag * 0.56 + movementPulse * 0.14, 1.18, 2.08);
+        const tailRot = clamp(0.38 + finWag * 0.24 + turnPulse * 0.07, 0.48, 0.80);
+        const tailScaleA = clamp(0.966 - finWag * 0.035, 0.907, 0.935);
+        const tailScaleB = clamp(1.034 + finWag * 0.039, 1.066, 1.100);
         f.el.style.setProperty('--fin-speed-top', `${finSpeedMs}ms`);
         f.el.style.setProperty('--fin-speed-bottom', `${Math.round(finSpeedMs * 1.08)}ms`);
         f.el.style.setProperty('--fin-speed-tail', `${tailSpeedMs}ms`);
