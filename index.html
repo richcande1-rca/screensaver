@@ -2109,10 +2109,30 @@ html.perf-lite .crab{
     if (f.type === 'angel') {
       const cx = f.homeX ?? 0.50;
       const cy = f.homeY ?? 0.18;
-      const spreadX = isMobile ? 0.34 : 0.40;
-      const spreadY = isMobile ? 0.09 : 0.11;
-      f.targetX = clamp(cx + rand(-spreadX, spreadX), 0.06, 0.94);
+      const spreadY = isMobile ? 0.08 : 0.10;
+      const currentX = Number.isFinite(f.x) ? f.x : cx;
+      const currentDir = f.dir || (Math.random() < 0.5 ? -1 : 1);
+      const nearLeftGlass = currentX < 0.18;
+      const nearRightGlass = currentX > 0.82;
+      let preferredDir = currentDir;
+
+      if (nearLeftGlass) {
+        preferredDir = 1;
+      } else if (nearRightGlass) {
+        preferredDir = -1;
+      } else if (Math.random() > 0.76) {
+        preferredDir = -currentDir;
+      }
+
+      const glideStep = rand(isMobile ? 0.22 : 0.26, isMobile ? 0.42 : 0.50);
+      f.targetX = clamp(currentX + preferredDir * glideStep, 0.07, 0.93);
+
+      if (Math.abs(f.targetX - currentX) < 0.15) {
+        f.targetX = clamp(currentX + preferredDir * 0.22, 0.07, 0.93);
+      }
+
       f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.05, 0.31);
+      f.targetCooldown = rand(1.4, 2.7);
     } else if (f.type === 'tetra') {
       const cx = f.homeX ?? 0.50;
       const cy = f.homeY ?? 0.58;
@@ -2152,6 +2172,7 @@ html.perf-lite .crab{
       } else {
         f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.50, 0.86);
       }
+      f.targetCooldown = rand(0.7, 1.5);
     }
   }
 
@@ -2184,10 +2205,9 @@ html.perf-lite .crab{
         else if (r < 0.985) f.state = 'turn';
         else f.state = 'dart';
       } else if (f.type === 'angel') {
-        if (r < 0.30) f.state = 'idle';
-        else if (r < 0.93) f.state = 'cruise';
-        else if (r < 0.99) f.state = 'turn';
-        else f.state = 'dart';
+        if (r < 0.34) f.state = 'idle';
+        else if (r < 0.985) f.state = 'cruise';
+        else f.state = 'turn';
       } else if (f.type === 'barb') {
         if (r < 0.20) f.state = 'idle';
         else if (r < 0.91) f.state = 'cruise';
@@ -2197,12 +2217,12 @@ html.perf-lite .crab{
     }
 
     if (f.state === 'idle') {
-      f.stateTimer = rand(2.4, 5.8);
+      f.stateTimer = f.type === 'angel' ? rand(3.4, 7.4) : rand(2.4, 5.8);
     } else if (f.state === 'cruise') {
-      f.stateTimer = rand(3.8, 8.5);
+      f.stateTimer = f.type === 'angel' ? rand(6.4, 12.4) : rand(3.8, 8.5);
       chooseTargetForFish(f);
     } else if (f.state === 'turn') {
-      f.stateTimer = rand(0.9, 2.1);
+      f.stateTimer = f.type === 'angel' ? rand(1.7, 3.1) : rand(0.9, 2.1);
       chooseTargetForFish(f);
     } else if (f.state === 'dart') {
       f.stateTimer = rand(0.28, 0.62);
@@ -2247,6 +2267,12 @@ html.perf-lite .crab{
       turnToDir: 1,
       turnAge: 999,
       turnDuration: 420,
+      flipCooldown: rand(0.6, 1.4),
+      targetCooldown: rand(0.5, 1.5),
+      oscillationScore: 0,
+      lastDesiredDir: 0,
+      escapeTimer: 0,
+      escapeDir: Math.random() < 0.5 ? -1 : 1,
       riseCooldown: 0,
       zone: null,
       homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
@@ -2818,6 +2844,9 @@ html.perf-lite .crab{
     for (const f of fish) {
       f.stateTimer -= dtSec;
       f.bobT += dtSec * 2.0;
+      f.flipCooldown = Math.max(0, (f.flipCooldown || 0) - dtSec);
+      f.targetCooldown = Math.max(0, (f.targetCooldown || 0) - dtSec);
+      f.escapeTimer = Math.max(0, (f.escapeTimer || 0) - dtSec);
 
       if (f.stateTimer <= 0) pickState(f);
 
@@ -2849,8 +2878,9 @@ html.perf-lite .crab{
       const ty = f.targetY - f.y;
       const dist = Math.hypot(tx, ty) || 0.00001;
 
-      if (dist < 0.02 && (f.state === 'cruise' || f.state === 'turn')) {
-        if (Math.random() < 0.02) {
+      const arrivalDist = f.type === 'angel' ? 0.034 : 0.02;
+      if (dist < arrivalDist && (f.state === 'cruise' || f.state === 'turn') && (f.targetCooldown || 0) <= 0) {
+        if (Math.random() < (f.type === 'angel' ? 0.06 : 0.02)) {
           pickState(f, 'idle');
         } else {
           chooseTargetForFish(f);
@@ -2865,8 +2895,50 @@ html.perf-lite .crab{
 
       const motionBoost = perfLite && !isMobile ? 1.42 : 1;
       const fishSpeedNow = FISH_SPEED * motionBoost * swimSpeedScale;
-      const desiredVX = (tx / dist) * desiredSpeed * fishSpeedNow + repelX;
-      const desiredVY = (ty / dist) * desiredSpeed * fishSpeedNow + repelY;
+      let avoidX = repelX;
+      let avoidY = repelY;
+
+      // Very soft avoidance so fish don't visually pinwheel in bubble streams
+      // or overlap another fish and keep making tiny opposite corrections.
+      const bubbleColumns = [
+        { x: 0.034, y1: 0.02, y2: 0.96, radius: 0.060, push: 0.000032 },
+        { x: 0.535, y1: 0.40, y2: 0.84, radius: 0.072, push: 0.000040 }
+      ];
+
+      for (const col of bubbleColumns) {
+        if (f.y < col.y1 || f.y > col.y2) continue;
+        const dxCol = f.x - col.x;
+        const adx = Math.abs(dxCol);
+        if (adx < col.radius) {
+          const side = dxCol < 0 ? -1 : 1;
+          const strength = (1 - adx / col.radius) * col.push * (f.type === 'angel' ? 0.74 : 1);
+          avoidX += side * strength;
+          avoidY += Math.sin((f.y - col.y1) * 10 + f.schoolPhase) * strength * 0.20;
+        }
+      }
+
+      const aspect = tankRect.height / Math.max(1, tankRect.width);
+      for (const other of fish) {
+        if (other === f) continue;
+        const ox = f.x - other.x;
+        const oyRaw = f.y - other.y;
+        const oy = oyRaw * aspect;
+        const d2 = ox * ox + oy * oy;
+        const minD = (f.type === 'angel' || other.type === 'angel') ? 0.115 : 0.078;
+        if (d2 > 0 && d2 < minD * minD) {
+          const d = Math.sqrt(d2);
+          const push = (1 - d / minD) * (f.type === 'angel' ? 0.000045 : 0.000060);
+          avoidX += (ox / d) * push;
+          avoidY += (oyRaw / Math.max(0.0001, Math.abs(oyRaw) + Math.abs(ox))) * push * 0.55;
+        }
+      }
+
+      if ((f.escapeTimer || 0) > 0) {
+        avoidX += (f.escapeDir || f.dir || 1) * (f.type === 'angel' ? 0.000050 : 0.000070);
+      }
+
+      const desiredVX = (tx / dist) * desiredSpeed * fishSpeedNow + avoidX;
+      const desiredVY = (ty / dist) * desiredSpeed * fishSpeedNow + avoidY;
 
       const accelT = 1 - Math.pow(1 - f.accel, frameScale);
       f.vx = lerp(f.vx, desiredVX, accelT);
@@ -2885,18 +2957,50 @@ html.perf-lite .crab{
       const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
 
+      if (f.lastDesiredDir && desiredDir !== f.lastDesiredDir && Math.abs(tx) < (f.type === 'angel' ? 0.16 : 0.10)) {
+        f.oscillationScore = Math.min(4, (f.oscillationScore || 0) + (f.type === 'angel' ? 0.82 : 0.68));
+      } else {
+        f.oscillationScore = Math.max(0, (f.oscillationScore || 0) - dtSec * 1.6);
+      }
+      f.lastDesiredDir = desiredDir;
+
+      if ((f.oscillationScore || 0) > 2.2 && (f.escapeTimer || 0) <= 0) {
+        if (f.x < 0.12) {
+          f.escapeDir = 1;
+        } else if (f.x > 0.88) {
+          f.escapeDir = -1;
+        } else if (Math.abs(f.x - 0.535) < 0.09 && f.y > 0.38 && f.y < 0.86) {
+          f.escapeDir = f.x < 0.535 ? -1 : 1;
+        } else if (f.x < 0.10) {
+          f.escapeDir = 1;
+        } else {
+          f.escapeDir = f.dir || (Math.random() < 0.5 ? -1 : 1);
+        }
+
+        f.escapeTimer = f.type === 'angel' ? rand(1.2, 1.9) : rand(0.65, 1.15);
+        f.targetX = clamp(f.x + f.escapeDir * (f.type === 'angel' ? 0.24 : 0.18), 0.07, 0.93);
+        f.targetY = clamp(f.targetY + rand(-0.045, 0.045), f.type === 'angel' ? 0.05 : 0.12, f.type === 'angel' ? 0.31 : 0.88);
+        f.targetCooldown = f.type === 'angel' ? rand(1.2, 2.0) : rand(0.6, 1.1);
+        f.oscillationScore = 0;
+      }
+
       // Slow down direction decisions so fish don't snap-flip the instant
       // their target shifts. Bigger fish get the gentlest response.
-      const dirResponse = f.type === 'angel' ? 0.070 : (f.type === 'discus' ? 0.055 : (f.type === 'barb' ? 0.090 : 0.110));
+      const dirResponse = f.type === 'angel' ? 0.045 : (f.type === 'discus' ? 0.055 : (f.type === 'barb' ? 0.075 : 0.110));
       const dirResponseT = 1 - Math.pow(1 - dirResponse, frameScale);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponseT);
 
       const previousDir = f.dir;
-      const turnThreshold = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.15 : (f.type === 'barb' ? 0.13 : 0.12));
+      const turnThreshold = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.30 : (f.type === 'barb' ? 0.18 : 0.12));
       const activeTurnDuration = f.turnDuration ?? 520;
       const turnStillPlaying = (f.turnAge ?? 999) < activeTurnDuration * 0.82;
+      const wantsEdgeTurn =
+        (f.x < 0.085 && desiredDir > 0) ||
+        (f.x > 0.915 && desiredDir < 0) ||
+        ((f.escapeTimer || 0) > 0 && desiredDir === (f.escapeDir || desiredDir));
+      const canFlip = (f.flipCooldown || 0) <= 0 || wantsEdgeTurn;
 
-      if (!turnStillPlaying) {
+      if (!turnStillPlaying && canFlip) {
         if (f.turnMomentum > turnThreshold) f.dir = 1;
         if (f.turnMomentum < -turnThreshold) f.dir = -1;
       }
@@ -2905,12 +3009,14 @@ html.perf-lite .crab{
       // The fish holds the old facing longer, compresses, flips near the middle,
       // then eases back out.
       if (f.dir !== previousDir) {
-        const turnBrake = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.22 : (f.type === 'barb' ? 0.30 : 0.36));
+        const turnBrake = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.18 : (f.type === 'barb' ? 0.28 : 0.36));
         f.vx *= turnBrake;
+        f.flipCooldown = f.type === 'discus' ? rand(1.8, 2.8) : (f.type === 'angel' ? rand(3.0, 4.8) : (f.type === 'barb' ? rand(1.2, 2.0) : rand(0.65, 1.15)));
+        f.targetCooldown = Math.max(f.targetCooldown || 0, f.type === 'angel' ? 1.5 : 0.6);
         f.turnFromDir = previousDir;
         f.turnToDir = f.dir;
         f.turnAge = 0;
-        f.turnDuration = f.type === 'discus' ? 1250 : (f.type === 'angel' ? 1120 : (f.type === 'barb' ? 780 : 680));
+        f.turnDuration = f.type === 'discus' ? 1250 : (f.type === 'angel' ? 1320 : (f.type === 'barb' ? 880 : 680));
       }
 
       if (f.dir === 1 && f.vx < 0) f.vx *= 0.35;
