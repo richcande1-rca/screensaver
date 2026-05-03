@@ -1822,7 +1822,7 @@ html.perf-lite .radioPanel{
           <button type="button" id="radioHideBtn">Hide Dial</button>
           <button type="button" id="radioStopBtn">Stop</button>
         </div>
-        <p class="radioHelp">Paste a YouTube video or playlist link, or type a search like “aquarium jazz”. The search strip below stays attached to the mini player.</p>
+        <p class="radioHelp">Paste a YouTube video/playlist link, or type a search like “aquarium jazz”. The mini-player search strip below is our own control above YouTube’s iframe.</p>
       </div>
       <div class="radioPlayerWrap" id="radioPlayerWrap">
         <div class="radioPlayerSearch" aria-label="Mini player YouTube search">
@@ -1861,8 +1861,6 @@ html.perf-lite .radioPanel{
   const radioDock = document.getElementById('radioDock');
   const radioCloseBtn = document.getElementById('radioCloseBtn');
   const radioUrlInput = document.getElementById('radioUrlInput');
-  const radioMiniSearchInput = document.getElementById('radioMiniSearchInput');
-  const radioMiniSearchBtn = document.getElementById('radioMiniSearchBtn');
   const radioPlayBtn = document.getElementById('radioPlayBtn');
   const radioDefaultBtn = document.getElementById('radioDefaultBtn');
   const radioHideBtn = document.getElementById('radioHideBtn');
@@ -1870,6 +1868,8 @@ html.perf-lite .radioPanel{
   const radioStatus = document.getElementById('radioStatus');
   const radioPlayerWrap = document.getElementById('radioPlayerWrap');
   const radioPlayerFrame = document.getElementById('radioPlayerFrame');
+  const radioMiniSearchInput = document.getElementById('radioMiniSearchInput');
+  const radioMiniSearchBtn = document.getElementById('radioMiniSearchBtn');
   const rootEl = document.documentElement;
 
   const FIXED_CYCLE_SPEED = 50;
@@ -2045,42 +2045,13 @@ html.perf-lite .radioPanel{
     return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
   }
 
-  function getInitialRadioUrl() {
-    try {
-      const stored = localStorage.getItem(RADIO_URL_STORAGE_KEY);
-      if (stored) return stored;
-    } catch (err) {}
-    return DEFAULT_RADIO_URL;
-  }
-
-  function saveRadioUrl(url) {
-    try {
-      localStorage.setItem(RADIO_URL_STORAGE_KEY, url);
-    } catch (err) {}
-  }
-
-  function syncRadioSearchInputs(value) {
-    const nextValue = String(value || '');
-    if (radioUrlInput && radioUrlInput.value !== nextValue) radioUrlInput.value = nextValue;
-    if (radioMiniSearchInput && radioMiniSearchInput.value !== nextValue) radioMiniSearchInput.value = nextValue;
-  }
-
-  function getActiveRadioInputValue() {
-    const miniActive = radioMiniSearchInput && document.activeElement === radioMiniSearchInput;
-    const source = miniActive ? radioMiniSearchInput : radioUrlInput;
-    return source ? source.value.trim() : '';
-  }
-
   function normalizePossibleYouTubeUrl(value) {
     const input = String(value || '').trim();
     if (!input) return '';
-
-    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(input)) return input;
-
+    if (/^https?:\/\//i.test(input)) return input;
     if (/^(www\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)\//i.test(input)) {
       return `https://${input}`;
     }
-
     return '';
   }
 
@@ -2102,6 +2073,32 @@ html.perf-lite .radioPanel{
     if (normalizePossibleYouTubeUrl(input)) return false;
     if (isBareYouTubeId(input)) return false;
     return true;
+  }
+
+  function syncRadioSearchInputs(value) {
+    const nextValue = String(value || '');
+    if (radioUrlInput && radioUrlInput.value !== nextValue) radioUrlInput.value = nextValue;
+    if (radioMiniSearchInput && radioMiniSearchInput.value !== nextValue) radioMiniSearchInput.value = nextValue;
+  }
+
+  function getActiveRadioInputValue() {
+    const miniActive = radioMiniSearchInput && document.activeElement === radioMiniSearchInput;
+    const source = miniActive ? radioMiniSearchInput : radioUrlInput;
+    return source ? source.value.trim() : '';
+  }
+
+  function getInitialRadioUrl() {
+    try {
+      const stored = localStorage.getItem(RADIO_URL_STORAGE_KEY);
+      if (stored) return stored;
+    } catch (err) {}
+    return DEFAULT_RADIO_URL;
+  }
+
+  function saveRadioUrl(url) {
+    try {
+      localStorage.setItem(RADIO_URL_STORAGE_KEY, url);
+    } catch (err) {}
   }
 
   function buildYouTubeEmbedUrl(rawValue) {
