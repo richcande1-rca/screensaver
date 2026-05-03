@@ -942,6 +942,9 @@ body.controls-collapsed .controls{
   left:50%;
   transform:translateX(-50%);
   z-index:1000;
+  cursor:pointer;
+  user-select:none;
+  touch-action:manipulation;
   font-size:14px;
   font-weight:700;
   letter-spacing:.14em;
@@ -970,6 +973,23 @@ body.controls-collapsed .controls{
     box-shadow 220ms linear,
     background 220ms linear,
     -webkit-text-stroke-color 220ms linear;
+}
+
+.title:focus-visible{
+  outline:2px solid rgba(191,230,255,0.62);
+  outline-offset:4px;
+}
+
+.title:active{
+  transform:translateX(-50%) translateY(1px);
+}
+
+.title.is-open{
+  border-color:rgba(150,230,255,0.70);
+  box-shadow:
+    0 0 18px rgba(191,230,255,0.30),
+    0 0 42px rgba(191,230,255,0.18),
+    inset 0 0 14px rgba(191,230,255,0.16);
 }
 
 @keyframes beamSway{
@@ -1678,9 +1698,7 @@ html.perf-lite .radioPanel{
     </div>
   </div>
 
-  <div class="title" id="appTitle">Ambient Aquarium</div>
-
-  <button class="controlsToggle" id="controlsToggle" type="button" aria-expanded="false" aria-controls="controlsPanel">Show Controls</button>
+  <div class="title" id="appTitle" role="button" tabindex="0" aria-expanded="false" aria-controls="controlsPanel" aria-label="Show Controls">Ambient Aquarium</div>
 
   <div class="controls" id="controlsPanel" aria-hidden="true">
     <div class="control-row">
@@ -1821,6 +1839,12 @@ html.perf-lite .radioPanel{
       controlsToggle.setAttribute('aria-expanded', String(open));
       controlsToggle.textContent = open ? 'Hide Controls' : 'Show Controls';
     }
+    if (titleEl) {
+      titleEl.classList.toggle('is-open', open);
+      titleEl.setAttribute('aria-expanded', String(open));
+      titleEl.setAttribute('aria-label', open ? 'Hide Controls' : 'Show Controls');
+      titleEl.title = open ? 'Hide Controls' : 'Show Controls';
+    }
     if (controlsPanel) {
       controlsPanel.setAttribute('aria-hidden', String(!open));
     }
@@ -1892,10 +1916,23 @@ html.perf-lite .radioPanel{
   }
 
 
-  function updateRadioButton(active) {
+  function updateRadioButton() {
     if (!radioToggleBtn) return;
-    radioToggleBtn.classList.toggle('radio-active', !!active);
-    radioToggleBtn.setAttribute('aria-pressed', String(!!active));
+
+    const isPlaying = !!radioDock && radioDock.classList.contains('radio-playing');
+    const isOpen = !!radioDock && radioDock.classList.contains('open');
+    const active = isPlaying || isOpen;
+
+    radioToggleBtn.classList.toggle('radio-active', active);
+    radioToggleBtn.setAttribute('aria-pressed', String(active));
+
+    if (isOpen) {
+      radioToggleBtn.textContent = isPlaying ? 'Hide Radio' : 'Hide Radio';
+    } else if (isPlaying) {
+      radioToggleBtn.textContent = 'Show Radio';
+    } else {
+      radioToggleBtn.textContent = '♪ Radio';
+    }
   }
 
   function setRadioOpen(open) {
@@ -1903,21 +1940,15 @@ html.perf-lite .radioPanel{
     radioDock.classList.toggle('open', !!open);
     radioDock.classList.remove('compact');
     radioDock.setAttribute('aria-hidden', String(!open));
-    updateRadioButton(open || radioDock.classList.contains('radio-playing'));
+    updateRadioButton();
+  }
+
+  function hideRadioDial() {
+    setRadioOpen(false);
   }
 
   function setRadioCompact() {
-    if (!radioDock) return;
-    if (radioDock.classList.contains('radio-playing')) {
-      radioDock.classList.remove('open');
-      radioDock.classList.add('compact');
-      radioDock.setAttribute('aria-hidden', 'false');
-      updateRadioButton(true);
-    } else {
-      radioDock.classList.remove('open', 'compact');
-      radioDock.setAttribute('aria-hidden', 'true');
-      updateRadioButton(false);
-    }
+    hideRadioDial();
   }
 
   function setRadioStatus(text) {
@@ -2020,7 +2051,7 @@ html.perf-lite .radioPanel{
     if (radioUrlInput) radioUrlInput.value = getInitialRadioUrl();
     setRadioStatus('idle');
     if (radioDock) radioDock.setAttribute('aria-hidden', 'true');
-    updateRadioButton(false);
+    updateRadioButton();
   }
 
 
@@ -2339,10 +2370,22 @@ html.perf-lite .radioPanel{
     setTimeout(refreshTankRect, 120);
   }
 
+  function toggleControlsPanel() {
+    const open = document.body.classList.contains('controls-collapsed');
+    setControlsOpen(open);
+  }
+
   if (controlsToggle) {
-    controlsToggle.addEventListener('click', () => {
-      const open = document.body.classList.contains('controls-collapsed');
-      setControlsOpen(open);
+    controlsToggle.addEventListener('click', toggleControlsPanel);
+  }
+
+  if (titleEl) {
+    titleEl.addEventListener('click', toggleControlsPanel);
+    titleEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleControlsPanel();
+      }
     });
   }
 
@@ -2372,13 +2415,13 @@ html.perf-lite .radioPanel{
 
   if (radioToggleBtn) {
     radioToggleBtn.addEventListener('click', () => {
-      const shouldOpen = !radioDock || (!radioDock.classList.contains('open') || radioDock.classList.contains('compact'));
+      const shouldOpen = !radioDock || !radioDock.classList.contains('open');
       setRadioOpen(shouldOpen);
     });
   }
 
-  if (radioCloseBtn) radioCloseBtn.addEventListener('click', setRadioCompact);
-  if (radioHideBtn) radioHideBtn.addEventListener('click', setRadioCompact);
+  if (radioCloseBtn) radioCloseBtn.addEventListener('click', hideRadioDial);
+  if (radioHideBtn) radioHideBtn.addEventListener('click', hideRadioDial);
   if (radioPlayBtn) radioPlayBtn.addEventListener('click', playRadio);
   if (radioDefaultBtn) radioDefaultBtn.addEventListener('click', resetRadioDefault);
   if (radioStopBtn) radioStopBtn.addEventListener('click', stopRadio);
