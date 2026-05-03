@@ -1424,25 +1424,62 @@ html.perf-lite .crab{
 
 .stage:fullscreen .fg1,
 .stage:-webkit-full-screen .fg1{
-  bottom:-4.8%;
+  bottom:-8.8%;
   opacity:.72;
 }
 
 .stage:fullscreen .fg2,
 .stage:-webkit-full-screen .fg2{
-  bottom:-13.8%;
+  bottom:-23.6%;
 }
 
 .stage:fullscreen .fg4,
 .stage:-webkit-full-screen .fg4{
-  bottom:-4.6%;
+  bottom:-8.9%;
 }
 
 .stage:fullscreen .fg3,
 .stage:-webkit-full-screen .fg3{
-  bottom:-6.2%;
+  bottom:-11.4%;
   width:25%;
   opacity:.70;
+}
+
+
+/* ----------------------------------------------------
+   PHONE-ONLY FULLSCREEN PLANT LIFT
+   Restores Chromebook/desktop fullscreen plant depth above,
+   then only lifts plants on phone-width fullscreen where the
+   bottom crop was hiding the PNG bases.
+---------------------------------------------------- */
+@media (max-width: 800px){
+  .stage:fullscreen .fg1,
+  .stage:-webkit-full-screen .fg1{
+    bottom:-1.2%;
+    width:27%;
+    opacity:.66;
+  }
+
+  .stage:fullscreen .fg2,
+  .stage:-webkit-full-screen .fg2{
+    bottom:-1.8%;
+    width:32%;
+    opacity:.68;
+  }
+
+  .stage:fullscreen .fg4,
+  .stage:-webkit-full-screen .fg4{
+    bottom:-1.0%;
+    width:35%;
+    opacity:.98;
+  }
+
+  .stage:fullscreen .fg3,
+  .stage:-webkit-full-screen .fg3{
+    bottom:-1.8%;
+    width:29%;
+    opacity:.62;
+  }
 }
 
 
