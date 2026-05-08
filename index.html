@@ -546,6 +546,36 @@ body{
   filter:var(--fish-filter, var(--fish-glow));
 }
 
+/* ----------------------------------------------------
+   MODEST FISH DEPTH PASS
+   Cheap optical trick: each fish carries a soft murky oval
+   under/behind itself. JS gently varies the shadow by depth
+   and dims the fish a hair during turn compression.
+---------------------------------------------------- */
+.fish::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:66%;
+  width:88%;
+  height:28%;
+  border-radius:999px;
+  background:radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,0.28) 0%,
+    rgba(0,0,0,0.13) 45%,
+    rgba(0,0,0,0.00) 74%
+  );
+  transform:
+    translate(-50%,-50%)
+    translateY(var(--fish-shadow-y, 10%))
+    scale(var(--fish-shadow-scale-x, 1), var(--fish-shadow-scale-y, .72));
+  filter:blur(var(--fish-shadow-blur, 4px));
+  opacity:var(--fish-shadow-opacity, .18);
+  pointer-events:none;
+  z-index:0;
+}
+
 .fish-sprite{
   position:absolute;
   display:block;
@@ -557,6 +587,7 @@ body{
   -webkit-user-drag:none;
   image-rendering:auto;
   background:transparent;
+  z-index:1;
   filter:var(--fish-sprite-filter, drop-shadow(0 0 8px rgba(120,220,255,0.10)));
 }
 
@@ -650,6 +681,11 @@ body{
 
 html.perf-lite .fish-tail{
   filter:none;
+}
+
+html.perf-lite .fish::before{
+  filter:blur(2px);
+  opacity:calc(var(--fish-shadow-opacity, .18) * .55);
 }
 
 /* ----------------------------------------------------
@@ -3665,7 +3701,7 @@ html.perf-lite .radioPanel{
       const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -0.20 : (f.type === 'barb' ? -3.5 : -4.5), f.type === 'discus' ? 0.20 : (f.type === 'barb' ? 3.5 : 4.5));
 
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
-      f.el.style.opacity = f.type === 'tetra' ? '0.96' : (f.type === 'discus' ? '0.98' : (f.type === 'barb' ? '0.97' : '1'));
+      const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'barb' ? 0.97 : 1));
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
@@ -3689,6 +3725,42 @@ html.perf-lite .radioPanel{
       }
 
       f.visualDir = visualDir;
+
+      // Modest 3D/depth illusion: dim slightly during visible turns and let
+      // each fish carry a soft water-shadow that changes with its swim depth.
+      const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'angel' ? 0.06 : 0.09));
+      f.el.style.opacity = (baseOpacity * turnDim).toFixed(3);
+
+      const depthNorm = clamp((f.y - 0.08) / 0.82, 0, 1);
+      const shadowBase =
+        f.type === 'tetra' ? 0.105 :
+        f.type === 'discus' ? 0.165 :
+        f.type === 'barb' ? 0.150 :
+        0.175;
+      const shadowOpacity = clamp(shadowBase * (0.64 + depthNorm * 0.62) * (1 - turnPulse * 0.22), 0, 0.30);
+      const shadowBlur =
+        f.type === 'tetra' ? 2.8 :
+        f.type === 'discus' ? 4.8 :
+        f.type === 'barb' ? 3.6 :
+        5.8;
+      const shadowScaleX =
+        f.type === 'angel' ? 0.78 + depthNorm * 0.24 :
+        f.type === 'discus' ? 0.86 + depthNorm * 0.22 :
+        0.92 + depthNorm * 0.26;
+      const shadowScaleY =
+        f.type === 'angel' ? 0.70 :
+        f.type === 'discus' ? 0.76 :
+        0.66;
+      const shadowY =
+        f.type === 'angel' ? '13%' :
+        f.type === 'discus' ? '9%' :
+        '11%';
+
+      f.el.style.setProperty('--fish-shadow-opacity', shadowOpacity.toFixed(3));
+      f.el.style.setProperty('--fish-shadow-blur', `${shadowBlur.toFixed(1)}px`);
+      f.el.style.setProperty('--fish-shadow-scale-x', shadowScaleX.toFixed(2));
+      f.el.style.setProperty('--fish-shadow-scale-y', shadowScaleY.toFixed(2));
+      f.el.style.setProperty('--fish-shadow-y', shadowY);
 
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.45 : (f.state === 'cruise' ? 1.0 : 0.55);
