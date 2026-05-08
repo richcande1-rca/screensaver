@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1831,7 +1833,7 @@ html.perf-lite .radioPanel{
         <div class="radioSearchLabel">YouTube Search</div>
         <div class="radioSearchRow">
           <input class="radioSearchInput" id="radioSearchInput" type="search" inputmode="search" spellcheck="false" aria-label="Search YouTube" placeholder="Search YouTube..." />
-          <button class="radioSearchBtn" type="button" id="radioSearchBtn">Search</button>
+          <button class="radioSearchBtn" type="button" id="radioSearchBtn">Find on YouTube</button>
         </div>
         <div class="radioButtons">
           <button type="button" id="radioPlayBtn">Play URL</button>
@@ -1839,7 +1841,7 @@ html.perf-lite .radioPanel{
           <button type="button" id="radioHideBtn">Hide Dial</button>
           <button type="button" id="radioStopBtn">Stop</button>
         </div>
-        <p class="radioHelp">Paste a YouTube link above, or use the search box. Search uses YouTube embed search, so direct links remain most reliable.</p>
+        <p class="radioHelp">Paste a YouTube link above to play it here. Use search to open YouTube results in a new tab, then copy a video link back here.</p>
       </div>
       <div class="radioPlayerWrap" id="radioPlayerWrap">
         <iframe id="radioPlayerFrame" title="YouTube aquarium radio" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -2120,6 +2122,30 @@ html.perf-lite .radioPanel{
 
       return buildSearchUrl(input);
     }
+  }
+
+
+  function openYouTubeSearch() {
+    if (!radioSearchInput) return;
+
+    const query = radioSearchInput.value.trim();
+
+    if (!query) {
+      setRadioStatus('search empty');
+      setRadioOpen(true);
+      return;
+    }
+
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    const opened = window.open(searchUrl, '_blank', 'noopener,noreferrer');
+
+    if (opened) {
+      setRadioStatus('search opened');
+    } else {
+      setRadioStatus('popup blocked');
+    }
+
+    setRadioOpen(true);
   }
 
   function playRadio(rawValue) {
@@ -2538,7 +2564,7 @@ html.perf-lite .radioPanel{
   if (radioCloseBtn) radioCloseBtn.addEventListener('click', hideRadioDial);
   if (radioHideBtn) radioHideBtn.addEventListener('click', hideRadioDial);
   if (radioPlayBtn) radioPlayBtn.addEventListener('click', () => playRadio());
-  if (radioSearchBtn) radioSearchBtn.addEventListener('click', () => playRadio(radioSearchInput ? radioSearchInput.value : ''));
+  if (radioSearchBtn) radioSearchBtn.addEventListener('click', openYouTubeSearch);
   if (radioDefaultBtn) radioDefaultBtn.addEventListener('click', resetRadioDefault);
   if (radioStopBtn) radioStopBtn.addEventListener('click', stopRadio);
   if (radioUrlInput) {
@@ -2553,7 +2579,7 @@ html.perf-lite .radioPanel{
     radioSearchInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
-        playRadio(radioSearchInput.value);
+        openYouTubeSearch();
       }
     });
   }
