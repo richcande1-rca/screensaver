@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1579,6 +1577,61 @@ html.perf-lite .crab{
   box-shadow:0 0 0 2px rgba(100,220,255,0.12);
 }
 
+.radioSearchLabel{
+  margin:9px 1px 4px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  color:rgba(191,239,255,0.86);
+  text-shadow:0 0 10px rgba(100,220,255,0.24);
+}
+
+.radioSearchRow{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:4px;
+}
+
+.radioSearchInput{
+  flex:1 1 auto;
+  min-width:0;
+  min-height:36px;
+  padding:8px 10px;
+  border:1px solid rgba(150,235,255,0.22);
+  border-radius:12px;
+  outline:none;
+  background:rgba(40,140,190,0.13);
+  color:var(--ui-text);
+  font-size:13px;
+}
+
+.radioSearchInput:focus{
+  border-color:rgba(150,235,255,0.52);
+  box-shadow:0 0 0 2px rgba(100,220,255,0.14);
+}
+
+.radioSearchBtn{
+  flex:0 0 auto;
+  min-height:36px;
+  padding:8px 11px;
+  border:1px solid rgba(150,235,255,0.28);
+  border-radius:12px;
+  background:rgba(100,210,255,0.16);
+  color:var(--ui-text);
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+
+.radioSearchBtn:hover,
+.radioSearchBtn:focus-visible{
+  background:rgba(100,210,255,0.24);
+  border-color:rgba(150,235,255,0.42);
+}
+
 .radioButtons{
   display:flex;
   flex-wrap:wrap;
@@ -1774,14 +1827,19 @@ html.perf-lite .radioPanel{
         <button class="radioClose" id="radioCloseBtn" type="button" aria-label="Hide radio">×</button>
       </div>
       <div class="radioControlsGroup">
-        <input class="radioInput" id="radioUrlInput" type="url" inputmode="url" spellcheck="false" aria-label="YouTube URL" />
+        <input class="radioInput" id="radioUrlInput" type="url" inputmode="url" spellcheck="false" aria-label="YouTube URL" placeholder="Paste YouTube link..." />
+        <div class="radioSearchLabel">YouTube Search</div>
+        <div class="radioSearchRow">
+          <input class="radioSearchInput" id="radioSearchInput" type="search" inputmode="search" spellcheck="false" aria-label="Search YouTube" placeholder="Search YouTube..." />
+          <button class="radioSearchBtn" type="button" id="radioSearchBtn">Search</button>
+        </div>
         <div class="radioButtons">
-          <button type="button" id="radioPlayBtn">Play</button>
+          <button type="button" id="radioPlayBtn">Play URL</button>
           <button type="button" id="radioDefaultBtn">Default</button>
           <button type="button" id="radioHideBtn">Hide Dial</button>
           <button type="button" id="radioStopBtn">Stop</button>
         </div>
-        <p class="radioHelp">Paste a YouTube video or playlist link. The mini player stays visible so YouTube keeps behaving.</p>
+        <p class="radioHelp">Paste a YouTube link above, or use the search box. Search uses YouTube embed search, so direct links remain most reliable.</p>
       </div>
       <div class="radioPlayerWrap" id="radioPlayerWrap">
         <iframe id="radioPlayerFrame" title="YouTube aquarium radio" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -1816,6 +1874,8 @@ html.perf-lite .radioPanel{
   const radioDock = document.getElementById('radioDock');
   const radioCloseBtn = document.getElementById('radioCloseBtn');
   const radioUrlInput = document.getElementById('radioUrlInput');
+  const radioSearchInput = document.getElementById('radioSearchInput');
+  const radioSearchBtn = document.getElementById('radioSearchBtn');
   const radioPlayBtn = document.getElementById('radioPlayBtn');
   const radioDefaultBtn = document.getElementById('radioDefaultBtn');
   const radioHideBtn = document.getElementById('radioHideBtn');
@@ -2016,6 +2076,12 @@ html.perf-lite .radioPanel{
     const input = String(rawValue || '').trim();
     if (!input) return null;
 
+    const buildSearchUrl = (query) => {
+      const cleaned = String(query || '').trim();
+      if (!cleaned) return null;
+      return `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(cleaned)}&autoplay=1&rel=0&playsinline=1`;
+    };
+
     try {
       const url = new URL(input);
       const host = url.hostname.replace(/^www\./, '').toLowerCase();
@@ -2042,20 +2108,27 @@ html.perf-lite .radioPanel{
         const listPart = list ? `&list=${encodeURIComponent(list)}` : '';
         return `https://www.youtube.com/embed/${encodeURIComponent(video)}?autoplay=1&rel=0&playsinline=1${listPart}`;
       }
+
+      return null;
     } catch (err) {
+      const hasWhitespace = /\s/.test(input);
       const bareId = cleanYouTubeId(input);
-      if (bareId.length >= 8) {
+
+      if (!hasWhitespace && bareId.length >= 8 && bareId.length <= 64) {
         return `https://www.youtube.com/embed/${encodeURIComponent(bareId)}?autoplay=1&rel=0&playsinline=1`;
       }
-    }
 
-    return null;
+      return buildSearchUrl(input);
+    }
   }
 
-  function playRadio() {
-    if (!radioPlayerFrame || !radioPlayerWrap || !radioUrlInput || !radioDock) return;
+  function playRadio(rawValue) {
+    if (!radioPlayerFrame || !radioPlayerWrap || !radioDock) return;
 
-    const url = radioUrlInput.value.trim() || DEFAULT_RADIO_URL;
+    const typedValue = rawValue !== undefined
+      ? String(rawValue || '').trim()
+      : String((radioUrlInput && radioUrlInput.value) || '').trim();
+    const url = typedValue || DEFAULT_RADIO_URL;
     const embedUrl = buildYouTubeEmbedUrl(url);
 
     if (!embedUrl) {
@@ -2064,7 +2137,9 @@ html.perf-lite .radioPanel{
       return;
     }
 
-    saveRadioUrl(url);
+    if (radioUrlInput && rawValue === undefined) {
+      saveRadioUrl(url);
+    }
     radioPlayerFrame.src = embedUrl;
     radioPlayerWrap.classList.add('visible');
     radioDock.classList.add('radio-playing');
@@ -2088,6 +2163,7 @@ html.perf-lite .radioPanel{
 
   function initRadioDial() {
     if (radioUrlInput) radioUrlInput.value = getInitialRadioUrl();
+    if (radioSearchInput) radioSearchInput.value = '';
     setRadioStatus('idle');
     if (radioDock) radioDock.setAttribute('aria-hidden', 'true');
     updateRadioButton();
@@ -2461,7 +2537,8 @@ html.perf-lite .radioPanel{
 
   if (radioCloseBtn) radioCloseBtn.addEventListener('click', hideRadioDial);
   if (radioHideBtn) radioHideBtn.addEventListener('click', hideRadioDial);
-  if (radioPlayBtn) radioPlayBtn.addEventListener('click', playRadio);
+  if (radioPlayBtn) radioPlayBtn.addEventListener('click', () => playRadio());
+  if (radioSearchBtn) radioSearchBtn.addEventListener('click', () => playRadio(radioSearchInput ? radioSearchInput.value : ''));
   if (radioDefaultBtn) radioDefaultBtn.addEventListener('click', resetRadioDefault);
   if (radioStopBtn) radioStopBtn.addEventListener('click', stopRadio);
   if (radioUrlInput) {
@@ -2469,6 +2546,14 @@ html.perf-lite .radioPanel{
       if (event.key === 'Enter') {
         event.preventDefault();
         playRadio();
+      }
+    });
+  }
+  if (radioSearchInput) {
+    radioSearchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        playRadio(radioSearchInput.value);
       }
     });
   }
