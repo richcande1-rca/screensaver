@@ -2904,6 +2904,20 @@ html.perf-lite .radioPanel{
       shyness: rand(0.8, 1.2),
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
+      // Pseudo-Z depth drift: a slow visual-only scale cue.
+      // 0 = farther back in the water column, 1 = closer/front.
+      depthPhase: Math.random() * Math.PI * 2,
+      depthBias:
+        type === 'angel' ? rand(0.30, 0.48) :
+        type === 'discus' ? rand(0.42, 0.60) :
+        type === 'barb' ? rand(0.54, 0.76) :
+        rand(0.48, 0.70),
+      depthAmp:
+        type === 'angel' ? rand(0.055, 0.090) :
+        type === 'discus' ? rand(0.050, 0.080) :
+        type === 'barb' ? rand(0.060, 0.095) :
+        rand(0.050, 0.085),
+      visualZ: 0.5,
       turnMomentum: 0,
       // Smoothed drawing direction. This lets the fish visually pivot
       // through a narrow edge-on shape instead of snapping instantly.
@@ -3727,7 +3741,22 @@ html.perf-lite .radioPanel{
 
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'barb' ? 0.97 : 1));
-      const drawScale = f.scale * FISH_SIZE_MULTIPLIER;
+
+      // Pseudo-Z scale drift: the fish slowly shrink/grow a little as if
+      // drifting back and forward through the tank depth. This is visual-only;
+      // it does not change swim targets or collision behavior.
+      const yFrontCue = clamp((f.y - 0.18) / 0.72, 0, 1);
+      const driftCue = Math.sin(t * (f.type === 'angel' ? 0.105 : (f.type === 'discus' ? 0.082 : 0.118)) + f.depthPhase);
+      const targetZ = clamp((f.depthBias ?? 0.5) + driftCue * (f.depthAmp ?? 0.06) + (yFrontCue - 0.5) * 0.12, 0, 1);
+      const zSmoothT = 1 - Math.pow(0.986, frameScale);
+      f.visualZ = Number.isFinite(f.visualZ) ? lerp(f.visualZ, targetZ, zSmoothT) : targetZ;
+
+      const zScale = lerp(0.925, 1.095, f.visualZ);
+      const zOpacity = lerp(0.82, 1.02, f.visualZ);
+      const zBlur = lerp(0.34, 0.02, f.visualZ);
+      const zSat = lerp(0.76, 1.06, f.visualZ);
+      const zBright = lerp(0.83, 1.04, f.visualZ);
+      const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
       // compress, linger through the hidden midpoint, then expand.
@@ -3755,7 +3784,8 @@ html.perf-lite .radioPanel{
       // stays as a separate flat oval below it. This avoids the fake-looking
       // spinning shadow during turns.
       const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'angel' ? 0.06 : 0.09));
-      f.el.style.opacity = (baseOpacity * turnDim).toFixed(3);
+      f.el.style.opacity = (baseOpacity * turnDim * zOpacity).toFixed(3);
+      f.el.style.filter = `saturate(${zSat.toFixed(3)}) brightness(${zBright.toFixed(3)}) blur(${zBlur.toFixed(2)}px)`;
 
       const depthNorm = clamp((f.y - 0.08) / 0.82, 0, 1);
       const shadowBase =
@@ -3763,16 +3793,18 @@ html.perf-lite .radioPanel{
         f.type === 'discus' ? 0.350 :
         f.type === 'barb' ? 0.320 :
         0.360;
-      const shadowOpacity = clamp(shadowBase * (0.86 + depthNorm * 0.88), 0, 0.66);
-      const shadowBlur =
+      const shadowOpacity = clamp(shadowBase * (0.72 + depthNorm * 0.58 + f.visualZ * 0.42), 0, 0.66);
+      const shadowBlur = (
         f.type === 'tetra' ? 3.2 :
         f.type === 'discus' ? 5.4 :
         f.type === 'barb' ? 4.0 :
-        5.8;
-      const shadowScaleX =
+        5.8
+      ) * lerp(0.86, 1.14, f.visualZ);
+      const shadowScaleX = (
         f.type === 'angel' ? 1.05 + depthNorm * 0.44 :
         f.type === 'discus' ? 1.12 + depthNorm * 0.38 :
-        1.15 + depthNorm * 0.45;
+        1.15 + depthNorm * 0.45
+      ) * lerp(0.88, 1.14, f.visualZ);
       const shadowScaleY =
         f.type === 'angel' ? 0.88 :
         f.type === 'discus' ? 0.92 :
