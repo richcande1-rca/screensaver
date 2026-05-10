@@ -565,13 +565,14 @@ body{
   border-radius:999px;
   background:radial-gradient(
     ellipse at center,
-    rgba(0,0,0,0.62) 0%,
-    rgba(0,0,0,0.34) 38%,
-    rgba(0,0,0,0.10) 66%,
-    rgba(0,0,0,0.00) 82%
+    rgba(0,0,0,0.54) 0%,
+    rgba(0,0,0,0.32) 34%,
+    rgba(48,92,112,0.20) 55%,
+    rgba(135,205,225,0.10) 72%,
+    rgba(0,0,0,0.00) 88%
   );
-  opacity:.34;
-  filter:blur(6px);
+  opacity:.38;
+  filter:blur(5.2px);
   pointer-events:none;
   will-change:transform, opacity, filter;
   transform:translate3d(-9999px,-9999px,0);
@@ -3758,16 +3759,16 @@ html.perf-lite .radioPanel{
 
       const depthNorm = clamp((f.y - 0.08) / 0.82, 0, 1);
       const shadowBase =
-        f.type === 'tetra' ? 0.185 :
-        f.type === 'discus' ? 0.280 :
-        f.type === 'barb' ? 0.255 :
-        0.290;
-      const shadowOpacity = clamp(shadowBase * (0.82 + depthNorm * 0.82), 0, 0.55);
+        f.type === 'tetra' ? 0.245 :
+        f.type === 'discus' ? 0.350 :
+        f.type === 'barb' ? 0.320 :
+        0.360;
+      const shadowOpacity = clamp(shadowBase * (0.86 + depthNorm * 0.88), 0, 0.66);
       const shadowBlur =
-        f.type === 'tetra' ? 3.8 :
-        f.type === 'discus' ? 6.2 :
-        f.type === 'barb' ? 4.8 :
-        6.8;
+        f.type === 'tetra' ? 3.2 :
+        f.type === 'discus' ? 5.4 :
+        f.type === 'barb' ? 4.0 :
+        5.8;
       const shadowScaleX =
         f.type === 'angel' ? 1.05 + depthNorm * 0.44 :
         f.type === 'discus' ? 1.12 + depthNorm * 0.38 :
