@@ -547,18 +547,21 @@ body{
 }
 
 /* ----------------------------------------------------
-   MODEST FISH DEPTH PASS
-   Cheap optical trick: each fish carries a soft murky oval
-   under/behind itself. JS gently varies the shadow by depth
-   and dims the fish a hair during turn compression.
+   STABLE FISH DEPTH SHADOWS
+   Shadows are now separate flat elements in the fish layer.
+   They follow position/depth only, while the fish sprite can
+   flip, compress, lean, and rotate above them.
 ---------------------------------------------------- */
 .fish::before{
-  content:"";
+  display:none;
+}
+
+.fish-shadow{
   position:absolute;
-  left:50%;
-  top:76%;
-  width:132%;
-  height:44%;
+  left:0;
+  top:0;
+  width:var(--shadow-w, 100px);
+  height:var(--shadow-h, 32px);
   border-radius:999px;
   background:radial-gradient(
     ellipse at center,
@@ -567,14 +570,25 @@ body{
     rgba(0,0,0,0.10) 66%,
     rgba(0,0,0,0.00) 82%
   );
-  transform:
-    translate(-50%,-50%)
-    translateY(var(--fish-shadow-y, 16%))
-    scale(var(--fish-shadow-scale-x, 1.18), var(--fish-shadow-scale-y, .82));
-  filter:blur(var(--fish-shadow-blur, 5.5px));
-  opacity:calc(var(--fish-shadow-opacity, .34) + .18);
+  opacity:.34;
+  filter:blur(6px);
   pointer-events:none;
-  z-index:0;
+  will-change:transform, opacity, filter;
+  transform:translate3d(-9999px,-9999px,0);
+  transform-origin:center center;
+  backface-visibility:hidden;
+}
+
+.fish-shadow-tetra{ --shadow-w:69px; --shadow-h:13px; }
+.fish-shadow-angel{ --shadow-w:121px; --shadow-h:56px; }
+.fish-shadow-discus{ --shadow-w:108px; --shadow-h:36px; }
+.fish-shadow-barb{ --shadow-w:79px; --shadow-h:16px; }
+
+@media (max-width: 800px){
+  .fish-shadow-tetra{ --shadow-w:61px; --shadow-h:11px; }
+  .fish-shadow-angel{ --shadow-w:111px; --shadow-h:52px; }
+  .fish-shadow-discus{ --shadow-w:100px; --shadow-h:33px; }
+  .fish-shadow-barb{ --shadow-w:69px; --shadow-h:14px; }
 }
 
 .fish-sprite{
@@ -2910,6 +2924,15 @@ html.perf-lite .radioPanel{
       homeX: clamp(x + rand(-0.03, 0.03), 0.12, 0.88),
       homeY: clamp(y + rand(-0.02, 0.02), 0.22, 0.72)
     };
+
+    const shadowEl = document.createElement('span');
+    shadowEl.className = `fish-shadow fish-shadow-${type}`;
+    shadowEl.setAttribute('aria-hidden', 'true');
+    if (el.parentNode) {
+      el.parentNode.insertBefore(shadowEl, el);
+      f.shadowEl = shadowEl;
+    }
+
     chooseTargetForFish(f);
     pickState(f, 'cruise');
     return f;
@@ -3727,8 +3750,9 @@ html.perf-lite .radioPanel{
 
       f.visualDir = visualDir;
 
-      // Modest 3D/depth illusion: dim slightly during visible turns and let
-      // each fish carry a soft water-shadow that changes with its swim depth.
+      // Depth illusion: the fish can flip/compress/rotate, but its shadow
+      // stays as a separate flat oval below it. This avoids the fake-looking
+      // spinning shadow during turns.
       const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'angel' ? 0.06 : 0.09));
       f.el.style.opacity = (baseOpacity * turnDim).toFixed(3);
 
@@ -3738,7 +3762,7 @@ html.perf-lite .radioPanel{
         f.type === 'discus' ? 0.280 :
         f.type === 'barb' ? 0.255 :
         0.290;
-      const shadowOpacity = clamp(shadowBase * (0.82 + depthNorm * 0.82) * (1 - turnPulse * 0.14), 0, 0.55);
+      const shadowOpacity = clamp(shadowBase * (0.82 + depthNorm * 0.82), 0, 0.55);
       const shadowBlur =
         f.type === 'tetra' ? 3.8 :
         f.type === 'discus' ? 6.2 :
@@ -3752,16 +3776,20 @@ html.perf-lite .radioPanel{
         f.type === 'angel' ? 0.88 :
         f.type === 'discus' ? 0.92 :
         0.82;
-      const shadowY =
-        f.type === 'angel' ? '22%' :
-        f.type === 'discus' ? '16%' :
-        '19%';
+      const shadowOffsetPx =
+        f.type === 'angel' ? 28 :
+        f.type === 'discus' ? 18 :
+        f.type === 'barb' ? 16 :
+        13;
 
-      f.el.style.setProperty('--fish-shadow-opacity', shadowOpacity.toFixed(3));
-      f.el.style.setProperty('--fish-shadow-blur', `${shadowBlur.toFixed(1)}px`);
-      f.el.style.setProperty('--fish-shadow-scale-x', shadowScaleX.toFixed(2));
-      f.el.style.setProperty('--fish-shadow-scale-y', shadowScaleY.toFixed(2));
-      f.el.style.setProperty('--fish-shadow-y', shadowY);
+      if (f.shadowEl) {
+        const shadowX = f.x * tankRect.width;
+        const shadowYPx = (drawY * tankRect.height) + (shadowOffsetPx * drawScale);
+        f.shadowEl.style.opacity = shadowOpacity.toFixed(3);
+        f.shadowEl.style.filter = `blur(${shadowBlur.toFixed(1)}px)`;
+        f.shadowEl.style.transform =
+          `translate3d(${shadowX}px, ${shadowYPx}px, 0) translate(-50%,-50%) scale(${(drawScale * shadowScaleX).toFixed(3)}, ${(drawScale * shadowScaleY).toFixed(3)})`;
+      }
 
       if (f.type === 'discus') {
         const speedMood = f.state === 'dart' ? 1.45 : (f.state === 'cruise' ? 1.0 : 0.55);
