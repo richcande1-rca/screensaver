@@ -2904,9 +2904,10 @@ html.perf-lite .radioPanel{
       shyness: rand(0.8, 1.2),
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
-      // Pseudo-Z diagnostic drift: stronger distance pass.
+      // Motion-coupled pseudo-Z drift.
       // 0 = farther back in the water column, 1 = closer/front.
-      // Distance is now carried mostly by scale + focus softness, not transparency.
+      // The phase only advances while the fish is actually swimming, so fish
+      // do not magically pulse/teleport in depth while idling.
       depthPhase: Math.random() * Math.PI * 2,
       depthRate:
         type === 'angel' ? rand(0.34, 0.48) :
@@ -3748,25 +3749,37 @@ html.perf-lite .radioPanel{
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'barb' ? 0.97 : 1));
 
-      // Pseudo-Z diagnostic scale drift: stronger distance cue, but with
-      // transparency restrained so fish go soft/deep instead of ghostly.
-      // This is visual-only; it does not change swim targets or collision behavior.
+      // Motion-coupled pseudo-Z scale drift.
+      // The depth phase only advances when the fish is actually moving.
+      // That keeps the cool shrink/grow depth cue, but prevents the fish from
+      // pulsing in place like a magic breathing sticker.
       const yFrontCue = clamp((f.y - 0.18) / 0.72, 0, 1);
-      const driftCue = Math.sin(t * (f.depthRate ?? 0.42) + f.depthPhase);
+      const nominalSpeed = Math.max(0.00001, f.cruiseSpeed * fishSpeedNow);
+      const rawMotionGate = clamp((speedMag - nominalSpeed * 0.14) / (nominalSpeed * 0.76), 0, 1);
+      const stateMotionGate =
+        f.state === 'idle' ? 0 :
+        f.state === 'turn' ? 0.42 :
+        1;
+      const motionGate = clamp(rawMotionGate * stateMotionGate, 0, 1);
+
+      if (motionGate > 0.015) {
+        f.depthPhase += dtSec * (f.depthRate ?? 0.42) * (0.65 + motionGate * 0.95) * motionGate;
+      }
+
+      const driftCue = Math.sin(f.depthPhase);
       const targetZ = clamp((f.depthBias ?? 0.5) + driftCue * (f.depthAmp ?? 0.24) + (yFrontCue - 0.5) * 0.12, 0, 1);
-      const zSmoothT = 1 - Math.pow(0.942, frameScale);
+      const zSmoothT = 1 - Math.pow(motionGate > 0.015 ? 0.940 : 0.972, frameScale);
       f.visualZ = Number.isFinite(f.visualZ) ? lerp(f.visualZ, targetZ, zSmoothT) : targetZ;
 
       const zScale = lerp(0.735, 1.305, f.visualZ);
       const opacityFloor =
-        f.type === 'discus' ? 0.885 :
-        f.type === 'angel' ? 0.830 :
-        f.type === 'barb' ? 0.815 :
-        0.790;
-      const zOpacity = lerp(opacityFloor, 1.030, f.visualZ);
-      const zBlur = lerp(f.type === 'discus' ? 1.55 : 1.85, 0.00, f.visualZ);
-      const zSat = lerp(0.50, 1.15, f.visualZ);
-      const zBright = lerp(0.62, 1.095, f.visualZ);
+        f.type === 'discus' ? 0.900 :
+        f.type === 'angel' ? 0.850 :
+        f.type === 'barb' ? 0.835 :
+        0.815;
+      const zOpacity = lerp(opacityFloor, 1.020, f.visualZ);
+      const zSat = lerp(0.56, 1.14, f.visualZ);
+      const zBright = lerp(0.67, 1.090, f.visualZ);
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
@@ -3796,7 +3809,7 @@ html.perf-lite .radioPanel{
       // spinning shadow during turns.
       const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'angel' ? 0.06 : 0.09));
       f.el.style.opacity = clamp(baseOpacity * turnDim * zOpacity, opacityFloor, 1).toFixed(3);
-      f.el.style.filter = `saturate(${zSat.toFixed(3)}) brightness(${zBright.toFixed(3)}) blur(${zBlur.toFixed(2)}px)`;
+      f.el.style.filter = `saturate(${zSat.toFixed(3)}) brightness(${zBright.toFixed(3)})`;
 
       const depthNorm = clamp((f.y - 0.08) / 0.82, 0, 1);
       const shadowBase =
