@@ -2904,19 +2904,24 @@ html.perf-lite .radioPanel{
       shyness: rand(0.8, 1.2),
       idleBob: rand(0.8, 1.2),
       depthOffset: rand(-0.006, 0.006),
-      // Pseudo-Z depth drift: a slow visual-only scale cue.
+      // Pseudo-Z diagnostic drift: obvious on purpose.
       // 0 = farther back in the water column, 1 = closer/front.
       depthPhase: Math.random() * Math.PI * 2,
+      depthRate:
+        type === 'angel' ? rand(0.34, 0.48) :
+        type === 'discus' ? rand(0.28, 0.42) :
+        type === 'barb' ? rand(0.40, 0.58) :
+        rand(0.38, 0.56),
       depthBias:
-        type === 'angel' ? rand(0.30, 0.48) :
-        type === 'discus' ? rand(0.42, 0.60) :
-        type === 'barb' ? rand(0.54, 0.76) :
-        rand(0.48, 0.70),
+        type === 'angel' ? rand(0.32, 0.50) :
+        type === 'discus' ? rand(0.40, 0.60) :
+        type === 'barb' ? rand(0.48, 0.72) :
+        rand(0.44, 0.70),
       depthAmp:
-        type === 'angel' ? rand(0.055, 0.090) :
-        type === 'discus' ? rand(0.050, 0.080) :
-        type === 'barb' ? rand(0.060, 0.095) :
-        rand(0.050, 0.085),
+        type === 'angel' ? rand(0.135, 0.195) :
+        type === 'discus' ? rand(0.125, 0.180) :
+        type === 'barb' ? rand(0.150, 0.220) :
+        rand(0.140, 0.205),
       visualZ: 0.5,
       turnMomentum: 0,
       // Smoothed drawing direction. This lets the fish visually pivot
@@ -3742,20 +3747,20 @@ html.perf-lite .radioPanel{
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
       const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'barb' ? 0.97 : 1));
 
-      // Pseudo-Z scale drift: the fish slowly shrink/grow a little as if
-      // drifting back and forward through the tank depth. This is visual-only;
-      // it does not change swim targets or collision behavior.
+      // Pseudo-Z diagnostic scale drift: stronger/faster on purpose so the
+      // shrink/inflate depth cue is visible during normal testing. This is
+      // visual-only; it does not change swim targets or collision behavior.
       const yFrontCue = clamp((f.y - 0.18) / 0.72, 0, 1);
-      const driftCue = Math.sin(t * (f.type === 'angel' ? 0.105 : (f.type === 'discus' ? 0.082 : 0.118)) + f.depthPhase);
-      const targetZ = clamp((f.depthBias ?? 0.5) + driftCue * (f.depthAmp ?? 0.06) + (yFrontCue - 0.5) * 0.12, 0, 1);
-      const zSmoothT = 1 - Math.pow(0.986, frameScale);
+      const driftCue = Math.sin(t * (f.depthRate ?? 0.42) + f.depthPhase);
+      const targetZ = clamp((f.depthBias ?? 0.5) + driftCue * (f.depthAmp ?? 0.17) + (yFrontCue - 0.5) * 0.10, 0, 1);
+      const zSmoothT = 1 - Math.pow(0.945, frameScale);
       f.visualZ = Number.isFinite(f.visualZ) ? lerp(f.visualZ, targetZ, zSmoothT) : targetZ;
 
-      const zScale = lerp(0.925, 1.095, f.visualZ);
-      const zOpacity = lerp(0.82, 1.02, f.visualZ);
-      const zBlur = lerp(0.34, 0.02, f.visualZ);
-      const zSat = lerp(0.76, 1.06, f.visualZ);
-      const zBright = lerp(0.83, 1.04, f.visualZ);
+      const zScale = lerp(0.815, 1.205, f.visualZ);
+      const zOpacity = lerp(0.64, 1.10, f.visualZ);
+      const zBlur = lerp(1.05, 0.00, f.visualZ);
+      const zSat = lerp(0.56, 1.16, f.visualZ);
+      const zBright = lerp(0.68, 1.10, f.visualZ);
       const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
@@ -3793,18 +3798,18 @@ html.perf-lite .radioPanel{
         f.type === 'discus' ? 0.350 :
         f.type === 'barb' ? 0.320 :
         0.360;
-      const shadowOpacity = clamp(shadowBase * (0.72 + depthNorm * 0.58 + f.visualZ * 0.42), 0, 0.66);
+      const shadowOpacity = clamp(shadowBase * (0.62 + depthNorm * 0.55 + f.visualZ * 0.82), 0, 0.74);
       const shadowBlur = (
         f.type === 'tetra' ? 3.2 :
         f.type === 'discus' ? 5.4 :
         f.type === 'barb' ? 4.0 :
         5.8
-      ) * lerp(0.86, 1.14, f.visualZ);
+      ) * lerp(0.72, 1.42, f.visualZ);
       const shadowScaleX = (
         f.type === 'angel' ? 1.05 + depthNorm * 0.44 :
         f.type === 'discus' ? 1.12 + depthNorm * 0.38 :
         1.15 + depthNorm * 0.45
-      ) * lerp(0.88, 1.14, f.visualZ);
+      ) * lerp(0.72, 1.38, f.visualZ);
       const shadowScaleY =
         f.type === 'angel' ? 0.88 :
         f.type === 'discus' ? 0.92 :
