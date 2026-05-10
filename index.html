@@ -551,28 +551,28 @@ body{
    Cheap optical trick: each fish carries a soft murky oval
    under/behind itself. JS gently varies the shadow by depth
    and dims the fish a hair during turn compression.
-   Test pass: made the oval wider/darker so the effect is visible.
 ---------------------------------------------------- */
 .fish::before{
   content:"";
   position:absolute;
   left:50%;
-  top:68%;
-  width:96%;
-  height:34%;
+  top:76%;
+  width:132%;
+  height:44%;
   border-radius:999px;
   background:radial-gradient(
     ellipse at center,
-    rgba(0,0,0,0.38) 0%,
-    rgba(0,0,0,0.20) 45%,
-    rgba(0,0,0,0.00) 78%
+    rgba(0,0,0,0.62) 0%,
+    rgba(0,0,0,0.34) 38%,
+    rgba(0,0,0,0.10) 66%,
+    rgba(0,0,0,0.00) 82%
   );
   transform:
     translate(-50%,-50%)
-    translateY(var(--fish-shadow-y, 10%))
-    scale(var(--fish-shadow-scale-x, 1), var(--fish-shadow-scale-y, .72));
-  filter:blur(var(--fish-shadow-blur, 5px));
-  opacity:var(--fish-shadow-opacity, .24);
+    translateY(var(--fish-shadow-y, 16%))
+    scale(var(--fish-shadow-scale-x, 1.18), var(--fish-shadow-scale-y, .82));
+  filter:blur(var(--fish-shadow-blur, 5.5px));
+  opacity:calc(var(--fish-shadow-opacity, .34) + .18);
   pointer-events:none;
   z-index:0;
 }
@@ -685,8 +685,8 @@ html.perf-lite .fish-tail{
 }
 
 html.perf-lite .fish::before{
-  filter:blur(2.6px);
-  opacity:calc(var(--fish-shadow-opacity, .24) * .85);
+  filter:blur(var(--fish-shadow-blur, 4px));
+  opacity:calc(var(--fish-shadow-opacity, .34) + .10);
 }
 
 /* ----------------------------------------------------
@@ -3734,28 +3734,28 @@ html.perf-lite .radioPanel{
 
       const depthNorm = clamp((f.y - 0.08) / 0.82, 0, 1);
       const shadowBase =
-        f.type === 'tetra' ? 0.145 :
-        f.type === 'discus' ? 0.225 :
-        f.type === 'barb' ? 0.205 :
-        0.240;
-      const shadowOpacity = clamp(shadowBase * (0.72 + depthNorm * 0.76) * (1 - turnPulse * 0.16), 0, 0.42);
+        f.type === 'tetra' ? 0.185 :
+        f.type === 'discus' ? 0.280 :
+        f.type === 'barb' ? 0.255 :
+        0.290;
+      const shadowOpacity = clamp(shadowBase * (0.82 + depthNorm * 0.82) * (1 - turnPulse * 0.14), 0, 0.55);
       const shadowBlur =
-        f.type === 'tetra' ? 3.4 :
-        f.type === 'discus' ? 5.7 :
-        f.type === 'barb' ? 4.4 :
+        f.type === 'tetra' ? 3.8 :
+        f.type === 'discus' ? 6.2 :
+        f.type === 'barb' ? 4.8 :
         6.8;
       const shadowScaleX =
-        f.type === 'angel' ? 0.88 + depthNorm * 0.28 :
-        f.type === 'discus' ? 0.94 + depthNorm * 0.27 :
-        1.00 + depthNorm * 0.30;
+        f.type === 'angel' ? 1.05 + depthNorm * 0.44 :
+        f.type === 'discus' ? 1.12 + depthNorm * 0.38 :
+        1.15 + depthNorm * 0.45;
       const shadowScaleY =
-        f.type === 'angel' ? 0.74 :
-        f.type === 'discus' ? 0.80 :
-        0.72;
+        f.type === 'angel' ? 0.88 :
+        f.type === 'discus' ? 0.92 :
+        0.82;
       const shadowY =
-        f.type === 'angel' ? '16%' :
-        f.type === 'discus' ? '11%' :
-        '13%';
+        f.type === 'angel' ? '22%' :
+        f.type === 'discus' ? '16%' :
+        '19%';
 
       f.el.style.setProperty('--fish-shadow-opacity', shadowOpacity.toFixed(3));
       f.el.style.setProperty('--fish-shadow-blur', `${shadowBlur.toFixed(1)}px`);
