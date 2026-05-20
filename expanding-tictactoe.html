@@ -90,6 +90,28 @@
     color: var(--text);
     margin: 10px 0;
   }
+
+  .rule-alert {
+    margin: 10px 0;
+    padding: 12px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,204,102,.55);
+    background: linear-gradient(145deg, rgba(255,204,102,.18), rgba(255,139,139,.13));
+    color: var(--text);
+    font-size: .92rem;
+    line-height: 1.35;
+  }
+  .rule-alert strong {
+    display: block;
+    color: #ffe2a0;
+    font-size: 1.02rem;
+    margin-bottom: 3px;
+  }
+  .rule-flow {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: .84rem;
+  }
   .stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -161,6 +183,11 @@
     <aside class="card">
       <h1>Expanding Tic-Tac-Toe: Model 2</h1>
       <div class="status" id="status"></div>
+      <div class="rule-alert">
+        <strong>Important rule change after a draw:</strong>
+        The first board is 3-across. After a draw expands the board to 7×7, you need <b>5 in a row</b> — not 3.
+        <div class="rule-flow">3×3 needs 3 → draw → 7×7 needs 5 → draw → 11×11 needs 7</div>
+      </div>
       <div class="stats">
         <div class="stat">Board<strong id="boardStat">3×3</strong></div>
         <div class="stat">Win Length<strong id="winStat">3</strong></div>
@@ -173,7 +200,7 @@
       <label><input type="checkbox" id="autoCpu" checked /> CPU moves automatically</label>
       <button id="cpuBtn">CPU Move Now</button>
       <div class="notes">
-        New model: start 3×3 / need 3. A draw expands naturally on all four sides by two rings: 3×3 → 7×7 → 11×11. Because each ring adds 1 to the win requirement, each double-ring expansion raises the win length by 2: 3 → 5 → 7.
+        Model 2 rule: the original marks stay live. A draw expands naturally on all four sides by two rings, and the win requirement rises with the expansion. Watch the Win Length box before assuming a 3-line still wins.
       </div>
       <div class="log" id="log"></div>
     </aside>
