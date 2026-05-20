@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Expanding Tic-Tac-Toe — Model 2</title>
+<style>
+  :root {
+    --bg: #111318;
+    --panel: #1b1f2a;
+    --panel2: #242a38;
+    --line: #394154;
+    --text: #f2f4f8;
+    --muted: #aab3c4;
+    --x: #79b8ff;
+    --o: #ffcc66;
+    --win: #9be28f;
+    --danger: #ff8b8b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #20283a 0, var(--bg) 48rem);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+  }
+  .app {
+    width: min(96vw, 980px);
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 270px;
+    gap: 14px;
+    align-items: start;
+  }
+  .card {
+    background: rgba(27, 31, 42, 0.92);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  }
+  .board-wrap { padding: 12px; overflow: auto; }
+  #board {
+    --cell: 76px;
+    display: grid;
+    grid-template-columns: repeat(var(--size), var(--cell));
+    grid-template-rows: repeat(var(--size), var(--cell));
+    gap: 5px;
+    justify-content: center;
+    min-width: max-content;
+  }
+  .cell {
+    width: var(--cell);
+    height: var(--cell);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #262d3c, #181d28);
+    color: var(--text);
+    font-weight: 800;
+    font-size: calc(var(--cell) * .56);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: transform .08s ease, border-color .12s ease, background .12s ease;
+  }
+  .cell:hover { transform: translateY(-1px); border-color: #68748f; }
+  .cell.disabled { cursor: default; opacity: .94; }
+  .cell.x { color: var(--x); text-shadow: 0 0 14px rgba(121,184,255,.22); }
+  .cell.o { color: var(--o); text-shadow: 0 0 14px rgba(255,204,102,.22); }
+  .cell.win {
+    color: #102012;
+    background: linear-gradient(145deg, #c8f7bd, var(--win));
+    border-color: #d6ffd0;
+    text-shadow: none;
+  }
+  .cell.old-ring { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  aside { padding: 14px; }
+  h1 { font-size: 1.15rem; margin: 0 0 8px; }
+  .status {
+    background: var(--panel2);
+    border-radius: 14px;
+    padding: 10px;
+    min-height: 58px;
+    color: var(--text);
+    margin: 10px 0;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .stat {
+    background: rgba(255,255,255,.055);
+    border-radius: 12px;
+    padding: 8px;
+    color: var(--muted);
+    font-size: .83rem;
+  }
+  .stat strong { display: block; color: var(--text); font-size: 1rem; margin-top: 2px; }
+  button {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    background: #364057;
+    color: var(--text);
+    padding: 10px 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  button:hover { filter: brightness(1.08); }
+  button.primary { background: #2e5b8f; }
+  button.warn { background: #633c3c; }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: .9rem;
+    margin-top: 10px;
+  }
+  input[type="checkbox"] { transform: scale(1.15); }
+  .notes {
+    color: var(--muted);
+    font-size: .84rem;
+    line-height: 1.35;
+    margin-top: 12px;
+  }
+  .log {
+    max-height: 156px;
+    overflow: auto;
+    background: rgba(0,0,0,.18);
+    border-radius: 12px;
+    padding: 8px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: .78rem;
+  }
+  .log div { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  @media (max-width: 760px) {
+    body { align-items: flex-start; }
+    .app { grid-template-columns: 1fr; }
+    aside { order: -1; }
+    #board { --cell: 58px; }
+  }
+</style>
+</head>
+<body>
+  <main class="app">
+    <section class="board-wrap card" aria-label="Game board">
+      <div id="board"></div>
+    </section>
+
+    <aside class="card">
+      <h1>Expanding Tic-Tac-Toe: Model 2</h1>
+      <div class="status" id="status"></div>
+      <div class="stats">
+        <div class="stat">Board<strong id="boardStat">3×3</strong></div>
+        <div class="stat">Win Length<strong id="winStat">3</strong></div>
+        <div class="stat">X Marks<strong id="xStat">0</strong></div>
+        <div class="stat">O Marks<strong id="oStat">0</strong></div>
+      </div>
+      <button class="primary" id="resetBtn">New Game</button>
+      <button id="swapBtn">Restart: CPU Opens</button>
+      <button class="warn" id="forceBtn">Force Draw Expansion</button>
+      <label><input type="checkbox" id="autoCpu" checked /> CPU moves automatically</label>
+      <button id="cpuBtn">CPU Move Now</button>
+      <div class="notes">
+        New model: start 3×3 / need 3. A draw expands naturally on all four sides by two rings: 3×3 → 7×7 → 11×11. Because each ring adds 1 to the win requirement, each double-ring expansion raises the win length by 2: 3 → 5 → 7.
+      </div>
+      <div class="log" id="log"></div>
+    </aside>
+  </main>
+
+<script>
+(() => {
+  const EMPTY = "";
+  const X = "X";
+  const O = "O";
+  const boardEl = document.getElementById("board");
+  const statusEl = document.getElementById("status");
+  const boardStatEl = document.getElementById("boardStat");
+  const winStatEl = document.getElementById("winStat");
+  const xStatEl = document.getElementById("xStat");
+  const oStatEl = document.getElementById("oStat");
+  const logEl = document.getElementById("log");
+  const autoCpuEl = document.getElementById("autoCpu");
+
+  let board = [];
+  let size = 3;
+  let winN = 3;
+  let current = X;
+  let human = X;
+  let cpu = O;
+  let gameOver = false;
+  let thinking = false;
+  let highlighted = new Set();
+  let expansions = 0;
+  let oldBounds = null;
+
+  const dirs = [
+    [1, 0], [0, 1], [1, 1], [1, -1]
+  ];
+
+  function newBoard(n) {
+    return Array.from({ length: n }, () => Array(n).fill(EMPTY));
+  }
+
+  function startGame(cpuOpens = false) {
+    size = 3;
+    winN = 3;
+    board = newBoard(size);
+    highlighted = new Set();
+    expansions = 0;
+    oldBounds = null;
+    gameOver = false;
+    thinking = false;
+    if (cpuOpens) {
+      human = O;
+      cpu = X;
+      current = X;
+      addLog("CPU opens as X.");
+    } else {
+      human = X;
+      cpu = O;
+      current = X;
+      addLog("Human opens as X.");
+    }
+    render();
+    maybeCpu();
+  }
+
+  function addLog(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    logEl.prepend(div);
+    while (logEl.children.length > 20) logEl.lastChild.remove();
+  }
+
+  function countMarks() {
+    let x = 0, o = 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (board[r][c] === X) x++;
+        if (board[r][c] === O) o++;
+      }
+    }
+    return { x, o };
+  }
+
+  function inBounds(r, c) {
+    return r >= 0 && c >= 0 && r < size && c < size;
+  }
+
+  function render() {
+    boardEl.style.setProperty("--size", size);
+    boardEl.style.setProperty("--cell", cellSizeForBoard() + "px");
+    boardEl.innerHTML = "";
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const cell = document.createElement("button");
+        cell.className = "cell";
+        cell.type = "button";
+        const val = board[r][c];
+        cell.textContent = val;
+        if (val === X) cell.classList.add("x", "disabled");
+        if (val === O) cell.classList.add("o", "disabled");
+        if (highlighted.has(key(r, c))) cell.classList.add("win");
+        if (oldBounds && r >= oldBounds.minR && r <= oldBounds.maxR && c >= oldBounds.minC && c <= oldBounds.maxC) {
+          cell.classList.add("old-ring");
+        }
+        cell.setAttribute("aria-label", `row ${r + 1}, column ${c + 1}${val ? ", " + val : ""}`);
+        cell.addEventListener("click", () => humanMove(r, c));
+        boardEl.appendChild(cell);
+      }
+    }
+
+    const marks = countMarks();
+    boardStatEl.textContent = `${size}×${size}`;
+    winStatEl.textContent = String(winN);
+    xStatEl.textContent = String(marks.x);
+    oStatEl.textContent = String(marks.o);
+    statusEl.textContent = statusText();
+  }
+
+  function cellSizeForBoard() {
+    if (size <= 3) return 76;
+    if (size <= 7) return 54;
+    if (size <= 11) return 42;
+    if (size <= 15) return 34;
+    return 28;
+  }
+
+  function statusText() {
+    if (gameOver) {
+      const winner = highlighted.size ? (current === X ? O : X) : "";
+      if (winner) return `${winner} wins with ${winN} in a row.`;
+      return "Game over.";
+    }
+    if (thinking) return "CPU is thinking...";
+    const side = current === human ? "Your turn" : "CPU turn";
+    return `${side}. Need ${winN} in a row.`;
+  }
+
+  function humanMove(r, c) {
+    if (gameOver || thinking || current !== human) return;
+    if (!inBounds(r, c) || board[r][c] !== EMPTY) return;
+    placeMove(r, c, human);
+  }
+
+  function placeMove(r, c, mark) {
+    board[r][c] = mark;
+    highlighted = new Set();
+    const winCells = checkWin(r, c, mark);
+    if (winCells) {
+      highlighted = new Set(winCells.map(([rr, cc]) => key(rr, cc)));
+      gameOver = true;
+      current = other(mark);
+      addLog(`${mark} wins on ${size}×${size}.`);
+      render();
+      return;
+    }
+    if (isFull()) {
+      addLog(`Draw on ${size}×${size}. Expanding by two rings; win length +2.`);
+      expandBoard();
+      current = nextByMarkCount();
+      render();
+      maybeCpu();
+      return;
+    }
+    current = other(mark);
+    render();
+    maybeCpu();
+  }
+
+  function other(mark) { return mark === X ? O : X; }
+  function key(r, c) { return `${r},${c}`; }
+
+  function checkWin(r, c, mark) {
+    for (const [dr, dc] of dirs) {
+      const cells = [[r, c]];
+      let rr = r + dr, cc = c + dc;
+      while (inBounds(rr, cc) && board[rr][cc] === mark) {
+        cells.push([rr, cc]); rr += dr; cc += dc;
+      }
+      rr = r - dr; cc = c - dc;
+      while (inBounds(rr, cc) && board[rr][cc] === mark) {
+        cells.unshift([rr, cc]); rr -= dr; cc -= dc;
+      }
+      if (cells.length >= winN) return cells;
+    }
+    return null;
+  }
+
+  function isFull() {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) if (board[r][c] === EMPTY) return false;
+    }
+    return true;
+  }
+
+  function expandBoard() {
+    const pad = 2;
+    const oldSize = size;
+    const newSize = size + pad * 2;
+    const next = newBoard(newSize);
+    for (let r = 0; r < oldSize; r++) {
+      for (let c = 0; c < oldSize; c++) {
+        next[r + pad][c + pad] = board[r][c];
+      }
+    }
+    board = next;
+    size = newSize;
+    winN += pad;
+    expansions += 1;
+    oldBounds = { minR: pad, minC: pad, maxR: pad + oldSize - 1, maxC: pad + oldSize - 1 };
+  }
+
+  function nextByMarkCount() {
+    const marks = countMarks();
+    if (marks.x <= marks.o) return X;
+    return O;
+  }
+
+  function maybeCpu() {
+    if (gameOver || current !== cpu || !autoCpuEl.checked) return;
+    thinking = true;
+    render();
+    window.setTimeout(() => {
+      const move = chooseCpuMove();
+      thinking = false;
+      if (move) placeMove(move.r, move.c, cpu);
+      else render();
+    }, 220);
+  }
+
+  function chooseCpuMove() {
+    if (size === 3) {
+      const mini = bestMiniMaxMove();
+      if (mini) return mini;
+    }
+
+    let move = findImmediateWin(cpu);
+    if (move) return move;
+    move = findImmediateWin(human);
+    if (move) return move;
+
+    const candidates = candidateMoves();
+    let best = null;
+    let bestScore = -Infinity;
+    for (const cand of candidates) {
+      board[cand.r][cand.c] = cpu;
+      const score = scoreMove(cand.r, cand.c, cpu) + centerBias(cand.r, cand.c) + smallRandom();
+      board[cand.r][cand.c] = EMPTY;
+      if (score > bestScore) {
+        bestScore = score;
+        best = cand;
+      }
+    }
+    return best || firstEmpty();
+  }
+
+  function findImmediateWin(mark) {
+    for (const cand of candidateMoves()) {
+      board[cand.r][cand.c] = mark;
+      const wins = checkWin(cand.r, cand.c, mark);
+      board[cand.r][cand.c] = EMPTY;
+      if (wins) return cand;
+    }
+    return null;
+  }
+
+  function candidateMoves() {
+    const seen = new Set();
+    let hasMark = false;
+    const radius = Math.min(2, Math.max(1, winN - 2));
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (board[r][c] !== EMPTY) {
+          hasMark = true;
+          for (let dr = -radius; dr <= radius; dr++) {
+            for (let dc = -radius; dc <= radius; dc++) {
+              const rr = r + dr, cc = c + dc;
+              if (inBounds(rr, cc) && board[rr][cc] === EMPTY) seen.add(key(rr, cc));
+            }
+          }
+        }
+      }
+    }
+    if (!hasMark) return [{ r: Math.floor(size / 2), c: Math.floor(size / 2) }];
+    return Array.from(seen).map(s => {
+      const [r, c] = s.split(",").map(Number);
+      return { r, c };
+    });
+  }
+
+  function scoreMove(r, c, mark) {
+    const foe = other(mark);
+    let total = 0;
+    for (const [dr, dc] of dirs) {
+      for (let offset = -winN + 1; offset <= 0; offset++) {
+        let mine = 0, theirs = 0, empty = 0, valid = true;
+        for (let i = 0; i < winN; i++) {
+          const rr = r + (offset + i) * dr;
+          const cc = c + (offset + i) * dc;
+          if (!inBounds(rr, cc)) { valid = false; break; }
+          if (board[rr][cc] === mark) mine++;
+          else if (board[rr][cc] === foe) theirs++;
+          else empty++;
+        }
+        if (!valid) continue;
+        if (theirs === 0) total += Math.pow(8, mine) + empty;
+        if (mine === 0) total += Math.pow(7, theirs) * 0.86;
+      }
+    }
+    return total;
+  }
+
+  function centerBias(r, c) {
+    const mid = (size - 1) / 2;
+    return Math.max(0, 8 - (Math.abs(r - mid) + Math.abs(c - mid)));
+  }
+
+  function smallRandom() { return Math.random() * 0.15; }
+
+  function firstEmpty() {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) if (board[r][c] === EMPTY) return { r, c };
+    }
+    return null;
+  }
+
+  function bestMiniMaxMove() {
+    let best = null;
+    let bestScore = -Infinity;
+    for (const move of candidateMoves()) {
+      board[move.r][move.c] = cpu;
+      const score = minimax(false, -Infinity, Infinity, 0);
+      board[move.r][move.c] = EMPTY;
+      if (score > bestScore) {
+        bestScore = score;
+        best = move;
+      }
+    }
+    return best;
+  }
+
+  function minimax(isCpuTurn, alpha, beta, depth) {
+    const terminal = terminalScore(depth);
+    if (terminal !== null) return terminal;
+
+    const moves = candidateMoves();
+    if (isCpuTurn) {
+      let best = -Infinity;
+      for (const move of moves) {
+        board[move.r][move.c] = cpu;
+        best = Math.max(best, minimax(false, alpha, beta, depth + 1));
+        board[move.r][move.c] = EMPTY;
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (const move of moves) {
+        board[move.r][move.c] = human;
+        best = Math.min(best, minimax(true, alpha, beta, depth + 1));
+        board[move.r][move.c] = EMPTY;
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    }
+  }
+
+  function terminalScore(depth) {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const mark = board[r][c];
+        if (!mark) continue;
+        if (checkWin(r, c, mark)) {
+          if (mark === cpu) return 100 - depth;
+          return depth - 100;
+        }
+      }
+    }
+    if (isFull()) return 0;
+    return null;
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => startGame(false));
+  document.getElementById("swapBtn").addEventListener("click", () => startGame(true));
+  document.getElementById("forceBtn").addEventListener("click", () => {
+    if (gameOver) return;
+    addLog(`Manual test expansion from ${size}×${size}: +2 rings, +2 win length.`);
+    expandBoard();
+    current = nextByMarkCount();
+    render();
+    maybeCpu();
+  });
+  document.getElementById("cpuBtn").addEventListener("click", () => {
+    if (!gameOver && current === cpu && !thinking) {
+      const move = chooseCpuMove();
+      if (move) placeMove(move.r, move.c, cpu);
+    }
+  });
+  autoCpuEl.addEventListener("change", maybeCpu);
+
+  startGame(false);
+})();
+</script>
+</body>
+</html>
