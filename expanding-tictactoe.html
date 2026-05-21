@@ -18,9 +18,11 @@
     --danger: #ff8b8b;
   }
   * { box-sizing: border-box; }
+  html { min-height: 100%; }
   body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     background: radial-gradient(circle at top, #20283a 0, var(--bg) 48rem);
     color: var(--text);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -28,6 +30,7 @@
     align-items: center;
     justify-content: center;
     padding: 14px;
+    overscroll-behavior: contain;
   }
   .app {
     width: min(96vw, 980px);
@@ -42,15 +45,23 @@
     border-radius: 18px;
     box-shadow: 0 18px 50px rgba(0,0,0,.35);
   }
-  .board-wrap { padding: 12px; overflow: auto; }
+  .board-wrap {
+    padding: 12px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
   #board {
     --cell: 76px;
+    --gap: 5px;
     display: grid;
     grid-template-columns: repeat(var(--size), var(--cell));
     grid-template-rows: repeat(var(--size), var(--cell));
-    gap: 5px;
+    gap: var(--gap);
     justify-content: center;
+    width: max-content;
     min-width: max-content;
+    margin: 0 auto;
   }
   .cell {
     width: var(--cell);
@@ -67,6 +78,9 @@
     justify-content: center;
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     transition: transform .08s ease, border-color .12s ease, background .12s ease;
   }
   .cell:hover { transform: translateY(-1px); border-color: #68748f; }
@@ -90,7 +104,6 @@
     color: var(--text);
     margin: 10px 0;
   }
-
   .rule-alert {
     margin: 10px 0;
     padding: 12px 10px;
@@ -107,10 +120,17 @@
     font-size: 1.02rem;
     margin-bottom: 3px;
   }
-  .rule-flow {
-    margin-top: 6px;
+  .rule-flow { margin-top: 6px; color: var(--muted); font-size: .84rem; }
+  details.mobile-info {
+    margin-top: 10px;
+  }
+  details.mobile-info summary {
     color: var(--muted);
-    font-size: .84rem;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.055);
+    user-select: none;
   }
   .stats {
     display: grid;
@@ -126,6 +146,11 @@
     font-size: .83rem;
   }
   .stat strong { display: block; color: var(--text); font-size: 1rem; margin-top: 2px; }
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
   button {
     width: 100%;
     border: 0;
@@ -135,7 +160,9 @@
     padding: 10px 11px;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 8px;
+    margin: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   button:hover { filter: brightness(1.08); }
   button.primary { background: #2e5b8f; }
@@ -149,12 +176,7 @@
     margin-top: 10px;
   }
   input[type="checkbox"] { transform: scale(1.15); }
-  .notes {
-    color: var(--muted);
-    font-size: .84rem;
-    line-height: 1.35;
-    margin-top: 12px;
-  }
+  .notes { color: var(--muted); font-size: .84rem; line-height: 1.35; margin-top: 12px; }
   .log {
     max-height: 156px;
     overflow: auto;
@@ -166,43 +188,126 @@
     font-size: .78rem;
   }
   .log div { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+
   @media (max-width: 760px) {
-    body { align-items: flex-start; }
-    .app { grid-template-columns: 1fr; }
-    aside { order: -1; }
-    #board { --cell: 58px; }
+    body {
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 8px;
+      overflow-x: hidden;
+    }
+    .app {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    aside {
+      order: -1;
+      width: 100%;
+      padding: 9px;
+      position: sticky;
+      top: 6px;
+      z-index: 5;
+      border-radius: 14px;
+    }
+    h1 { font-size: .98rem; margin-bottom: 5px; }
+    .status {
+      min-height: 0;
+      padding: 8px;
+      margin: 6px 0;
+      font-size: .9rem;
+      border-radius: 12px;
+    }
+    .stats {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin: 6px 0;
+    }
+    .stat {
+      padding: 6px 5px;
+      font-size: .68rem;
+      text-align: center;
+      border-radius: 10px;
+    }
+    .stat strong { font-size: .86rem; }
+    .actions {
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    button {
+      min-height: 42px;
+      padding: 8px 8px;
+      font-size: .82rem;
+      border-radius: 10px;
+    }
+    label { margin-top: 7px; font-size: .78rem; }
+    .rule-alert {
+      margin: 8px 0;
+      padding: 9px;
+      font-size: .8rem;
+      border-radius: 12px;
+    }
+    .rule-alert strong { font-size: .88rem; }
+    .rule-flow { font-size: .76rem; }
+    .notes { font-size: .78rem; }
+    .log { max-height: 95px; font-size: .72rem; }
+    .board-wrap {
+      width: 100%;
+      padding: 8px;
+      border-radius: 14px;
+      max-height: calc(100dvh - 205px);
+    }
+    #board { --gap: 4px; }
+    .cell {
+      border-radius: 9px;
+      font-size: calc(var(--cell) * .58);
+    }
+  }
+
+  @media (max-width: 390px) {
+    .stats { gap: 4px; }
+    .stat { font-size: .63rem; padding: 5px 3px; }
+    .stat strong { font-size: .8rem; }
+    button { font-size: .77rem; padding-left: 5px; padding-right: 5px; }
+    .board-wrap { max-height: calc(100dvh - 198px); }
   }
 </style>
 </head>
 <body>
   <main class="app">
-    <section class="board-wrap card" aria-label="Game board">
+    <section class="board-wrap card" id="boardWrap" aria-label="Game board">
       <div id="board"></div>
     </section>
 
     <aside class="card">
       <h1>Expanding Tic-Tac-Toe: Model 2</h1>
       <div class="status" id="status"></div>
-      <div class="rule-alert">
-        <strong>Important rule change after a draw:</strong>
-        The first board is 3-across. After a draw expands the board to 7×7, you need <b>5 in a row</b> — not 3.
-        <div class="rule-flow">3×3 needs 3 → draw → 7×7 needs 5 → draw → 11×11 needs 7</div>
-      </div>
       <div class="stats">
         <div class="stat">Board<strong id="boardStat">3×3</strong></div>
-        <div class="stat">Win Length<strong id="winStat">3</strong></div>
-        <div class="stat">X Marks<strong id="xStat">0</strong></div>
-        <div class="stat">O Marks<strong id="oStat">0</strong></div>
+        <div class="stat">Win<strong id="winStat">3</strong></div>
+        <div class="stat">X<strong id="xStat">0</strong></div>
+        <div class="stat">O<strong id="oStat">0</strong></div>
       </div>
-      <button class="primary" id="resetBtn">New Game</button>
-      <button id="swapBtn">Restart: CPU Opens</button>
-      <button class="warn" id="forceBtn">Force Draw Expansion</button>
+      <div class="actions">
+        <button class="primary" id="resetBtn">New Game</button>
+        <button id="swapBtn">CPU Opens</button>
+        <button class="warn" id="forceBtn">Force Expand</button>
+        <button id="cpuBtn">CPU Move</button>
+      </div>
       <label><input type="checkbox" id="autoCpu" checked /> CPU moves automatically</label>
-      <button id="cpuBtn">CPU Move Now</button>
-      <div class="notes">
-        Model 2 rule: the original marks stay live. A draw expands naturally on all four sides by two rings, and the win requirement rises with the expansion. Watch the Win Length box before assuming a 3-line still wins.
-      </div>
-      <div class="log" id="log"></div>
+      <details class="mobile-info" id="infoDetails" open>
+        <summary>Rules / log</summary>
+        <div class="rule-alert">
+          <strong>Important rule change after a draw:</strong>
+          The first board is 3-across. After a draw expands the board to 7×7, you need <b>5 in a row</b> — not 3.
+          <div class="rule-flow">3×3 needs 3 → draw → 7×7 needs 5 → draw → 11×11 needs 7</div>
+        </div>
+        <div class="notes">
+          Original marks stay live. A draw expands naturally on all four sides by two rings. On phone, drag the board area to pan after expansion.
+        </div>
+        <div class="log" id="log"></div>
+      </details>
     </aside>
   </main>
 
@@ -212,6 +317,7 @@
   const X = "X";
   const O = "O";
   const boardEl = document.getElementById("board");
+  const boardWrapEl = document.getElementById("boardWrap");
   const statusEl = document.getElementById("status");
   const boardStatEl = document.getElementById("boardStat");
   const winStatEl = document.getElementById("winStat");
@@ -219,6 +325,7 @@
   const oStatEl = document.getElementById("oStat");
   const logEl = document.getElementById("log");
   const autoCpuEl = document.getElementById("autoCpu");
+  const infoDetailsEl = document.getElementById("infoDetails");
 
   let board = [];
   let size = 3;
@@ -231,10 +338,13 @@
   let highlighted = new Set();
   let expansions = 0;
   let oldBounds = null;
+  let centerOnNextRender = true;
 
-  const dirs = [
-    [1, 0], [0, 1], [1, 1], [1, -1]
-  ];
+  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+  const isPhone = () => window.matchMedia("(max-width: 760px)").matches;
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  if (isPhone()) infoDetailsEl.open = false;
 
   function newBoard(n) {
     return Array.from({ length: n }, () => Array(n).fill(EMPTY));
@@ -249,6 +359,7 @@
     oldBounds = null;
     gameOver = false;
     thinking = false;
+    centerOnNextRender = true;
     if (cpuOpens) {
       human = O;
       cpu = X;
@@ -316,14 +427,37 @@
     xStatEl.textContent = String(marks.x);
     oStatEl.textContent = String(marks.o);
     statusEl.textContent = statusText();
+
+    if (centerOnNextRender) {
+      requestAnimationFrame(centerBoard);
+      centerOnNextRender = false;
+    }
   }
 
   function cellSizeForBoard() {
+    const wrapWidth = boardWrapEl ? boardWrapEl.clientWidth : window.innerWidth;
+    const gap = isPhone() ? 4 : 5;
+    const available = Math.max(260, wrapWidth - 18);
+    const fitted = Math.floor((available - gap * (size - 1)) / size);
+
+    if (isPhone()) {
+      if (size <= 3) return clamp(fitted, 58, 76);
+      if (size <= 7) return clamp(fitted, 42, 58);
+      if (size <= 11) return clamp(fitted, 30, 42);
+      return clamp(fitted, 26, 34);
+    }
+
     if (size <= 3) return 76;
     if (size <= 7) return 54;
     if (size <= 11) return 42;
     if (size <= 15) return 34;
     return 28;
+  }
+
+  function centerBoard() {
+    if (!boardWrapEl) return;
+    boardWrapEl.scrollLeft = Math.max(0, (boardWrapEl.scrollWidth - boardWrapEl.clientWidth) / 2);
+    boardWrapEl.scrollTop = Math.max(0, (boardWrapEl.scrollHeight - boardWrapEl.clientHeight) / 2);
   }
 
   function statusText() {
@@ -352,6 +486,7 @@
       gameOver = true;
       current = other(mark);
       addLog(`${mark} wins on ${size}×${size}.`);
+      centerOnNextRender = true;
       render();
       return;
     }
@@ -359,6 +494,7 @@
       addLog(`Draw on ${size}×${size}. Expanding by two rings; win length +2.`);
       expandBoard();
       current = nextByMarkCount();
+      centerOnNextRender = true;
       render();
       maybeCpu();
       return;
@@ -590,6 +726,7 @@
     addLog(`Manual test expansion from ${size}×${size}: +2 rings, +2 win length.`);
     expandBoard();
     current = nextByMarkCount();
+    centerOnNextRender = true;
     render();
     maybeCpu();
   });
@@ -600,6 +737,10 @@
     }
   });
   autoCpuEl.addEventListener("change", maybeCpu);
+  window.addEventListener("resize", () => {
+    centerOnNextRender = true;
+    render();
+  });
 
   startGame(false);
 })();
