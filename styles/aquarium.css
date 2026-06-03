@@ -43,8 +43,8 @@
   --ripple-display:block;
   --ripple-opacity:.14;
 
-  --bg-mobile-image:url("./aquarium-bg.png");
-  --bg-desktop-image:url("./BG2.png");
+  --bg-mobile-image:url("../aquarium-bg.png");
+  --bg-desktop-image:url("../BG2.png");
 }
 
 *{box-sizing:border-box}

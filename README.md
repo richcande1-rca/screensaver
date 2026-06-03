@@ -46,12 +46,33 @@ node --check /tmp/index-script.js
 python3 -m http.server 8123 --bind 127.0.0.1
 ```
 
-In another terminal, verify the page responds:
+In another terminal, verify the page and stylesheet respond:
 
 ```bash
 python3 - <<'PY'
 import urllib.request
-with urllib.request.urlopen('http://127.0.0.1:8123/index.html', timeout=5) as response:
-    print(response.status, response.headers.get('content-type'))
+for url in [
+    'http://127.0.0.1:8123/index.html',
+    'http://127.0.0.1:8123/styles/aquarium.css',
+]:
+    with urllib.request.urlopen(url, timeout=5) as response:
+        print(url, response.status, response.headers.get('content-type'))
+PY
+```
+
+Check that local HTML and CSS asset references exist:
+
+```bash
+python3 - <<'PY'
+import re
+from pathlib import Path
+for source in [Path('index.html'), Path('styles/aquarium.css')]:
+    text = source.read_text()
+    refs = re.findall(r'(?:src|href)="(\.\.?/[^"#?]+)"', text)
+    refs += re.findall(r'url\(["\']?(\.\.?/[^"\')#?]+)', text)
+    missing = [ref for ref in refs if not (source.parent / ref).resolve().exists()]
+    print(source, 'missing relative refs:', missing)
+    if missing:
+        raise SystemExit(1)
 PY
 ```
