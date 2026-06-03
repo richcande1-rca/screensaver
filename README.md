@@ -16,14 +16,16 @@ You can also open `index.html` directly from disk, but serving it locally is clo
 
 ## Project layout
 
-- `index.html` — the application entrypoint, including markup, styles, controls, animation, audio, and radio logic.
+- `index.html` — the application markup and static scene structure.
+- `styles.css` — aquarium layout, responsive rules, lighting, plant, fish, bubble, control, fullscreen, and radio presentation.
+- `app.js` — controls, animation, audio, fullscreen, background selection, and radio behavior.
 - `*.png` — aquarium backgrounds, fish sprites, plant sprites, and decorative props.
 - `index.webm` — recorded/demo media asset kept with the prototype.
 
 ## Current maintenance notes
 
-- The app is intentionally static and self-contained right now.
-- Most logic still lives in `index.html`; future cleanup should split CSS and JavaScript into dedicated files after preserving visual parity.
+- The app is intentionally static and has no package/build tooling right now.
+- Markup, styles, and behavior now live in separate files to make future visual or interaction changes easier to review.
 - Image assets are large because they prioritize prototype fidelity. Asset compression/responsive variants should be handled in a dedicated optimization pass.
 
 ## Smoke checks
@@ -31,14 +33,7 @@ You can also open `index.html` directly from disk, but serving it locally is clo
 After changing the app, run these quick checks from the repo root:
 
 ```bash
-python3 - <<'PY'
-from pathlib import Path
-s = Path('index.html').read_text()
-start = s.index('<script>') + len('<script>')
-end = s.index('</script>', start)
-Path('/tmp/index-script.js').write_text(s[start:end])
-PY
-node --check /tmp/index-script.js
+node --check app.js
 ```
 
 ```bash
