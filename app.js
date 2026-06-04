@@ -358,6 +358,10 @@
     { src: './tetra2.png', facing: -1 }
   ];
   const NOMINAL_FRAME_MS = 1000 / 60;
+  const BUBBLE_AVOIDANCE_COLUMNS = [
+    { x: 0.034, y1: 0.02, y2: 0.96, radius: 0.060, push: 0.000032 },
+    { x: 0.535, y1: 0.32, y2: 0.77, radius: 0.072, push: 0.000040 }
+  ];
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1170,7 +1174,8 @@
       size,
       drift: Math.random() * 100,
       a: 0.08 + Math.random() * 0.18,
-      perfRank: Math.random()
+      perfRank: Math.random(),
+      hidden: false
     });
   }
 
@@ -1191,7 +1196,8 @@
       vy: 0.00045 + Math.random() * 0.00035,
       size,
       wobble: Math.random() * 100,
-      intensityRank: Math.random()
+      intensityRank: Math.random(),
+      active: true
     });
   }
 
@@ -1212,7 +1218,8 @@
       vy: 0.00028 + Math.random() * 0.00014,
       size,
       wobble: Math.random() * 100,
-      intensityRank: Math.random()
+      intensityRank: Math.random(),
+      active: true
     });
   }
 
@@ -1480,6 +1487,9 @@
     const dtSec = dt / 1000;
     const frameScale = Math.max(0.5, dt / NOMINAL_FRAME_MS);
     const t = now * 0.001;
+    const tankWidth = tankRect.width;
+    const tankHeight = tankRect.height;
+    const tankAspect = tankHeight / Math.max(1, tankWidth);
     frameTick += 1;
 
     if (currentMode === 'cycle') applyCyclePalette(now);
@@ -1493,9 +1503,13 @@
       const particleDt = dt;
       for (const p of particles) {
         if (perfLite && !isMobile && p.perfRank > 0.62) {
-          p.el.style.opacity = '0';
+          if (!p.hidden) {
+            p.el.style.opacity = '0';
+            p.hidden = true;
+          }
           continue;
         }
+        p.hidden = false;
         p.drift += particleDt * 0.0007;
         p.x += p.vx * particleDt + Math.sin(p.drift * 0.5) * 0.00002;
         p.y += p.vy * particleDt;
@@ -1508,7 +1522,7 @@
         if (p.x > 1.03) p.x = -0.03;
 
         p.el.style.opacity = p.a + 0.03 * Math.sin(t + p.drift);
-        p.el.style.transform = `translate3d(${p.x * tankRect.width}px, ${p.y * tankRect.height}px, 0)`;
+        p.el.style.transform = `translate3d(${p.x * tankWidth}px, ${p.y * tankHeight}px, 0)`;
       }
     }
 
@@ -1518,11 +1532,15 @@
         const isActive = b.intensityRank <= bubbleIntensityScale;
 
         if (!isActive) {
-          b.y = 1.05 + Math.random() * 0.15;
-          b.x = 0.015 + Math.random() * 0.03;
-          b.el.style.opacity = '0';
+          if (b.active) {
+            b.active = false;
+            b.y = 1.05 + Math.random() * 0.15;
+            b.x = 0.015 + Math.random() * 0.03;
+            b.el.style.opacity = '0';
+          }
           continue;
         }
+        b.active = true;
 
         b.wobble += bubbleDt * 0.0016;
         b.y -= b.vy * bubbleDt;
@@ -1534,7 +1552,7 @@
         }
 
         const scale = 0.96 + 0.06 * Math.sin(b.wobble * 1.4);
-        b.el.style.transform = `translate3d(${b.x * tankRect.width}px, ${b.y * tankRect.height}px, 0) scale(${scale})`;
+        b.el.style.transform = `translate3d(${b.x * tankWidth}px, ${b.y * tankHeight}px, 0) scale(${scale})`;
         b.el.style.opacity = (0.48 + ((1 - b.y) * 0.28)).toFixed(3);
       }
 
@@ -1542,11 +1560,15 @@
         const isActive = b.intensityRank <= bubbleIntensityScale;
 
         if (!isActive) {
-          b.x = 0.535 + (Math.random() - 0.5) * 0.010;
-          b.y = 0.744 + Math.random() * 0.010;
-          b.el.style.opacity = '0';
+          if (b.active) {
+            b.active = false;
+            b.x = 0.535 + (Math.random() - 0.5) * 0.010;
+            b.y = 0.744 + Math.random() * 0.010;
+            b.el.style.opacity = '0';
+          }
           continue;
         }
+        b.active = true;
 
         b.wobble += bubbleDt * 0.0011;
         b.y -= b.vy * bubbleDt;
@@ -1558,7 +1580,7 @@
         }
 
         const scale = 0.95 + 0.08 * Math.sin(b.wobble * 1.5);
-        b.el.style.transform = `translate3d(${b.x * tankRect.width}px, ${b.y * tankRect.height}px, 0) scale(${scale})`;
+        b.el.style.transform = `translate3d(${b.x * tankWidth}px, ${b.y * tankHeight}px, 0) scale(${scale})`;
         b.el.style.opacity = (0.58 + ((1 - b.y) * 0.28)).toFixed(3);
       }
     }
@@ -1591,17 +1613,30 @@
       const bodyTilt = Math.sin(crab.phase * 0.55) * (crab.pause > 0 ? 0.35 : 0.9);
       const bodyScaleY = 1 + Math.sin(crab.phase * 2) * (crab.pause > 0 ? 0.006 : 0.012);
       crab.el.style.transform =
-        `translate3d(${crab.x * tankRect.width}px, ${(crab.baseY + crawlLift) * tankRect.height}px, 0) translate(-50%,-50%) scale(${-crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
+        `translate3d(${crab.x * tankWidth}px, ${(crab.baseY + crawlLift) * tankHeight}px, 0) translate(-50%,-50%) scale(${-crab.dir}, ${bodyScaleY}) rotate(${bodyTilt}deg)`;
     }
 
-    const tetraList = fish.filter(f => f.type === 'tetra');
-    let tetraCenterX = 0.5;
-    let tetraCenterY = 0.78;
+    let tetraCenterX = 0;
+    let tetraCenterY = 0;
+    let tetraCount = 0;
 
-    if (tetraList.length) {
-      tetraCenterX = tetraList.reduce((s, f) => s + f.x, 0) / tetraList.length;
-      tetraCenterY = tetraList.reduce((s, f) => s + f.y, 0) / tetraList.length;
+    for (const f of fish) {
+      if (f.type !== 'tetra') continue;
+      tetraCenterX += f.x;
+      tetraCenterY += f.y;
+      tetraCount += 1;
     }
+
+    if (tetraCount) {
+      tetraCenterX /= tetraCount;
+      tetraCenterY /= tetraCount;
+    } else {
+      tetraCenterX = 0.5;
+      tetraCenterY = 0.78;
+    }
+
+    const motionBoost = perfLite && !isMobile ? 1.42 : 1;
+    const fishSpeedNow = FISH_SPEED * motionBoost * swimSpeedScale;
 
     for (const f of fish) {
       f.stateTimer -= dtSec;
@@ -1655,19 +1690,12 @@
       if (f.state === 'cruise') desiredSpeed = f.cruiseSpeed;
       if (f.state === 'dart') desiredSpeed = f.dartSpeed;
 
-      const motionBoost = perfLite && !isMobile ? 1.42 : 1;
-      const fishSpeedNow = FISH_SPEED * motionBoost * swimSpeedScale;
       let avoidX = repelX;
       let avoidY = repelY;
 
       // Very soft avoidance so fish don't visually pinwheel in bubble streams
       // or overlap another fish and keep making tiny opposite corrections.
-      const bubbleColumns = [
-        { x: 0.034, y1: 0.02, y2: 0.96, radius: 0.060, push: 0.000032 },
-        { x: 0.535, y1: 0.32, y2: 0.77, radius: 0.072, push: 0.000040 }
-      ];
-
-      for (const col of bubbleColumns) {
+      for (const col of BUBBLE_AVOIDANCE_COLUMNS) {
         if (f.y < col.y1 || f.y > col.y2) continue;
         const dxCol = f.x - col.x;
         const adx = Math.abs(dxCol);
@@ -1679,12 +1707,11 @@
         }
       }
 
-      const aspect = tankRect.height / Math.max(1, tankRect.width);
       for (const other of fish) {
         if (other === f) continue;
         const ox = f.x - other.x;
         const oyRaw = f.y - other.y;
-        const oy = oyRaw * aspect;
+        const oy = oyRaw * tankAspect;
         const d2 = ox * ox + oy * oy;
         const minD = (f.type === 'angel' || other.type === 'angel') ? 0.115 : 0.078;
         if (d2 > 0 && d2 < minD * minD) {
@@ -1925,8 +1952,8 @@
         13;
 
       if (f.shadowEl) {
-        const shadowX = f.x * tankRect.width;
-        const shadowYPx = (drawY * tankRect.height) + (shadowOffsetPx * drawScale);
+        const shadowX = f.x * tankWidth;
+        const shadowYPx = (drawY * tankHeight) + (shadowOffsetPx * drawScale);
         f.shadowEl.style.opacity = shadowOpacity.toFixed(3);
         f.shadowEl.style.filter = `blur(${shadowBlur.toFixed(1)}px)`;
         f.shadowEl.style.transform =
@@ -2021,7 +2048,7 @@
       const visualScaleY = drawScale * (1 + turnPulse * 0.010);
 
       f.el.style.transform =
-        `translate3d(${f.x * tankRect.width}px, ${drawY * tankRect.height}px, 0) translate(-50%,-50%) scale(${visualScaleX}, ${visualScaleY}) rotate(${finalRot + turnLeanDeg}deg)`;
+        `translate3d(${f.x * tankWidth}px, ${drawY * tankHeight}px, 0) translate(-50%,-50%) scale(${visualScaleX}, ${visualScaleY}) rotate(${finalRot + turnLeanDeg}deg)`;
     }
 
     scheduleBubbleAudio(now);
