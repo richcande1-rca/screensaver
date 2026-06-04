@@ -17,23 +17,17 @@
   display:none !important;
 }
 
+/* Bottom fish shadows were visually noisy without adding useful depth. */
+.fish-shadow{
+  display:none !important;
+}
+
 .discus-fin-tail{
   filter:
     blur(.03px)
     saturate(1.08)
     brightness(1.045)
     drop-shadow(0 0 4px rgba(160,220,240,.12));
-}
-
-.fish-shadow-discus{
-  background:radial-gradient(
-    ellipse at center,
-    rgba(0,0,0,.52) 0%,
-    rgba(0,0,0,.32) 32%,
-    rgba(48,92,112,.20) 56%,
-    rgba(135,205,225,.11) 74%,
-    rgba(0,0,0,0) 90%
-  );
 }
 
 @media (max-width:800px){
