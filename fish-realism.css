@@ -1,0 +1,86 @@
+/* ----------------------------------------------------
+   Discus 2.5D realism prototype
+   CSS-only so it is easy to inspect, tune, or remove.
+---------------------------------------------------- */
+.discus{
+  --discus-gloss-opacity:.28;
+  --discus-belly-opacity:.18;
+  --discus-eye-opacity:.72;
+}
+
+.discus .fish-sprite{
+  filter:
+    drop-shadow(0 1px 2px rgba(0,0,0,.18))
+    drop-shadow(0 0 7px rgba(140,220,255,.11))
+    saturate(1.04)
+    contrast(1.04);
+}
+
+.discus::before,
+.discus::after{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:4;
+  opacity:1;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
+}
+
+/* Soft top/front gloss makes the sprite read as a rounded body instead of a flat sticker. */
+.discus::before{
+  display:block;
+  background:
+    radial-gradient(circle at 31% 36%, rgba(255,255,255,var(--discus-eye-opacity)) 0 1.4px, rgba(255,255,255,0) 2.8px),
+    radial-gradient(ellipse at 37% 28%, rgba(255,255,255,.30), rgba(255,255,255,.08) 30%, rgba(255,255,255,0) 58%),
+    linear-gradient(112deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 28%, rgba(255,255,255,0) 54%);
+  mix-blend-mode:screen;
+  opacity:var(--discus-gloss-opacity);
+}
+
+/* Low rear shade adds belly/depth without repainting the PNG. */
+.discus::after{
+  background:
+    radial-gradient(ellipse at 66% 70%, rgba(0,0,0,.22), rgba(0,0,0,.09) 36%, rgba(0,0,0,0) 68%),
+    linear-gradient(180deg, rgba(0,0,0,0) 36%, rgba(0,0,0,.17) 100%);
+  mix-blend-mode:multiply;
+  opacity:var(--discus-belly-opacity);
+}
+
+.discus-fin-tail{
+  filter:
+    blur(.035px)
+    saturate(1.06)
+    brightness(1.04)
+    drop-shadow(0 0 3px rgba(160,220,240,.10));
+}
+
+.fish-shadow-discus{
+  background:radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,.48) 0%,
+    rgba(0,0,0,.30) 32%,
+    rgba(48,92,112,.18) 56%,
+    rgba(135,205,225,.11) 74%,
+    rgba(0,0,0,0) 90%
+  );
+}
+
+html.perf-lite .discus::before,
+html.perf-lite .discus::after{
+  opacity:.12;
+}
+
+@media (max-width:800px){
+  .discus{
+    --discus-gloss-opacity:.20;
+    --discus-belly-opacity:.12;
+    --discus-eye-opacity:.55;
+  }
+
+  .discus .fish-sprite{
+    filter:drop-shadow(0 0 5px rgba(120,220,255,.08));
+  }
+}
