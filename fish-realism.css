@@ -3,27 +3,25 @@
    CSS-only so it is easy to inspect, tune, or remove.
 ---------------------------------------------------- */
 .discus{
-  --discus-gloss-opacity:.58;
-  --discus-belly-opacity:.34;
-  --discus-eye-opacity:.95;
-  --discus-rim-opacity:.36;
+  --discus-highlight-opacity:.30;
+  --discus-shade-opacity:.24;
+  --discus-eye-opacity:.86;
 }
 
 .discus .fish-sprite{
   filter:
-    drop-shadow(0 1px 2px rgba(0,0,0,.28))
-    drop-shadow(0 0 10px rgba(145,225,255,.20))
-    saturate(1.10)
-    contrast(1.08)
-    brightness(1.03);
+    drop-shadow(0 1px 2px rgba(0,0,0,.22))
+    drop-shadow(0 0 8px rgba(145,225,255,.14))
+    saturate(1.06)
+    contrast(1.05)
+    brightness(1.015);
 }
 
 .discus::before,
 .discus::after{
   content:"";
   position:absolute;
-  inset:1px;
-  border-radius:50%;
+  inset:7px 9px 8px 9px;
   pointer-events:none;
   z-index:4;
   opacity:1;
@@ -31,69 +29,65 @@
   backface-visibility:hidden;
 }
 
-/* Stronger top/front gloss: visible test pass, not final tuning. */
+/* Directional highlight only. No full circular lens over the body. */
 .discus::before{
   display:block;
+  border-radius:58% 48% 50% 54% / 44% 52% 56% 50%;
   background:
-    radial-gradient(circle at 31% 36%, rgba(255,255,255,var(--discus-eye-opacity)) 0 2.2px, rgba(160,230,255,.48) 2.8px, rgba(255,255,255,0) 5.2px),
-    radial-gradient(ellipse at 35% 25%, rgba(255,255,255,.55), rgba(255,255,255,.22) 28%, rgba(255,255,255,0) 60%),
-    radial-gradient(ellipse at 24% 48%, rgba(170,235,255,.22), rgba(170,235,255,.07) 34%, rgba(170,235,255,0) 62%),
-    linear-gradient(112deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,.10) 34%, rgba(255,255,255,0) 62%);
+    radial-gradient(circle at 30% 37%, rgba(255,255,255,var(--discus-eye-opacity)) 0 1.9px, rgba(160,230,255,.36) 2.5px, rgba(255,255,255,0) 4.6px),
+    linear-gradient(118deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.12) 24%, rgba(255,255,255,0) 48%),
+    radial-gradient(ellipse at 34% 27%, rgba(190,240,255,.24), rgba(190,240,255,.08) 28%, rgba(190,240,255,0) 54%);
   mix-blend-mode:screen;
-  opacity:var(--discus-gloss-opacity);
+  opacity:var(--discus-highlight-opacity);
 }
 
-/* Stronger lower/rear shade to make the body read round instead of flat. */
+/* Edge and belly shade, kept off the center so it does not look like glass. */
 .discus::after{
+  border-radius:52% 44% 48% 56% / 42% 50% 58% 52%;
   background:
-    radial-gradient(ellipse at 74% 68%, rgba(0,0,0,.34), rgba(0,0,0,.16) 34%, rgba(0,0,0,0) 68%),
-    radial-gradient(ellipse at 50% 93%, rgba(0,0,0,.28), rgba(0,0,0,.10) 28%, rgba(0,0,0,0) 58%),
-    linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.28) 100%),
-    linear-gradient(90deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 72%, rgba(0,0,0,.24) 100%);
+    linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,.22) 100%),
+    linear-gradient(90deg, rgba(0,0,0,.14) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 74%, rgba(0,0,0,.20) 100%),
+    radial-gradient(ellipse at 72% 70%, rgba(0,0,0,.24), rgba(0,0,0,.10) 30%, rgba(0,0,0,0) 60%);
   mix-blend-mode:multiply;
-  opacity:var(--discus-belly-opacity);
-  box-shadow:
-    inset 8px 0 14px rgba(255,255,255,var(--discus-rim-opacity)),
-    inset -10px -4px 16px rgba(0,0,0,.30);
+  opacity:var(--discus-shade-opacity);
 }
 
 .discus-fin-tail{
   filter:
     blur(.03px)
-    saturate(1.12)
-    brightness(1.08)
-    drop-shadow(0 0 5px rgba(160,220,240,.18));
+    saturate(1.08)
+    brightness(1.05)
+    drop-shadow(0 0 4px rgba(160,220,240,.14));
 }
 
 .fish-shadow-discus{
   background:radial-gradient(
     ellipse at center,
-    rgba(0,0,0,.58) 0%,
-    rgba(0,0,0,.34) 32%,
-    rgba(48,92,112,.22) 56%,
-    rgba(135,205,225,.12) 74%,
+    rgba(0,0,0,.52) 0%,
+    rgba(0,0,0,.32) 32%,
+    rgba(48,92,112,.20) 56%,
+    rgba(135,205,225,.11) 74%,
     rgba(0,0,0,0) 90%
   );
 }
 
 html.perf-lite .discus::before,
 html.perf-lite .discus::after{
-  opacity:.18;
+  opacity:.14;
 }
 
 @media (max-width:800px){
   .discus{
-    --discus-gloss-opacity:.40;
-    --discus-belly-opacity:.24;
-    --discus-eye-opacity:.82;
-    --discus-rim-opacity:.24;
+    --discus-highlight-opacity:.22;
+    --discus-shade-opacity:.18;
+    --discus-eye-opacity:.74;
   }
 
   .discus .fish-sprite{
     filter:
-      drop-shadow(0 1px 2px rgba(0,0,0,.22))
-      drop-shadow(0 0 7px rgba(120,220,255,.14))
-      saturate(1.06)
-      contrast(1.04);
+      drop-shadow(0 1px 2px rgba(0,0,0,.18))
+      drop-shadow(0 0 6px rgba(120,220,255,.10))
+      saturate(1.04)
+      contrast(1.03);
   }
 }
