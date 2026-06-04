@@ -61,7 +61,7 @@
       id: 'sandy',
       label: 'Sandy',
       mobile: './bg3.png',
-      desktop: './bg3.2.png'
+      desktop: './bg3.png'
     }
   ];
 
