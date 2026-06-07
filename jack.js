@@ -75,29 +75,29 @@
 
   function pickNextState(now) {
     const r = Math.random();
-    const canClaim = (now - lastClaimAt) > 24000;
+    const canClaim = (now - lastClaimAt) > 22000;
 
     if (canClaim && r > 0.965) {
       state = 'claim';
       lastClaimAt = now;
-      stateTimer = rand(1.0, 1.6);
+      stateTimer = rand(0.9, 1.35);
       const pushDir = x < 0.5 ? 1 : -1;
-      targetX = clamp(x + pushDir * rand(0.09, 0.14), bounds.left, bounds.right);
-      targetY = clamp(y + rand(-0.025, 0.025), bounds.top, bounds.bottom);
+      targetX = clamp(x + pushDir * rand(0.11, 0.18), bounds.left, bounds.right);
+      targetY = clamp(y + rand(-0.030, 0.030), bounds.top, bounds.bottom);
       return;
     }
 
-    if (r < 0.38) {
+    if (r < 0.34) {
       state = 'hover';
-      stateTimer = rand(3.8, 8.8);
-      targetX = clamp(x + rand(-0.028, 0.028), bounds.left, bounds.right);
-      targetY = clamp(y + rand(-0.020, 0.020), bounds.top, bounds.bottom);
+      stateTimer = rand(2.8, 6.4);
+      targetX = clamp(x + rand(-0.034, 0.034), bounds.left, bounds.right);
+      targetY = clamp(y + rand(-0.024, 0.024), bounds.top, bounds.bottom);
       return;
     }
 
     state = 'patrol';
-    stateTimer = rand(7.0, 14.5);
-    pickCruiseTarget(r > 0.78);
+    stateTimer = rand(5.2, 10.8);
+    pickCruiseTarget(r > 0.76);
   }
 
   function softlyAvoidDiver(dtSec) {
@@ -107,8 +107,8 @@
 
     if (dist > 0.001 && dist < 0.145) {
       const pressure = (0.145 - dist) / 0.145;
-      vx += (dx / dist) * pressure * 0.010 * dtSec;
-      vy += (dy / dist) * pressure * 0.005 * dtSec;
+      vx += (dx / dist) * pressure * 0.018 * dtSec;
+      vy += (dy / dist) * pressure * 0.008 * dtSec;
     }
   }
 
@@ -119,7 +119,7 @@
     const frameScale = dt / (1000 / 60);
     last = now;
 
-    phase += dtSec * lerp(0.44, 0.92, speed01());
+    phase += dtSec * lerp(0.58, 1.20, speed01());
 
     if (rect.width > 0 && rect.height > 0) {
       stateTimer -= dtSec;
@@ -128,28 +128,28 @@
       const dy = targetY - y;
       const dist = Math.hypot(dx, dy);
 
-      if (stateTimer <= 0 || dist < 0.030) {
+      if (stateTimer <= 0 || dist < 0.045) {
         pickNextState(now);
       }
 
       const ndx = dist > 0.0001 ? dx / dist : 0;
       const ndy = dist > 0.0001 ? dy / dist : 0;
-      const swim = lerp(0.55, 1.15, speed01());
+      const swim = lerp(0.70, 1.35, speed01());
       const targetSpeed =
-        state === 'claim' ? 0.044 * swim :
-        state === 'hover' ? 0.010 * swim :
-        0.026 * swim;
+        state === 'claim' ? 0.145 * swim :
+        state === 'hover' ? 0.030 * swim :
+        0.092 * swim;
       const steer =
-        state === 'claim' ? 0.030 :
-        state === 'hover' ? 0.018 :
-        0.022;
-      const steerT = clamp(steer * frameScale, 0, 0.28);
+        state === 'claim' ? 0.048 :
+        state === 'hover' ? 0.028 :
+        0.038;
+      const steerT = clamp(steer * frameScale, 0, 0.36);
 
       vx = lerp(vx, ndx * targetSpeed, steerT);
       vy = lerp(vy, ndy * targetSpeed, steerT);
       softlyAvoidDiver(dtSec);
 
-      const drag = Math.pow(state === 'hover' ? 0.955 : 0.975, frameScale);
+      const drag = Math.pow(state === 'hover' ? 0.970 : 0.986, frameScale);
       vx *= drag;
       vy *= drag;
 
@@ -171,7 +171,7 @@
       const turnPulse = Math.sin(Math.PI * turnP);
       const depth = clamp((y - bounds.top) / (bounds.bottom - bounds.top), 0, 1);
       const bob = Math.sin(phase * 1.35) * (state === 'hover' ? 0.0032 : 0.0048);
-      const glideTilt = Math.sin(phase * 0.72) * 0.55 + clamp(vy * 150, -1.15, 1.15);
+      const glideTilt = Math.sin(phase * 0.72) * 0.55 + clamp(vy * 90, -1.15, 1.15);
       const claimLean = state === 'claim' ? facingDir * 0.75 : 0;
       const baseScale = mobile ? 1.04 : 1.16;
       const scale = baseScale * lerp(0.91, 1.08, depth);
