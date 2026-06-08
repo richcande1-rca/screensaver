@@ -1,0 +1,66 @@
+/* ----------------------------------------------------
+   Jack Dempsey tail articulation
+   CSS-only first pass: keep Jack in the shared app.js fish
+   engine, but split his tail visually from jack1.png.
+---------------------------------------------------- */
+
+.jack{
+  --jack-tail-speed: 1480ms;
+  --jack-tail-x-a: .18%;
+  --jack-tail-x-b: -.18%;
+  --jack-tail-scale-a: .972;
+  --jack-tail-scale-b: 1.028;
+  --jack-tail-skew-a: -.72deg;
+  --jack-tail-skew-b: .72deg;
+  --jack-tail-rot-a: -.42deg;
+  --jack-tail-rot-b: .42deg;
+}
+
+.jack .fish-sprite{
+  clip-path: polygon(0% 0%, 76% 0%, 76% 100%, 0% 100%);
+}
+
+.jack::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  background:url('./jack1.png') center center / contain no-repeat;
+  clip-path:polygon(58% 10%, 100% 8%, 100% 92%, 58% 90%);
+  transform-origin:63% 50%;
+  opacity:.98;
+  filter:blur(.03px) saturate(1.02) brightness(1.02);
+  will-change:transform;
+  backface-visibility:hidden;
+  animation:jackTailWag var(--jack-tail-speed) cubic-bezier(.45,.05,.55,.95) infinite;
+}
+
+@keyframes jackTailWag{
+  0%{
+    transform:translate3d(var(--jack-tail-x-a),0,0) scaleX(var(--jack-tail-scale-a)) skewY(var(--jack-tail-skew-a)) rotate(var(--jack-tail-rot-a));
+  }
+  50%{
+    transform:translate3d(var(--jack-tail-x-b),0,0) scaleX(var(--jack-tail-scale-b)) skewY(var(--jack-tail-skew-b)) rotate(var(--jack-tail-rot-b));
+  }
+  100%{
+    transform:translate3d(var(--jack-tail-x-a),0,0) scaleX(var(--jack-tail-scale-a)) skewY(var(--jack-tail-skew-a)) rotate(var(--jack-tail-rot-a));
+  }
+}
+
+html.perf-lite .jack::after{
+  filter:none;
+  opacity:.94;
+}
+
+@media (max-width: 800px){
+  .jack{
+    --jack-tail-speed: 1560ms;
+    --jack-tail-x-a: .14%;
+    --jack-tail-x-b: -.14%;
+    --jack-tail-rot-a: -.34deg;
+    --jack-tail-rot-b: .34deg;
+  }
+}
