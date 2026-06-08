@@ -346,6 +346,8 @@
 
   const FISH_SPEED = isMobile ? 3.6 : 4.05;
   const FISH_SIZE_MULTIPLIER = 2;
+  const FULLSCREEN_FISH_BASE_WIDTH = 680;
+  const FULLSCREEN_FISH_BASE_HEIGHT = 880;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 40 : 72;
   const DIVER_BUBBLE_COUNT = isMobile ? 24 : 40;
@@ -382,6 +384,23 @@
     if (perfLite === next) return;
     perfLite = next;
     rootEl.classList.toggle('perf-lite', perfLite);
+  }
+
+
+  function getFishViewportScale(tankWidth, tankHeight) {
+    if (!getFullscreenElement()) return 1;
+
+    // The tank expands from a portrait-ish desktop frame to the whole screen in
+    // fullscreen. Sprite dimensions are pixel-based, so without this boost the
+    // fish keep their old pixel size and read smaller inside the larger tank.
+    // Weight height more than width so ultrawide fullscreen does not make the
+    // fish comically large, while still giving them enough presence on desktop.
+    const heightScale = tankHeight / FULLSCREEN_FISH_BASE_HEIGHT;
+    const widthScale = tankWidth / FULLSCREEN_FISH_BASE_WIDTH;
+    const blendedScale = heightScale * 0.78 + widthScale * 0.22;
+    const maxScale = isMobile ? 1.24 : 1.55;
+
+    return clamp(blendedScale, 1, maxScale);
   }
 
   if (typeof ResizeObserver !== 'undefined') {
@@ -1551,6 +1570,7 @@
     const tankWidth = tankRect.width;
     const tankHeight = tankRect.height;
     const tankAspect = tankHeight / Math.max(1, tankWidth);
+    const fishViewportScale = getFishViewportScale(tankWidth, tankHeight);
     frameTick += 1;
 
     if (currentMode === 'cycle') applyCyclePalette(now);
@@ -1957,7 +1977,7 @@
       const zOpacity = lerp(opacityFloor, 1.020, f.visualZ);
       const zSat = lerp(0.56, 1.14, f.visualZ);
       const zBright = lerp(0.67, 1.090, f.visualZ);
-      const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale;
+      const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale * fishViewportScale;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
       // compress, linger through the hidden midpoint, then expand.
