@@ -152,3 +152,124 @@ html.perf-lite .angel::after{
     --small-angel-tail-rot-b: .18deg;
   }
 }
+
+/* ----------------------------------------------------
+   TV-visible tail tuning
+   Keep the existing split-tail system, but make a few more
+   fish read as alive from couch distance. No app.js changes.
+---------------------------------------------------- */
+
+/* Tetras: quick little flicks. Still subtle, but no longer invisible. */
+.tetra:has(.fish-sprite[src$="tetra1.png"]),
+.tetra:has(.fish-sprite[src$="tetra2.png"]){
+  --tetra-tail-speed: 780ms;
+  --tetra-tail-x-a: .34%;
+  --tetra-tail-x-b: -.34%;
+  --tetra-tail-scale-a: .935;
+  --tetra-tail-scale-b: 1.065;
+  --tetra-tail-skew-a: -2.2deg;
+  --tetra-tail-skew-b: 2.2deg;
+  --tetra-tail-rot-a: -1.18deg;
+  --tetra-tail-rot-b: 1.18deg;
+}
+
+/* Main angel: slow, elegant wag on the JS-created tail span. */
+.angel-tail-replacement{
+  --tail-speed: 1320ms;
+  --tail-x-a: .38%;
+  --tail-x-b: -.38%;
+  --tail-scale-a: .948;
+  --tail-scale-b: 1.052;
+  --tail-skew-a: -1.36deg;
+  --tail-skew-b: 1.36deg;
+  --tail-rot-a: -.62deg;
+  --tail-rot-b: .62deg;
+}
+
+/* Smaller angels: a touch more motion, but still calmer than tetras. */
+.angel:has(.fish-sprite[src$="angel2.png"]),
+.angel:has(.fish-sprite[src$="angel3.png"]){
+  --small-angel-tail-speed: 1500ms;
+  --small-angel-tail-x-a: .24%;
+  --small-angel-tail-x-b: -.24%;
+  --small-angel-tail-scale-a: .964;
+  --small-angel-tail-scale-b: 1.036;
+  --small-angel-tail-skew-a: -.92deg;
+  --small-angel-tail-skew-b: .92deg;
+  --small-angel-tail-rot-a: -.48deg;
+  --small-angel-tail-rot-b: .48deg;
+}
+
+/* Barbs: more obvious wag because they sit lower and move faster. */
+.barb{
+  --tail-speed: 880ms;
+  --tail-x-a: .48%;
+  --tail-x-b: -.48%;
+  --tail-scale-a: .920;
+  --tail-scale-b: 1.080;
+  --tail-skew-a: -2.25deg;
+  --tail-skew-b: 2.25deg;
+  --tail-rot-a: -1.05deg;
+  --tail-rot-b: 1.05deg;
+}
+
+/* Jack: heavier fish, slower tail sweep. */
+.jack{
+  --jack-tail-speed: 1180ms;
+  --jack-tail-x-a: .36%;
+  --jack-tail-x-b: -.36%;
+  --jack-tail-scale-a: .944;
+  --jack-tail-scale-b: 1.056;
+  --jack-tail-skew-a: -1.36deg;
+  --jack-tail-skew-b: 1.36deg;
+  --jack-tail-rot-a: -.74deg;
+  --jack-tail-rot-b: .74deg;
+}
+
+@media (max-width: 800px){
+  .tetra:has(.fish-sprite[src$="tetra1.png"]),
+  .tetra:has(.fish-sprite[src$="tetra2.png"]){
+    --tetra-tail-speed: 880ms;
+    --tetra-tail-x-a: .24%;
+    --tetra-tail-x-b: -.24%;
+    --tetra-tail-scale-a: .950;
+    --tetra-tail-scale-b: 1.050;
+    --tetra-tail-skew-a: -1.6deg;
+    --tetra-tail-skew-b: 1.6deg;
+    --tetra-tail-rot-a: -.88deg;
+    --tetra-tail-rot-b: .88deg;
+  }
+
+  .angel-tail-replacement{
+    --tail-speed: 1480ms;
+    --tail-x-a: .26%;
+    --tail-x-b: -.26%;
+    --tail-rot-a: -.48deg;
+    --tail-rot-b: .48deg;
+  }
+
+  .angel:has(.fish-sprite[src$="angel2.png"]),
+  .angel:has(.fish-sprite[src$="angel3.png"]){
+    --small-angel-tail-speed: 1660ms;
+    --small-angel-tail-x-a: .18%;
+    --small-angel-tail-x-b: -.18%;
+    --small-angel-tail-rot-a: -.34deg;
+    --small-angel-tail-rot-b: .34deg;
+  }
+
+  .barb{
+    --tail-speed: 960ms;
+    --tail-x-a: .34%;
+    --tail-x-b: -.34%;
+    --tail-rot-a: -.82deg;
+    --tail-rot-b: .82deg;
+  }
+
+  .jack{
+    --jack-tail-speed: 1320ms;
+    --jack-tail-x-a: .26%;
+    --jack-tail-x-b: -.26%;
+    --jack-tail-rot-a: -.54deg;
+    --jack-tail-rot-b: .54deg;
+  }
+}
