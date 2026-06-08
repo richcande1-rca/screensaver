@@ -346,6 +346,8 @@
 
   const FISH_SPEED = isMobile ? 3.6 : 4.05;
   const FISH_SIZE_MULTIPLIER = 2;
+  const FULLSCREEN_FISH_BASE_WIDTH = 680;
+  const FULLSCREEN_FISH_BASE_HEIGHT = 880;
   const PARTICLE_COUNT = isMobile ? 22 : 55;
   const BUBBLE_COUNT = isMobile ? 40 : 72;
   const DIVER_BUBBLE_COUNT = isMobile ? 24 : 40;
@@ -353,6 +355,7 @@
   const ANGEL_COUNT = 3;
   const DISCUS_COUNT = 1;
   const BARB_COUNT = 3;
+  const JACK_COUNT = 1;
   const TETRA_SPRITES = [
     { src: './tetra1.png', facing: 1 },
     { src: './tetra2.png', facing: -1 }
@@ -381,6 +384,23 @@
     if (perfLite === next) return;
     perfLite = next;
     rootEl.classList.toggle('perf-lite', perfLite);
+  }
+
+
+  function getFishViewportScale(tankWidth, tankHeight) {
+    if (!getFullscreenElement()) return 1;
+
+    // The tank expands from a portrait-ish desktop frame to the whole screen in
+    // fullscreen. Sprite dimensions are pixel-based, so without this boost the
+    // fish keep their old pixel size and read smaller inside the larger tank.
+    // Weight height more than width so ultrawide fullscreen does not make the
+    // fish comically large, while still giving them enough presence on desktop.
+    const heightScale = tankHeight / FULLSCREEN_FISH_BASE_HEIGHT;
+    const widthScale = tankWidth / FULLSCREEN_FISH_BASE_WIDTH;
+    const blendedScale = heightScale * 0.78 + widthScale * 0.22;
+    const maxScale = isMobile ? 1.24 : 1.55;
+
+    return clamp(blendedScale, 1, maxScale);
   }
 
   if (typeof ResizeObserver !== 'undefined') {
@@ -909,6 +929,25 @@
         f.targetY = clamp(cy + rand(-spreadY, spreadY), 0.50, 0.86);
       }
       f.targetCooldown = rand(0.7, 1.5);
+    } else if (f.type === 'jack') {
+      const currentX = Number.isFinite(f.x) ? f.x : 0.50;
+      const currentDir = f.dir || (Math.random() < 0.5 ? -1 : 1);
+      const nearLeftGlass = currentX < 0.16;
+      const nearRightGlass = currentX > 0.84;
+      let preferredDir = currentDir;
+
+      if (nearLeftGlass) {
+        preferredDir = 1;
+      } else if (nearRightGlass) {
+        preferredDir = -1;
+      } else if (Math.random() < 0.22) {
+        preferredDir = -currentDir;
+      }
+
+      const glideStep = rand(isMobile ? 0.24 : 0.30, isMobile ? 0.44 : 0.56);
+      f.targetX = clamp(currentX + preferredDir * glideStep, 0.07, 0.93);
+      f.targetY = clamp((f.homeY ?? 0.48) + rand(-0.16, 0.16), 0.24, 0.78);
+      f.targetCooldown = rand(1.0, 2.0);
     }
   }
 
@@ -949,16 +988,20 @@
         else if (r < 0.91) f.state = 'cruise';
         else if (r < 0.985) f.state = 'turn';
         else f.state = 'dart';
+      } else if (f.type === 'jack') {
+        if (r < 0.22) f.state = 'idle';
+        else if (r < 0.965) f.state = 'cruise';
+        else f.state = 'turn';
       }
     }
 
     if (f.state === 'idle') {
-      f.stateTimer = f.type === 'angel' ? rand(3.4, 7.4) : rand(2.4, 5.8);
+      f.stateTimer = f.type === 'angel' ? rand(3.4, 7.4) : (f.type === 'jack' ? rand(2.8, 5.4) : rand(2.4, 5.8));
     } else if (f.state === 'cruise') {
-      f.stateTimer = f.type === 'angel' ? rand(6.4, 12.4) : rand(3.8, 8.5);
+      f.stateTimer = f.type === 'angel' ? rand(6.4, 12.4) : (f.type === 'jack' ? rand(5.8, 9.8) : rand(3.8, 8.5));
       chooseTargetForFish(f);
     } else if (f.state === 'turn') {
-      f.stateTimer = f.type === 'angel' ? rand(1.7, 3.1) : rand(0.9, 2.1);
+      f.stateTimer = f.type === 'angel' ? rand(1.7, 3.1) : (f.type === 'jack' ? rand(1.1, 2.4) : rand(0.9, 2.1));
       chooseTargetForFish(f);
     } else if (f.state === 'dart') {
       f.stateTimer = rand(0.28, 0.62);
@@ -1002,16 +1045,19 @@
         type === 'angel' ? rand(0.34, 0.48) :
         type === 'discus' ? rand(0.28, 0.42) :
         type === 'barb' ? rand(0.40, 0.58) :
+        type === 'jack' ? rand(0.32, 0.46) :
         rand(0.38, 0.56),
       depthBias:
         type === 'angel' ? rand(0.32, 0.50) :
         type === 'discus' ? rand(0.40, 0.60) :
         type === 'barb' ? rand(0.48, 0.72) :
+        type === 'jack' ? rand(0.38, 0.58) :
         rand(0.44, 0.70),
       depthAmp:
         type === 'angel' ? rand(0.190, 0.275) :
         type === 'discus' ? rand(0.175, 0.250) :
         type === 'barb' ? rand(0.210, 0.300) :
+        type === 'jack' ? rand(0.165, 0.240) :
         rand(0.195, 0.285),
       visualZ: 0.5,
       turnMomentum: 0,
@@ -1152,6 +1198,31 @@
     f.riseCooldown = 0;
     f.homeX = clamp(x + rand(-0.10, 0.10), 0.18, 0.82);
     f.homeY = clamp(y + rand(-0.08, 0.08), 0.34, 0.74);
+    chooseTargetForFish(f);
+    fish.push(f);
+  }
+
+
+  function createJack(x, y, scale = 1, spriteSrc = './jack1.png') {
+    const el = makeEl(`
+      <div class="fish jack">
+        <img class="fish-sprite" src="${spriteSrc}" alt="">
+      </div>
+    `);
+
+    fishLayer.appendChild(el);
+
+    const f = makeFishBase('jack', el, x, y, scale);
+    f.nativeFacing = -1;
+    f.cruiseSpeed = rand(0.000045, 0.000066);
+    f.dartSpeed = rand(0.000095, 0.000130);
+    f.accel = rand(0.0031, 0.0046);
+    f.drag = rand(0.9930, 0.9956);
+    f.turnEase = rand(0.024, 0.037);
+    f.shyness = rand(0.74, 0.96);
+    f.idleBob = rand(0.58, 0.88);
+    f.homeX = clamp(x + rand(-0.12, 0.12), 0.16, 0.84);
+    f.homeY = clamp(y + rand(-0.08, 0.08), 0.28, 0.70);
     chooseTargetForFish(f);
     fish.push(f);
   }
@@ -1332,6 +1403,15 @@
       );
     }
 
+    if (JACK_COUNT >= 1) {
+      createJack(
+        isMobile ? 0.64 : 0.66,
+        isMobile ? 0.44 : 0.46,
+        isMobile ? 0.78 : 0.84,
+        './jack1.png'
+      );
+    }
+
     if (BARB_COUNT >= 1) {
       createBarb(
         isMobile ? 0.30 : 0.28,
@@ -1490,6 +1570,7 @@
     const tankWidth = tankRect.width;
     const tankHeight = tankRect.height;
     const tankAspect = tankHeight / Math.max(1, tankWidth);
+    const fishViewportScale = getFishViewportScale(tankWidth, tankHeight);
     frameTick += 1;
 
     if (currentMode === 'cycle') applyCyclePalette(now);
@@ -1658,7 +1739,7 @@
         const strength = (0.05 - dist2) * 0.015 * f.shyness;
         repelX = dxm * strength;
         repelY = dym * strength;
-        if (f.type !== 'discus' && f.state !== 'dart' && dist2 < 0.012) {
+        if (f.type !== 'discus' && f.type !== 'jack' && f.state !== 'dart' && dist2 < 0.012) {
           pickState(f, 'dart');
         }
       }
@@ -1675,9 +1756,9 @@
       const ty = f.targetY - f.y;
       const dist = Math.hypot(tx, ty) || 0.00001;
 
-      const arrivalDist = f.type === 'angel' ? 0.034 : 0.02;
+      const arrivalDist = f.type === 'angel' ? 0.034 : (f.type === 'jack' ? 0.030 : 0.02);
       if (dist < arrivalDist && (f.state === 'cruise' || f.state === 'turn') && (f.targetCooldown || 0) <= 0) {
-        if (Math.random() < (f.type === 'angel' ? 0.06 : 0.02)) {
+        if (Math.random() < (f.type === 'angel' ? 0.06 : (f.type === 'jack' ? 0.04 : 0.02))) {
           pickState(f, 'idle');
         } else {
           chooseTargetForFish(f);
@@ -1701,7 +1782,7 @@
         const adx = Math.abs(dxCol);
         if (adx < col.radius) {
           const side = dxCol < 0 ? -1 : 1;
-          const strength = (1 - adx / col.radius) * col.push * (f.type === 'angel' ? 0.74 : 1);
+          const strength = (1 - adx / col.radius) * col.push * (f.type === 'angel' ? 0.74 : (f.type === 'jack' ? 0.82 : 1));
           avoidX += side * strength;
           avoidY += Math.sin((f.y - col.y1) * 10 + f.schoolPhase) * strength * 0.20;
         }
@@ -1713,17 +1794,17 @@
         const oyRaw = f.y - other.y;
         const oy = oyRaw * tankAspect;
         const d2 = ox * ox + oy * oy;
-        const minD = (f.type === 'angel' || other.type === 'angel') ? 0.115 : 0.078;
+        const minD = (f.type === 'angel' || other.type === 'angel') ? 0.115 : ((f.type === 'jack' || other.type === 'jack') ? 0.105 : 0.078);
         if (d2 > 0 && d2 < minD * minD) {
           const d = Math.sqrt(d2);
-          const push = (1 - d / minD) * (f.type === 'angel' ? 0.000045 : 0.000060);
+          const push = (1 - d / minD) * (f.type === 'angel' ? 0.000045 : (f.type === 'jack' ? 0.000040 : 0.000060));
           avoidX += (ox / d) * push;
           avoidY += (oyRaw / Math.max(0.0001, Math.abs(oyRaw) + Math.abs(ox))) * push * 0.55;
         }
       }
 
       if ((f.escapeTimer || 0) > 0) {
-        avoidX += (f.escapeDir || f.dir || 1) * (f.type === 'angel' ? 0.000050 : 0.000070);
+        avoidX += (f.escapeDir || f.dir || 1) * (f.type === 'angel' ? 0.000050 : (f.type === 'jack' ? 0.000055 : 0.000070));
       }
 
       const desiredVX = (tx / dist) * desiredSpeed * fishSpeedNow + avoidX;
@@ -1746,8 +1827,8 @@
       const intentX = Math.abs(tx) > 0.01 ? tx : desiredVX;
       const desiredDir = intentX >= 0 ? 1 : -1;
 
-      if (f.lastDesiredDir && desiredDir !== f.lastDesiredDir && Math.abs(tx) < (f.type === 'angel' ? 0.16 : 0.10)) {
-        f.oscillationScore = Math.min(4, (f.oscillationScore || 0) + (f.type === 'angel' ? 0.82 : 0.68));
+      if (f.lastDesiredDir && desiredDir !== f.lastDesiredDir && Math.abs(tx) < (f.type === 'angel' ? 0.16 : (f.type === 'jack' ? 0.13 : 0.10))) {
+        f.oscillationScore = Math.min(4, (f.oscillationScore || 0) + (f.type === 'angel' ? 0.82 : (f.type === 'jack' ? 0.74 : 0.68)));
       } else {
         f.oscillationScore = Math.max(0, (f.oscillationScore || 0) - dtSec * 1.6);
       }
@@ -1766,21 +1847,21 @@
           f.escapeDir = f.dir || (Math.random() < 0.5 ? -1 : 1);
         }
 
-        f.escapeTimer = f.type === 'angel' ? rand(1.2, 1.9) : rand(0.65, 1.15);
-        f.targetX = clamp(f.x + f.escapeDir * (f.type === 'angel' ? 0.24 : 0.18), 0.07, 0.93);
-        f.targetY = clamp(f.targetY + rand(-0.045, 0.045), f.type === 'angel' ? 0.05 : 0.12, f.type === 'angel' ? 0.31 : 0.88);
-        f.targetCooldown = f.type === 'angel' ? rand(1.2, 2.0) : rand(0.6, 1.1);
+        f.escapeTimer = f.type === 'angel' ? rand(1.2, 1.9) : (f.type === 'jack' ? rand(0.9, 1.5) : rand(0.65, 1.15));
+        f.targetX = clamp(f.x + f.escapeDir * (f.type === 'angel' ? 0.24 : (f.type === 'jack' ? 0.22 : 0.18)), 0.07, 0.93);
+        f.targetY = clamp(f.targetY + rand(-0.045, 0.045), f.type === 'angel' ? 0.05 : (f.type === 'jack' ? 0.22 : 0.12), f.type === 'angel' ? 0.31 : 0.88);
+        f.targetCooldown = f.type === 'angel' ? rand(1.2, 2.0) : (f.type === 'jack' ? rand(0.8, 1.4) : rand(0.6, 1.1));
         f.oscillationScore = 0;
       }
 
       // Slow down direction decisions so fish don't snap-flip the instant
       // their target shifts. Bigger fish get the gentlest response.
-      const dirResponse = f.type === 'angel' ? 0.045 : (f.type === 'discus' ? 0.055 : (f.type === 'barb' ? 0.075 : 0.110));
+      const dirResponse = f.type === 'angel' ? 0.045 : (f.type === 'discus' ? 0.055 : (f.type === 'jack' ? 0.050 : (f.type === 'barb' ? 0.075 : 0.110)));
       const dirResponseT = 1 - Math.pow(1 - dirResponse, frameScale);
       f.turnMomentum = lerp(f.turnMomentum, desiredDir, dirResponseT);
 
       const previousDir = f.dir;
-      const turnThreshold = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.30 : (f.type === 'barb' ? 0.18 : 0.12));
+      const turnThreshold = f.type === 'discus' ? 0.16 : (f.type === 'jack' ? 0.19 : (f.type === 'angel' ? 0.30 : (f.type === 'barb' ? 0.18 : 0.12)));
       const activeTurnDuration = f.turnDuration ?? 520;
       const turnStillPlaying = (f.turnAge ?? 999) < activeTurnDuration * 0.82;
       const wantsEdgeTurn =
@@ -1798,14 +1879,14 @@
       // The fish holds the old facing longer, compresses, flips near the middle,
       // then eases back out.
       if (f.dir !== previousDir) {
-        const turnBrake = f.type === 'discus' ? 0.16 : (f.type === 'angel' ? 0.18 : (f.type === 'barb' ? 0.28 : 0.36));
+        const turnBrake = f.type === 'discus' ? 0.16 : (f.type === 'jack' ? 0.18 : (f.type === 'angel' ? 0.18 : (f.type === 'barb' ? 0.28 : 0.36)));
         f.vx *= turnBrake;
-        f.flipCooldown = f.type === 'discus' ? rand(1.8, 2.8) : (f.type === 'angel' ? rand(3.0, 4.8) : (f.type === 'barb' ? rand(1.2, 2.0) : rand(0.65, 1.15)));
-        f.targetCooldown = Math.max(f.targetCooldown || 0, f.type === 'angel' ? 1.5 : 0.6);
+        f.flipCooldown = f.type === 'discus' ? rand(1.8, 2.8) : (f.type === 'jack' ? rand(1.7, 2.7) : (f.type === 'angel' ? rand(3.0, 4.8) : (f.type === 'barb' ? rand(1.2, 2.0) : rand(0.65, 1.15))));
+        f.targetCooldown = Math.max(f.targetCooldown || 0, f.type === 'angel' ? 1.5 : (f.type === 'jack' ? 1.0 : 0.6));
         f.turnFromDir = previousDir;
         f.turnToDir = f.dir;
         f.turnAge = 0;
-        f.turnDuration = f.type === 'discus' ? 1250 : (f.type === 'angel' ? 1320 : (f.type === 'barb' ? 880 : 680));
+        f.turnDuration = f.type === 'discus' ? 1250 : (f.type === 'jack' ? 1180 : (f.type === 'angel' ? 1320 : (f.type === 'barb' ? 880 : 680)));
       }
 
       if (f.dir === 1 && f.vx < 0) f.vx *= 0.35;
@@ -1826,6 +1907,9 @@
       } else if (f.type === 'barb') {
         f.x = clamp(f.x, 0.05, 0.95);
         f.y = clamp(f.y, 0.50, 0.90);
+      } else if (f.type === 'jack') {
+        f.x = clamp(f.x, 0.05, 0.95);
+        f.y = clamp(f.y, 0.20, 0.82);
       }
 
       const displayVX = Math.max(Math.abs(f.vx), Math.abs(desiredVX) * 0.65, 0.00001) * f.dir;
@@ -1851,15 +1935,15 @@
         : 0;
 
       const drawY = f.y + bodyBob + extraSchoolY + f.depthOffset;
-      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.12 : (f.type === 'barb' ? 0.15 : 0.18));
+      const rotDeg = (f.angle * 180 / Math.PI) * (f.type === 'discus' ? 0.12 : (f.type === 'jack' ? 0.13 : (f.type === 'barb' ? 0.15 : 0.18)));
       const tailPhase = Math.sin(t * 10 * tailBoost + f.schoolPhase * 2);
       const tailDeg = f.type === 'discus'
         ? tailPhase * clamp(speedMag * 650, 0, 0.20)
-        : tailPhase * (speedMag * (f.type === 'barb' ? 7600 : 9000));
-      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -0.20 : (f.type === 'barb' ? -3.5 : -4.5), f.type === 'discus' ? 0.20 : (f.type === 'barb' ? 3.5 : 4.5));
+        : tailPhase * (speedMag * (f.type === 'jack' ? 5200 : (f.type === 'barb' ? 7600 : 9000)));
+      const finalRot = rotDeg + clamp(tailDeg, f.type === 'discus' ? -0.20 : (f.type === 'jack' ? -2.2 : (f.type === 'barb' ? -3.5 : -4.5)), f.type === 'discus' ? 0.20 : (f.type === 'jack' ? 2.2 : (f.type === 'barb' ? 3.5 : 4.5)));
 
       const spriteFacing = f.nativeFacing ?? ((f.type === 'angel' || f.type === 'discus') ? -1 : 1);
-      const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'barb' ? 0.97 : 1));
+      const baseOpacity = f.type === 'tetra' ? 0.96 : (f.type === 'discus' ? 0.98 : (f.type === 'jack' ? 0.985 : (f.type === 'barb' ? 0.97 : 1)));
 
       // Motion-coupled pseudo-Z scale drift.
       // The depth phase only advances when the fish is actually moving.
@@ -1887,12 +1971,13 @@
       const opacityFloor =
         f.type === 'discus' ? 0.900 :
         f.type === 'angel' ? 0.850 :
+        f.type === 'jack' ? 0.875 :
         f.type === 'barb' ? 0.835 :
         0.815;
       const zOpacity = lerp(opacityFloor, 1.020, f.visualZ);
       const zSat = lerp(0.56, 1.14, f.visualZ);
       const zBright = lerp(0.67, 1.090, f.visualZ);
-      const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale;
+      const drawScale = f.scale * FISH_SIZE_MULTIPLIER * zScale * fishViewportScale;
 
       // Softer, slower turn illusion, without the paper-thin cutout look:
       // compress, linger through the hidden midpoint, then expand.
@@ -1909,7 +1994,7 @@
 
         // Hold the old facing a touch longer so the actual flip is hidden
         // inside the compressed part of the turn instead of popping early.
-        const flipPoint = f.type === 'discus' ? 0.62 : (f.type === 'angel' ? 0.60 : 0.56);
+        const flipPoint = f.type === 'discus' ? 0.62 : (f.type === 'jack' ? 0.61 : (f.type === 'angel' ? 0.60 : 0.56));
         visualDir = easedTurnP < flipPoint ? (f.turnFromDir ?? f.dir) : (f.turnToDir ?? f.dir);
         turnPulse = Math.sin(Math.PI * easedTurnP);
       }
@@ -1919,7 +2004,7 @@
       // Depth illusion: the fish can flip/compress/rotate, but its shadow
       // stays as a separate flat oval below it. This avoids the fake-looking
       // spinning shadow during turns.
-      const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'angel' ? 0.06 : 0.09));
+      const turnDim = 1 - turnPulse * (f.type === 'discus' ? 0.07 : (f.type === 'jack' ? 0.065 : (f.type === 'angel' ? 0.06 : 0.09)));
       f.el.style.opacity = clamp(baseOpacity * turnDim * zOpacity, opacityFloor, 1).toFixed(3);
       f.el.style.filter = `saturate(${zSat.toFixed(3)}) brightness(${zBright.toFixed(3)})`;
 
@@ -1927,27 +2012,32 @@
       const shadowBase =
         f.type === 'tetra' ? 0.245 :
         f.type === 'discus' ? 0.350 :
+        f.type === 'jack' ? 0.345 :
         f.type === 'barb' ? 0.320 :
         0.360;
       const shadowOpacity = clamp(shadowBase * (0.54 + depthNorm * 0.50 + f.visualZ * 0.98), 0, 0.76);
       const shadowBlur = (
         f.type === 'tetra' ? 3.2 :
         f.type === 'discus' ? 5.4 :
+        f.type === 'jack' ? 5.0 :
         f.type === 'barb' ? 4.0 :
         5.8
       ) * lerp(0.62, 1.58, f.visualZ);
       const shadowScaleX = (
         f.type === 'angel' ? 1.05 + depthNorm * 0.44 :
         f.type === 'discus' ? 1.12 + depthNorm * 0.38 :
+        f.type === 'jack' ? 1.10 + depthNorm * 0.42 :
         1.15 + depthNorm * 0.45
       ) * lerp(0.60, 1.54, f.visualZ);
       const shadowScaleY =
         f.type === 'angel' ? 0.88 :
         f.type === 'discus' ? 0.92 :
+        f.type === 'jack' ? 0.86 :
         0.82;
       const shadowOffsetPx =
         f.type === 'angel' ? 28 :
         f.type === 'discus' ? 18 :
+        f.type === 'jack' ? 17 :
         f.type === 'barb' ? 16 :
         13;
 
@@ -2041,9 +2131,9 @@
         f.el.style.setProperty('--tail-rot-b', `${tailRot.toFixed(2)}deg`);
       }
 
-      const minTurnWidth = f.type === 'discus' ? 0.78 : (f.type === 'angel' ? 0.74 : (f.type === 'barb' ? 0.70 : 0.68));
+      const minTurnWidth = f.type === 'discus' ? 0.78 : (f.type === 'jack' ? 0.76 : (f.type === 'angel' ? 0.74 : (f.type === 'barb' ? 0.70 : 0.68)));
       const widthMultiplier = 1 - turnPulse * (1 - minTurnWidth);
-      const turnLeanDeg = turnPulse * f.dir * (f.type === 'discus' ? 1.4 : (f.type === 'angel' ? 1.8 : (f.type === 'barb' ? 2.5 : 2.8)));
+      const turnLeanDeg = turnPulse * f.dir * (f.type === 'discus' ? 1.4 : (f.type === 'jack' ? 1.6 : (f.type === 'angel' ? 1.8 : (f.type === 'barb' ? 2.5 : 2.8))));
       const visualScaleX = spriteFacing * visualDir * drawScale * widthMultiplier;
       const visualScaleY = drawScale * (1 + turnPulse * 0.010);
 

@@ -575,12 +575,14 @@ body{
 .fish-shadow-angel{ --shadow-w:121px; --shadow-h:56px; }
 .fish-shadow-discus{ --shadow-w:108px; --shadow-h:36px; }
 .fish-shadow-barb{ --shadow-w:79px; --shadow-h:16px; }
+.fish-shadow-jack{ --shadow-w:118px; --shadow-h:29px; }
 
 @media (max-width: 800px){
   .fish-shadow-tetra{ --shadow-w:61px; --shadow-h:11px; }
   .fish-shadow-angel{ --shadow-w:111px; --shadow-h:52px; }
   .fish-shadow-discus{ --shadow-w:100px; --shadow-h:33px; }
   .fish-shadow-barb{ --shadow-w:69px; --shadow-h:14px; }
+  .fish-shadow-jack{ --shadow-w:104px; --shadow-h:25px; }
 }
 
 .fish-sprite{
@@ -623,6 +625,11 @@ body{
 .barb{
   width:60px;
   height:34px;
+}
+
+.jack{
+  width:92px;
+  height:52px;
 }
 
 
