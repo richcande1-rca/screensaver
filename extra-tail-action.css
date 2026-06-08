@@ -1,0 +1,154 @@
+/* ----------------------------------------------------
+   Extra lightweight tail action
+   CSS-only pass for smaller card-like fish that do not yet
+   get explicit tail layers from app.js.
+---------------------------------------------------- */
+
+/* Tetras: tiny, quick flicks. Each sprite faces a different way,
+   so the clipped tail side is selected by image filename. */
+.tetra:has(.fish-sprite[src$="tetra1.png"]),
+.tetra:has(.fish-sprite[src$="tetra2.png"]){
+  --tetra-tail-speed: 920ms;
+  --tetra-tail-x-a: .18%;
+  --tetra-tail-x-b: -.18%;
+  --tetra-tail-scale-a: .965;
+  --tetra-tail-scale-b: 1.035;
+  --tetra-tail-skew-a: -1.05deg;
+  --tetra-tail-skew-b: 1.05deg;
+  --tetra-tail-rot-a: -.58deg;
+  --tetra-tail-rot-b: .58deg;
+}
+
+.tetra:has(.fish-sprite[src$="tetra1.png"]) .fish-sprite{
+  clip-path:polygon(22% 0%, 100% 0%, 100% 100%, 22% 100%);
+}
+
+.tetra:has(.fish-sprite[src$="tetra2.png"]) .fish-sprite{
+  clip-path:polygon(0% 0%, 78% 0%, 78% 100%, 0% 100%);
+}
+
+.tetra:has(.fish-sprite[src$="tetra1.png"])::after,
+.tetra:has(.fish-sprite[src$="tetra2.png"])::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  background:center center / contain no-repeat;
+  opacity:.97;
+  filter:blur(.02px) saturate(1.03) brightness(1.02);
+  will-change:transform;
+  backface-visibility:hidden;
+  animation:tetraTailFlick var(--tetra-tail-speed) cubic-bezier(.42,.04,.58,.96) infinite;
+}
+
+.tetra:has(.fish-sprite[src$="tetra1.png"])::after{
+  background-image:url('./tetra1.png');
+  clip-path:polygon(0% 18%, 36% 12%, 36% 88%, 0% 82%);
+  transform-origin:35% 50%;
+}
+
+.tetra:has(.fish-sprite[src$="tetra2.png"])::after{
+  background-image:url('./tetra2.png');
+  clip-path:polygon(64% 12%, 100% 18%, 100% 82%, 64% 88%);
+  transform-origin:65% 50%;
+}
+
+@keyframes tetraTailFlick{
+  0%{
+    transform:translate3d(var(--tetra-tail-x-a),0,0) scaleX(var(--tetra-tail-scale-a)) skewY(var(--tetra-tail-skew-a)) rotate(var(--tetra-tail-rot-a));
+  }
+  50%{
+    transform:translate3d(var(--tetra-tail-x-b),0,0) scaleX(var(--tetra-tail-scale-b)) skewY(var(--tetra-tail-skew-b)) rotate(var(--tetra-tail-rot-b));
+  }
+  100%{
+    transform:translate3d(var(--tetra-tail-x-a),0,0) scaleX(var(--tetra-tail-scale-a)) skewY(var(--tetra-tail-skew-a)) rotate(var(--tetra-tail-rot-a));
+  }
+}
+
+/* Smaller angels: slow, barely-there tail motion. The main angel
+   already has a JS-created tail span, so this only targets angel2/3. */
+.angel:has(.fish-sprite[src$="angel2.png"]),
+.angel:has(.fish-sprite[src$="angel3.png"]){
+  --small-angel-tail-speed: 1880ms;
+  --small-angel-tail-x-a: .12%;
+  --small-angel-tail-x-b: -.12%;
+  --small-angel-tail-scale-a: .982;
+  --small-angel-tail-scale-b: 1.018;
+  --small-angel-tail-skew-a: -.46deg;
+  --small-angel-tail-skew-b: .46deg;
+  --small-angel-tail-rot-a: -.24deg;
+  --small-angel-tail-rot-b: .24deg;
+}
+
+.angel:has(.fish-sprite[src$="angel2.png"]) .fish-sprite,
+.angel:has(.fish-sprite[src$="angel3.png"]) .fish-sprite{
+  clip-path:polygon(0% 0%, 79% 0%, 79% 100%, 0% 100%);
+}
+
+.angel:has(.fish-sprite[src$="angel2.png"])::after,
+.angel:has(.fish-sprite[src$="angel3.png"])::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  background:center center / contain no-repeat;
+  clip-path:polygon(58% 6%, 100% 0%, 100% 100%, 58% 94%);
+  transform-origin:62% 50%;
+  opacity:.96;
+  filter:blur(.03px) saturate(1.02) brightness(1.02);
+  will-change:transform;
+  backface-visibility:hidden;
+  animation:smallAngelTailWag var(--small-angel-tail-speed) cubic-bezier(.45,.05,.55,.95) infinite;
+}
+
+.angel:has(.fish-sprite[src$="angel2.png"])::after{
+  background-image:url('./angel2.png');
+}
+
+.angel:has(.fish-sprite[src$="angel3.png"])::after{
+  background-image:url('./angel3.png');
+}
+
+@keyframes smallAngelTailWag{
+  0%{
+    transform:translate3d(var(--small-angel-tail-x-a),0,0) scaleX(var(--small-angel-tail-scale-a)) skewY(var(--small-angel-tail-skew-a)) rotate(var(--small-angel-tail-rot-a));
+  }
+  50%{
+    transform:translate3d(var(--small-angel-tail-x-b),0,0) scaleX(var(--small-angel-tail-scale-b)) skewY(var(--small-angel-tail-skew-b)) rotate(var(--small-angel-tail-rot-b));
+  }
+  100%{
+    transform:translate3d(var(--small-angel-tail-x-a),0,0) scaleX(var(--small-angel-tail-scale-a)) skewY(var(--small-angel-tail-skew-a)) rotate(var(--small-angel-tail-rot-a));
+  }
+}
+
+html.perf-lite .tetra::after,
+html.perf-lite .angel::after{
+  filter:none;
+  opacity:.90;
+}
+
+@media (max-width: 800px){
+  .tetra:has(.fish-sprite[src$="tetra1.png"]),
+  .tetra:has(.fish-sprite[src$="tetra2.png"]){
+    --tetra-tail-speed: 1040ms;
+    --tetra-tail-x-a: .12%;
+    --tetra-tail-x-b: -.12%;
+    --tetra-tail-rot-a: -.42deg;
+    --tetra-tail-rot-b: .42deg;
+  }
+
+  .angel:has(.fish-sprite[src$="angel2.png"]),
+  .angel:has(.fish-sprite[src$="angel3.png"]){
+    --small-angel-tail-speed: 2060ms;
+    --small-angel-tail-x-a: .08%;
+    --small-angel-tail-x-b: -.08%;
+    --small-angel-tail-rot-a: -.18deg;
+    --small-angel-tail-rot-b: .18deg;
+  }
+}
